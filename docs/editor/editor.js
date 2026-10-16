@@ -122,10 +122,10 @@ function renderList() {
     cb.addEventListener('change', () => { it.show = cb.checked; setDirty(true); });
     const mid = document.createElement('div');
     const t = document.createElement('input'); t.value = it.title; t.maxLength = 120;
-    t.addEventListener('input', () => { it.title = t.value; setDirty(true); });
+    t.addEventListener('input', () => { it.title = t.value; setDirty(true); sendPreview(); });
     const n = document.createElement('textarea'); n.value = it.note; n.rows = 2; n.maxLength = 400;
-    n.addEventListener('input', () => { it.note = n.value; setDirty(true); });
-    const m = document.createElement('div'); m.className = 'meta'; m.textContent = folder ? 'SLOŽKA' : it.url;
+    n.addEventListener('input', () => { it.note = n.value; setDirty(true); sendPreview(); });
+    const m = document.createElement('div'); m.className = 'meta'; m.textContent = folder ? (it.parent ? 'PODSLOŽKA' : 'HLAVNÍ TLAČÍTKO (první řádek)') : it.url;
     const pick = document.createElement('label'); pick.className = 'pick'; pick.append(document.createTextNode('Složka: '));
     const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent);
     sel.addEventListener('change', () => { it.parent = sel.value; setDirty(true); render(); });
@@ -147,7 +147,7 @@ function renderList() {
 /* ---------- přidání ---------- */
 $('#n-url').addEventListener('input', () => {
   const m = parseMediaUrl($('#n-url').value);
-  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio' })[m.kind] : 'Tento odkaz tátův přehrávač nepřehraje.';
+  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio nebo živé rádio', web: 'webová stránka (počasí)' })[m.kind] : 'Tento odkaz tátův přehrávač nepřehraje.';
 });
 $('#add').addEventListener('click', () => {
   const it = validateItem({ id: newId(), title: $('#n-title').value, note: $('#n-note').value, url: $('#n-url').value, added: new Date().toISOString().slice(0, 10) });
