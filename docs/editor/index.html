@@ -6,12 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
-<title>Hrací skříň – editor</title>
+<title>Superbox 85 – editor</title>
 <link rel="stylesheet" href="editor.css">
 </head>
 <body>
 <header>
-  <h1>Hrací skříň – editor</h1>
+  <h1>Stanleyho Superbox 85 – editor</h1>
   <div id="msg" role="status" aria-live="polite"></div>
 </header>
 
@@ -29,8 +29,16 @@
   <h2>Přidat odkaz</h2>
   <label>Odkaz (https://… YouTube nebo přímý soubor mp4/webm/mp3/m4a/ogg/wav)<input id="n-url" autocomplete="off"></label>
   <label>Název<input id="n-title" maxlength="120" autocomplete="off"></label>
+  <label>Složka<select id="n-parent"></select></label>
   <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
   <div class="row"><button id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
+</section>
+
+<section class="add">
+  <h2>Přidat složku</h2>
+  <label>Název složky<input id="f-title" maxlength="120" autocomplete="off"></label>
+  <label>Nadřazená složka<select id="f-parent"></select></label>
+  <div class="row"><button id="add-folder" type="button">Přidat složku</button></div>
 </section>
 
 <section>

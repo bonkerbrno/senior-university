@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src https:; frame-src https://www.youtube-nocookie.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#2a1408">
-<title>Hrací skříň</title>
+<title>Stanleyho Superbox 85</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/jukebox.css">
@@ -21,6 +21,11 @@
     <symbol id="i-stop" viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/></symbol>
     <symbol id="i-mini" viewBox="0 0 24 24"><path d="M3 15h18v6H3zM7 3h10v8H7z"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M4 7l3-3 5 5 5-5 3 3-5 5 5 5-3 3-5-5-5 5-3-3 5-5z"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 4v7h-7l2.7-2.7A5 5 0 0 0 7 12zM20 12a8 8 0 0 1-13.7 5.6L4 20v-7h7l-2.7 2.7A5 5 0 0 0 17 12z"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 4a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 8 7zm8 0a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 16 7zm-4 4.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zM8 14a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 8 14zm8 0a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3l10 9h-3v9h-5v-6h-4v6H5v-9H2z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M10 4L2 12l8 8v-5h10V9H10z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2 5h8l2 3h10v11H2z"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 20L3 8h18z"/></symbol>
   </defs>
@@ -28,8 +33,7 @@
 
 <main id="app">
   <section id="cabinet" aria-label="Přehrávač">
-    <h1 class="marquee">Hrací skříň</h1>
-    <div id="status" class="status" role="status" aria-live="polite">Vítejte. Vyberte pořad vpravo.</div>
+    <header class="sign"><div class="bulbs" aria-hidden="true"></div><h1><span class="star">★</span> Stanleyho Superbox 85 <span class="star">★</span></h1><div class="bulbs" aria-hidden="true"></div></header>
     <div id="screen-wrap">
       <div id="stage" aria-label="Obrazovka"><div id="idle" class="idle"><span>♪</span><p>Vyberte pořad a stiskněte Pustit</p></div></div>
       <div id="fs-bar" class="fs-bar">
@@ -38,6 +42,7 @@
         <button type="button" class="btn small" data-act="full"><span class="lamp"></span><svg class="ico"><use href="#i-full"/></svg><span class="lbl">Zpět</span></button>
       </div>
     </div>
+    <div id="infobar" class="infobar"><div id="status" class="status" role="status" aria-live="polite">Vítejte. Vyberte pořad.</div><div id="substatus" class="substatus"></div></div>
     <div id="controls" class="controls">
       <button type="button" class="btn" data-act="news"><span class="lamp"></span><svg class="ico"><use href="#i-news"/></svg><span class="lbl">Novinky</span></button>
       <button type="button" class="btn" data-act="play"><span class="lamp"></span><svg class="ico"><use href="#i-play"/></svg><span class="lbl">Pustit</span></button>
@@ -45,20 +50,32 @@
       <button type="button" class="btn" data-act="stop"><span class="lamp"></span><svg class="ico"><use href="#i-stop"/></svg><span class="lbl">Ukončit</span></button>
       <button type="button" class="btn" data-act="full"><span class="lamp"></span><svg class="ico"><use href="#i-full"/></svg><span class="lbl">Celá obrazovka</span></button>
       <button type="button" class="btn" data-act="mini"><span class="lamp"></span><svg class="ico"><use href="#i-mini"/></svg><span class="lbl">Zmenšit</span></button>
+      <button type="button" class="btn" data-act="auto"><span class="lamp"></span><svg class="ico"><use href="#i-auto"/></svg><span class="lbl">Automat</span></button>
       <button type="button" class="btn red" data-act="close"><span class="lamp"></span><svg class="ico"><use href="#i-close"/></svg><span class="lbl">Zavřít</span></button>
+    </div>
+    <div id="extras" class="extras">
+      <button type="button" class="btn small" data-act="rand-here"><span class="lamp"></span><svg class="ico"><use href="#i-dice"/></svg><span class="lbl">Náhodně ve složce</span></button>
+      <button type="button" class="btn small" data-act="rand-all"><span class="lamp"></span><svg class="ico"><use href="#i-dice"/></svg><span class="lbl">Náhodně ze všeho</span></button>
     </div>
   </section>
 
   <aside id="listbox" aria-label="Seznam pořadů">
     <h2 class="marquee">Pořady</h2>
-    <button type="button" class="btn arrow" data-act="up"><svg class="ico"><use href="#i-up"/></svg><span class="lbl">Nahoru</span></button>
+    <div class="navrow">
+      <button type="button" class="btn nav" data-act="home"><span class="lamp"></span><svg class="ico"><use href="#i-home"/></svg><span class="lbl">Domů</span></button>
+      <button type="button" class="btn nav" data-act="back"><span class="lamp"></span><svg class="ico"><use href="#i-back"/></svg><span class="lbl">Zpět</span></button>
+    </div>
+    <div id="crumbs" class="crumbs">Domů</div>
     <div id="list" class="list" tabindex="0"></div>
-    <button type="button" class="btn arrow" data-act="down"><svg class="ico"><use href="#i-down"/></svg><span class="lbl">Dolů</span></button>
+    <div class="arrowrow">
+      <button type="button" class="btn arrow" data-act="up"><svg class="ico"><use href="#i-up"/></svg><span class="lbl">Nahoru</span></button>
+      <button type="button" class="btn arrow" data-act="down"><svg class="ico"><use href="#i-down"/></svg><span class="lbl">Dolů</span></button>
+    </div>
   </aside>
 </main>
 
 <div id="asleep" class="asleep" hidden>
-  <h2>Hrací skříň odpočívá</h2>
+  <h2>Superbox odpočívá</h2>
   <button type="button" class="btn big" data-act="wake"><span class="lamp"></span><svg class="ico"><use href="#i-play"/></svg><span class="lbl">Zapnout</span></button>
 </div>
 

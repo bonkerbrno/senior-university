@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateFeed, parseMediaUrl, LIMITS } from '../docs/js/validate.js';
+import { validateFeed, parseMediaUrl, playableIn, LIMITS } from '../docs/js/validate.js';
+import { parseLibrary, buildFeed, canParent } from '../docs/js/library.js';
 
 const feed = (items) => JSON.stringify({ schema: 1, items });
 const ok = { id: 'a1', title: 'Zvony', note: 'Pěkné', url: 'https://youtu.be/dQw4w9WgXcQ' };
@@ -38,7 +39,7 @@ test('položky se špatným schématem, ID nebo délkou se zahodí', () => {
 test('duplicitní ID se zahodí, počet položek je omezen', () => {
   assert.equal(validateFeed(feed([ok, ok])).items.length, 1);
   const many = Array.from({ length: 500 }, (_, i) => ({ ...ok, id: 'i' + i }));
-  assert.equal(validateFeed(feed(many)).items.length, LIMITS.items);
+  assert.equal(validateFeed(feed(many)).items.length, LIMITS.nodes);
 });
 
 test('HTML v textu zůstane textem (vykresluje se přes textContent)', () => {
@@ -52,4 +53,38 @@ test('rozbité, velké a cizí JSON selžou', () => {
   assert.throws(() => validateFeed('{"schema":2,"items":[]}'));
   assert.throws(() => validateFeed('{"schema":1,"items":{}}'));
   assert.throws(() => validateFeed(null));
+});
+
+test('složky: strom projde, hloubka a duplicity se hlídají', () => {
+  const f = (id, items) => ({ id, kind: 'folder', title: 'S' + id, items });
+  const nested = f('f1', [ok, f('f2', [{ ...ok, id: 'a2' }])]);
+  const r = validateFeed(feed([nested]));
+  assert.equal(r.items[0].kind, 'folder');
+  assert.equal(r.items[0].children[1].children[0].id, 'a2');
+  assert.equal(playableIn(r.items, true).length, 2);
+  assert.equal(playableIn(r.items, false).length, 0);
+  let deep = { ...ok, id: 'leaf' };
+  for (let i = 0; i < LIMITS.depth + 2; i++) deep = f('d' + i, [deep]);
+  assert.equal(JSON.stringify(validateFeed(feed([deep])).items).includes('leaf'), false);
+  assert.equal(validateFeed(feed([f('x', []), f('x', [])])).items.length, 1);
+  assert.equal(validateFeed(feed([{ id: 'q', kind: 'folder', title: 'Q' }])).items[0].children.length, 0);
+});
+
+test('knihovna: strom pro feed jen ze zaškrtnutých a neprázdných složek', () => {
+  const lib = parseLibrary(JSON.stringify({ schema: 1, items: [
+    { id: 'f1', kind: 'folder', title: 'Hudba', show: true },
+    { id: 'f2', kind: 'folder', title: 'Prázdná', show: true },
+    { id: 'f3', kind: 'folder', title: 'Skrytá', show: false },
+    { ...ok, id: 'a', parent: 'f1', show: true },
+    { ...ok, id: 'b', parent: 'f1', show: false },
+    { ...ok, id: 'c', parent: 'f3', show: true },
+    { ...ok, id: 'd', parent: '', show: true },
+    { ...ok, id: 'e', parent: 'neexistuje', show: true },
+  ] }));
+  const feedObj = buildFeed(lib);
+  assert.deepEqual(feedObj.items.map((x) => x.id), ['f1', 'd', 'e']);
+  assert.deepEqual(feedObj.items[0].items.map((x) => x.id), ['a']);
+  assert.equal(validateFeed(JSON.stringify(feedObj)).dropped, 0);
+  assert.equal(canParent(lib, 'f1', 'f1'), false);
+  assert.equal(canParent(lib, 'f1', 'f2'), true);
 });

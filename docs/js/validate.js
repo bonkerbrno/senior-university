@@ -1,7 +1,7 @@
 // Sdílený validátor. Používá ho přehrávač, editor i testy.
 // Feed je jen text: nikdy se nevyhodnocuje jako kód ani HTML.
 
-export const LIMITS = { bytes: 262144, items: 200, title: 120, note: 400, id: 40 };
+export const LIMITS = { bytes: 262144, nodes: 300, depth: 5, title: 120, note: 400, id: 40 };
 
 const YT_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'm.youtube.com', 'youtu.be']);
 const VIDEO_EXT = new Set(['mp4', 'webm', 'ogv']);
@@ -41,7 +41,7 @@ export function parseMediaUrl(raw) {
   return null;
 }
 
-export function validateItem(raw) {
+function baseFields(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const id = cleanText(raw.id, LIMITS.id);
   if (!id || !/^[A-Za-z0-9_-]+$/.test(id)) return null;
@@ -49,13 +49,26 @@ export function validateItem(raw) {
   if (!title) return null;
   const note = raw.note === undefined ? '' : cleanText(raw.note, LIMITS.note);
   if (note === null) return null;
-  const media = parseMediaUrl(raw.url);
-  if (!media) return null;
   const added = typeof raw.added === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.added) ? raw.added : '';
-  return { id, title, note, kind: media.kind, mediaId: media.id || '', url: media.url, added };
+  return { id, title, note, added };
 }
 
-// text -> { items, dropped } ; při vážné chybě vyhodí Error
+// Přehrávatelná položka: { id, title, note, kind, mediaId, url, added } nebo null
+export function validateItem(raw) {
+  const b = baseFields(raw);
+  if (!b) return null;
+  const media = parseMediaUrl(raw.url);
+  if (!media) return null;
+  return { ...b, kind: media.kind, mediaId: media.id || '', url: media.url };
+}
+
+// Složka (bez dětí): { id, title, note, kind: 'folder', children: [] } nebo null
+export function validateFolder(raw) {
+  const b = baseFields(raw);
+  return b ? { ...b, kind: 'folder', children: [] } : null;
+}
+
+// text -> { items (strom), dropped } ; při vážné chybě vyhodí Error
 export function validateFeed(text) {
   if (typeof text !== 'string' || text.length > LIMITS.bytes) throw new Error('Seznam je příliš velký.');
   let data;
@@ -64,13 +77,30 @@ export function validateFeed(text) {
     throw new Error('Seznam má neznámý formát.');
   }
   const seen = new Set();
-  const items = [];
+  let budget = LIMITS.nodes;
   let dropped = 0;
-  for (const raw of data.items.slice(0, LIMITS.items)) {
-    const it = validateItem(raw);
-    if (!it || seen.has(it.id)) { dropped++; continue; }
-    seen.add(it.id);
-    items.push(it);
+  const walk = (list, depth) => {
+    const out = [];
+    for (const raw of list) {
+      if (budget <= 0) { dropped++; continue; }
+      const isFolder = raw && typeof raw === 'object' && raw.kind === 'folder';
+      const node = isFolder ? (depth < LIMITS.depth ? validateFolder(raw) : null) : validateItem(raw);
+      if (!node || seen.has(node.id)) { dropped++; continue; }
+      seen.add(node.id);
+      budget--;
+      if (isFolder && Array.isArray(raw.items)) node.children = walk(raw.items, depth + 1);
+      out.push(node);
+    }
+    return out;
+  };
+  return { items: walk(data.items, 0), dropped };
+}
+
+// Všechny přehrávatelné položky ve stromu (pořadí jako v seznamu)
+export function playableIn(nodes, recursive = false) {
+  const out = [];
+  for (const n of nodes) {
+    if (n.kind === 'folder') { if (recursive) out.push(...playableIn(n.children, true)); } else out.push(n);
   }
-  return { items, dropped };
+  return out;
 }

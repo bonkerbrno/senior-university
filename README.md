@@ -1,4 +1,4 @@
-# Hrací skříň (senior-university)
+# Stanleyho Superbox 85 (senior-university)
 
 Vzdálený přehrávač pro tátu: jukebox s velkými 3D tlačítky, který si na stisk „Novinky“ stáhne seznam tipů na videa a audio, které připravuje Stanislav.
 
@@ -10,6 +10,13 @@ Vzdálený přehrávač pro tátu: jukebox s velkými 3D tlačítky, který si n
   - `docs/js/validate.js` – přísná kontrola dat (sdílená)
 - `tests/` – testy (`npm test`, `npm run e2e`, `node tests/editor-e2e.mjs`)
 - `navody/` – postupy: [zprovoznění](navody/zprovozneni.md), [tátovo zařízení](navody/tatovo-zarizeni.md), [bezpečnost](navody/bezpecnost.md)
+
+## Co umí
+- složky a podsložky s velkými tlačítky Domů a Zpět, drobečková cesta, video hraje dál při procházení složek,
+- jedno kliknutí i rychlé vícenásobné klikání na totéž tlačítko dělá totéž,
+- pruh pod videem ukazuje, co hraje, ve které složce a zda je zapnutý Automat,
+- **Automat** pouští pořady jeden po druhém dokola; malá tlačítka **Náhodně ve složce / ze všeho** pustí náhodný pořad a Automat pak volí náhodně,
+- editor umí složky, podsložky, řazení a přesun pořadů mezi složkami (`docs/js/library.js` skládá strom pro tátu).
 
 Žádné závislosti ani build: jsou to čisté statické soubory.
 Testy e2e potřebují `playwright` s Chromiem (ve vývojovém prostředí je předinstalovaný).

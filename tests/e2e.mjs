@@ -19,7 +19,7 @@ fs.mkdirSync(shots, { recursive: true });
 // --- fixtury ---
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'jb-'));
 const wav = path.join(tmp, 'tone.wav');
-{ const n = 8000 * 20, b = Buffer.alloc(44 + n * 2);
+{ const n = 8000 * 3, b = Buffer.alloc(44 + n * 2);
   b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20);
   b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(16000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
   b.write('data', 36); b.writeUInt32LE(n * 2, 40);
@@ -30,10 +30,15 @@ let haveVideo = true;
 try { execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15', '-t', '20', '-c:v', 'libvpx', '-b:v', '200k', webm]); }
 catch { haveVideo = false; }
 
+const yt = (id, title, vid) => ({ id, title, note: 'Zkušební ' + title, url: 'https://www.youtube.com/watch?v=' + vid, added: '2026-10-16' });
+const med = (id, title, file) => ({ id, title, note: 'Soubor ' + title, url: 'https://media.test/' + file, added: '2026-10-16' });
 const feed = { schema: 1, updated: '2026-10-16T12:00:00Z', items: [
-  { id: 'yt1', title: 'Pražské zvony', note: 'Zvuky Prahy', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', added: '2026-10-16' },
-  { id: 'au1', title: 'Hudba z <b>rádia</b>', note: 'Čistý tón', url: 'https://media.test/tone.wav', added: '2026-10-16' },
-  ...(haveVideo ? [{ id: 'vi1', title: 'Zkušební video', note: 'Barevné pruhy', url: 'https://media.test/clip.webm', added: '2026-10-16' }] : []),
+  { id: 'f1', kind: 'folder', title: 'Hudba', note: 'Písničky', items: [
+    yt('yt1', 'Pražské zvony', 'dQw4w9WgXcQ'),
+    med('au1', 'Hudba z <b>rádia</b>', 'tone.wav'),
+    { id: 'f2', kind: 'folder', title: 'Podsložka', note: 'Hlubší úroveň', items: haveVideo ? [med('vi1', 'Zkušební video', 'clip.webm')] : [med('au3', 'Druhý tón', 'tone.wav')] },
+  ] },
+  med('au2', 'Samostatný tón', 'tone.wav'),
   { id: 'bad', title: 'Zlý odkaz', note: '', url: 'javascript:alert(1)' },
 ] };
 let feedBody = JSON.stringify(feed);
@@ -73,132 +78,160 @@ await ctx.route('https://www.youtube-nocookie.com/**', (route) => {
 
 const text = (sel) => page.locator(sel).first().innerText();
 const step = async (name, fn) => { await fn(); console.log('✓', name); };
+const act = (a, i) => page.locator(i === undefined ? `button[data-act="${a}"]:visible` : `button[data-act="${a}"][data-index="${i}"]`).first();
+const lit = (a) => act(a).getAttribute('data-lit');
+const wait = (ms = 650) => page.waitForTimeout(ms);
+const status = () => text('#status');
 
 await page.goto(base);
 await page.waitForSelector('.item');
 
-await step('seznam se vykreslí a zlá položka se zahodí', async () => {
-  assert.equal(await page.locator('.item').count(), feed.items.length - 1);
-  assert.equal(await page.locator('.item .badge').count(), feed.items.length - 1);
+await step('nadpis, 8 hlavních tlačítek a Domů/Zpět', async () => {
+  assert.match(await text('h1'), /Stanleyho Superbox 85/i);
+  assert.equal(await page.locator('#controls .btn').count(), 8);
+  assert.equal(await page.locator('#extras .btn').count(), 2);
+  assert.ok((await page.locator('#controls .btn').first().boundingBox()).height >= 96);
+  assert.equal(await act('back').isDisabled(), true);
+  assert.equal(await act('home').isDisabled(), true);
 });
-await step('HTML v názvu zůstane textem', async () => {
-  assert.equal(await page.locator('.item h3 b').count(), 0);
-  assert.match(await text('.item:nth-child(2) h3'), /<b>rádia<\/b>/);
-});
-await step('všech 7 tlačítek a 2 šipky existuje', async () => {
-  assert.equal(await page.locator('#controls .btn').count(), 7);
-  const h = await page.locator('#controls .btn').first().boundingBox();
-  assert.ok(h.height >= 96, 'výška tlačítka ' + h.height);
+await step('v kořeni je složka a položka, zlá položka je zahozena', async () => {
+  assert.equal(await page.locator('.item').count(), 2);
+  assert.equal(await page.locator('.item.folder').count(), 1);
+  assert.match(await text('.item.folder h3'), /Hudba/);
+  assert.match(await text('.item.folder h3'), /3 pořadů|\(\d+ pořad/);
 });
 await page.screenshot({ path: path.join(shots, '1-uvod.png') });
 
-await step('Pustit YouTube: iframe je izolovaný a hraje se', async () => {
-  await page.locator('[data-act="item"][data-index="0"]').click();
-  const f = page.locator('#stage iframe');
-  assert.equal(await f.count(), 1);
-  assert.match(await f.getAttribute('src'), /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?/);
-  assert.equal(await f.getAttribute('sandbox'), 'allow-scripts allow-same-origin');
-  assert.match(await text('#status'), /Hraje: Pražské zvony/);
-  assert.equal(await page.locator('#controls [data-act="play"]').getAttribute('data-lit'), 'green');
+await step('otevření složky: drobečky, Zpět a Domů se rozsvítí/povolí', async () => {
+  await act('open', 0).click();
+  assert.equal(await text('#crumbs'), 'Domů › Hudba');
+  assert.equal(await page.locator('.item').count(), 3);
+  assert.equal(await act('back').isDisabled(), false);
+  assert.equal(await act('home').isDisabled(), false);
+});
+await step('rychlé trojklikání na Pustit dělá totéž co jedno kliknutí', async () => {
+  await act('item', 0).click({ clickCount: 3, delay: 40 });
+  assert.match(await status(), /Hraje: Pražské zvony/);
+  assert.equal(await page.locator('#stage iframe').count(), 1);
+  assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts allow-same-origin/);
+  assert.equal(await lit('play'), 'green');
+  assert.match(await text('#substatus'), /Složka: Domů › Hudba/);
+  assert.match(await text('#substatus'), /Automat: vypnut/);
+});
+await page.screenshot({ path: path.join(shots, '2-hraje-ve-slozce.png') });
+await step('pod videem je pruh s informací (infobar je pod obrazovkou)', async () => {
+  const s = await page.locator('#screen-wrap').boundingBox(), i = await page.locator('#infobar').boundingBox();
+  assert.ok(i.y >= s.y + s.height - 2, 'infobar pod videem');
+});
+await step('procházení složek video nezastaví', async () => {
+  await act('home').click();
+  assert.equal(await text('#crumbs'), 'Domů');
+  assert.equal(await page.locator('#stage iframe').count(), 1);
+  assert.match(await status(), /Hraje: Pražské zvony/);
+  assert.equal(await page.locator('.item.playing').count(), 0); // hrající položka je v jiné složce
+  await wait(); await act('open', 0).click();
   assert.equal(await page.locator('.item.playing').count(), 1);
-  assert.equal(await page.locator('.item .badge').count(), feed.items.length - 2);
 });
-await page.screenshot({ path: path.join(shots, '2-hraje.png') });
-
-await step('Pauza / Pokračovat přepíná stav a svítí oranžově', async () => {
-  await page.locator('#controls [data-act="pause"]').click();
-  assert.match(await text('#status'), /Pozastaveno/);
-  assert.equal(await page.locator('#controls [data-act="pause"]').getAttribute('data-lit'), 'orange');
-  assert.match(await text('#controls [data-act="pause"] .lbl'), /Pokračovat/);
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="pause"]').click();
-  assert.match(await text('#status'), /Hraje/);
+await step('rychlé dvojkliknutí na Pauzu = jedna pauza, pak Pokračovat', async () => {
+  await act('pause').dblclick();
+  assert.match(await status(), /Pozastaveno/);
+  assert.equal(await lit('pause'), 'orange');
+  await wait(); await act('pause').click();
+  assert.match(await status(), /Hraje/);
 });
-await step('druhý stisk téže položky přehrávání vypne', async () => {
-  await page.waitForTimeout(450);
-  await page.locator('[data-act="item"][data-index="0"]').click();
-  assert.match(await text('#status'), /Nic nehraje/);
+await step('další kliknutí na hrající položku ji vypne', async () => {
+  await wait(); await act('item', 0).click();
+  assert.match(await status(), /Nic nehraje/);
   assert.equal(await page.locator('#stage iframe').count(), 0);
 });
-await step('audio se spustí a běží', async () => {
-  await page.locator('[data-act="item"][data-index="1"]').click();
+await step('audio ve složce hraje; Ukončit ho zastaví', async () => {
+  await act('item', 1).click();
   await page.waitForFunction(() => { const a = document.querySelector('#stage audio'); return a && a.currentTime > 0.3 && !a.paused; }, null, { timeout: 8000 });
-  assert.match(await text('#status'), /Hraje: Hudba/);
+  await page.screenshot({ path: path.join(shots, '3-audio.png') });
+  await act('stop').click();
+  assert.equal(await page.locator('#stage audio, #stage iframe, #stage video').count(), 0);
 });
-await page.screenshot({ path: path.join(shots, '3-audio.png') });
-await step('Pauza zastaví audio, Pokračovat ho rozběhne', async () => {
-  await page.locator('#controls [data-act="pause"]').click();
-  assert.equal(await page.evaluate(() => document.querySelector('#stage audio').paused), true);
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="pause"]').click();
-  await page.waitForFunction(() => !document.querySelector('#stage audio').paused);
+await step('Automat: po skončení tónu naváže další pořad ze složky', async () => {
+  await act('auto').click();
+  assert.equal(await lit('auto'), 'green');
+  assert.match(await text('#substatus'), /Automat: zapnut/);
+  await wait(); await act('item', 1).click();            // au1 (3 s) -> další v pořadí je yt1
+  await page.waitForFunction(() => /Hraje: Pražské zvony/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  await page.screenshot({ path: path.join(shots, '4-automat.png') });
 });
-if (haveVideo) await step('video se spustí', async () => {
-  await page.waitForTimeout(450);
-  await page.locator('[data-act="item"][data-index="2"]').click();
+await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
+  await act('rand-here').click();
+  assert.equal(await lit('rand-here'), 'blue');
+  assert.match(await text('#substatus'), /Náhodně ve složce/);
+  assert.match(await status(), /Hraje:/);
+  await wait(); await act('rand-here').click();
+  assert.equal(await lit('rand-here'), null);
+});
+await step('Náhodně ze všeho: pustí pořad z celé knihovny', async () => {
+  await act('rand-all').click();
+  assert.equal(await lit('rand-all'), 'blue');
+  assert.match(await status(), /Hraje:/);
+  assert.match(await text('#substatus'), /Náhodně ze všeho/);
+  await wait(); await act('rand-all').click();
+  assert.equal(await lit('rand-all'), null);
+  await act('auto').click(); // vypnout Automat
+  assert.equal(await lit('auto'), null);
+});
+await step('podsložka: Zpět vrací o úroveň, Domů do kořene', async () => {
+  await act('stop').click(); await wait();
+  await act('open', 2).click();
+  assert.equal(await text('#crumbs'), 'Domů › Hudba › Podsložka');
+  await act('back').click();
+  assert.equal(await text('#crumbs'), 'Domů › Hudba');
+  await wait(); await act('open', 2).click(); await wait(); await act('home').click();
+  assert.equal(await text('#crumbs'), 'Domů');
+});
+if (haveVideo) await step('video z podsložky se spustí', async () => {
+  await wait(); await act('open', 0).click(); await wait(); await act('open', 2).click();
+  await act('item', 0).click();
   await page.waitForFunction(() => { const v = document.querySelector('#stage video'); return v && v.currentTime > 0.3 && !v.paused; }, null, { timeout: 8000 });
-});
-if (haveVideo) await page.screenshot({ path: path.join(shots, '4-video.png') });
-
-await step('Ukončit vrátí úvodní obrazovku', async () => {
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="stop"]').click();
-  assert.match(await text('#status'), /Nic nehraje/);
-  assert.equal(await page.locator('#stage video, #stage audio, #stage iframe').count(), 0);
-  assert.equal(await page.locator('#controls [data-act="pause"]').isDisabled(), true);
-});
-await step('šipka nahoru posune výběr a Pustit spustí vybranou', async () => {
-  await page.locator('[data-act="up"]').click();
-  assert.equal(await page.locator('.item.selected h3').innerText(), 'Hudba z <b>rádia</b>');
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="play"]').click();
-  assert.match(await text('#status'), /Hraje: Hudba/);
-  await page.locator('#controls [data-act="stop"]').click();
+  await page.screenshot({ path: path.join(shots, '5-video.png') });
+  await act('stop').click(); await wait(); await act('home').click();
 });
 await step('Zmenšit přepne na lištu a zpět', async () => {
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="mini"]').click();
+  await wait(); await act('mini').click();
   assert.equal(await page.evaluate(() => document.body.classList.contains('mini')), true);
   assert.equal(await page.locator('#listbox').isVisible(), false);
-  await page.screenshot({ path: path.join(shots, '5-mini.png') });
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="mini"]').click();
+  await page.screenshot({ path: path.join(shots, '6-mini.png') });
+  await wait(); await act('mini').click();
   assert.equal(await page.locator('#listbox').isVisible(), true);
 });
 await step('Celá obrazovka zapne a vypne režim fullscreen', async () => {
-  await page.locator('#controls [data-act="full"]').click();
+  await act('full').click();
   await page.waitForFunction(() => !!document.fullscreenElement).catch(() => {});
-  const fs1 = await page.evaluate(() => !!document.fullscreenElement);
-  if (fs1) { await page.waitForTimeout(450); await page.locator('#fs-bar [data-act="full"]').click(); await page.waitForFunction(() => !document.fullscreenElement); }
+  if (await page.evaluate(() => !!document.fullscreenElement)) { await wait(); await page.locator('#fs-bar [data-act="full"]').click(); await page.waitForFunction(() => !document.fullscreenElement); }
   else console.log('  (headless: fullscreen API nepotvrzeno, přeskočeno)');
 });
 await step('chyba přehrávání ukáže srozumitelnou hlášku', async () => {
   ytMode = 'error';
-  await page.waitForTimeout(450);
-  await page.locator('[data-act="item"][data-index="0"]').click();
+  await wait(); await act('open', 0).click(); await wait();
+  await act('item', 0).click();
   await page.waitForFunction(() => /nejde přehrát/.test(document.querySelector('#status').textContent), null, { timeout: 5000 });
+  await wait(); await act('home').click();
 });
 await step('Zavřít uspí skříň, Zapnout ji vrátí', async () => {
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="close"]').click();
+  await wait(); await act('close').click();
   assert.equal(await page.locator('#asleep').isVisible(), true);
   assert.equal(await page.locator('#app').isVisible(), false);
-  await page.screenshot({ path: path.join(shots, '6-spi.png') });
-  await page.locator('#asleep [data-act="wake"]').click();
+  await page.screenshot({ path: path.join(shots, '7-spi.png') });
+  await act('wake').click();
   assert.equal(await page.locator('#app').isVisible(), true);
 });
-await step('Novinky načtou nový seznam', async () => {
-  feed.items.push({ id: 'new1', title: 'Nový pořad', note: 'Čerstvě přidáno', url: 'https://media.test/tone.wav' });
+await step('Novinky načtou nový seznam a pozdrží se ve složce', async () => {
+  feed.items.push(med('new1', 'Nový pořad', 'tone.wav'));
   feedBody = JSON.stringify(feed);
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="news"]').click();
-  await page.waitForFunction(() => document.querySelectorAll('.item').length >= 3 && /Nový pořad/.test(document.querySelector('#list').textContent));
-  assert.match(await text('#status'), /nov/i);
+  await wait(); await act('news').click();
+  await page.waitForFunction(() => /Nový pořad/.test(document.querySelector('#list').textContent));
+  assert.match(await status(), /novink|nové/i);
 });
 await step('offline: zůstane poslední seznam a hláška', async () => {
   await ctx.setOffline(true);
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="news"]').click();
+  await wait(); await act('news').click();
   await page.waitForFunction(() => /Nejsem připojen/.test(document.querySelector('#status').textContent));
   assert.ok(await page.locator('.item').count() >= 3);
   await ctx.setOffline(false);
@@ -206,13 +239,18 @@ await step('offline: zůstane poslední seznam a hláška', async () => {
 await step('škodlivý feed (nesprávné schéma) nepřepíše seznam', async () => {
   const before = await page.locator('.item').count();
   feedBody = '{"schema":9,"items":[]}';
-  await page.waitForTimeout(450);
-  await page.locator('#controls [data-act="news"]').click();
+  await wait(); await act('news').click();
   await page.waitForFunction(() => /Nejsem připojen/.test(document.querySelector('#status').textContent));
   assert.equal(await page.locator('.item').count(), before);
 });
+await step('HTML v názvu zůstane textem', async () => {
+  feedBody = JSON.stringify(feed);
+  await wait(); await act('news').click();
+  await page.waitForSelector('.item.folder'); await wait(); await act('open', 0).click();
+  assert.equal(await page.locator('.item h3 b').count(), 0);
+  assert.match(await text('.item:nth-child(2) h3'), /<b>rádia<\/b>/);
+});
 await step('CSP blokuje vložený skript a stránka nemá chyby', async () => {
-  // page.evaluate obchází CSP, proto vložíme skript jako element, jako by to udělal útočník
   const ran = await page.evaluate(() => { const s = document.createElement('script'); s.textContent = 'window.__pwned = 1'; document.head.append(s); return !!window.__pwned; });
   assert.equal(ran, false);
   assert.deepEqual(errors.filter((e) => !/Content Security Policy/.test(e)), []);

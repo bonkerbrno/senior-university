@@ -36,19 +36,30 @@ await page.locator('summary').click();
 await page.fill('#token', 'tok123');
 await page.click('#load');
 await page.waitForFunction(() => /Seznam načten/.test(document.querySelector('#msg').textContent));
+await page.fill('#f-title', 'Hudba'); await page.click('#add-folder');
+await page.fill('#f-title', 'Rock'); await page.selectOption('#f-parent', { label: 'Hudba' }); await page.click('#add-folder');
 await page.fill('#n-url', 'https://youtu.be/dQw4w9WgXcQ');
 assert.match(await page.innerText('#n-info'), /YouTube/);
 await page.fill('#n-title', 'Zvony');
 await page.fill('#n-note', 'Krásné zvonění');
+await page.selectOption('#n-parent', { label: '— Rock' });
 await page.click('#add');
-await page.fill('#n-url', 'https://a.cz/f.mp3'); await page.fill('#n-title', 'Skryté'); await page.click('#add');
-await page.locator('li input[type=checkbox]').first().uncheck(); // nejnovější (Skryté) schovat
+await page.fill('#n-url', 'https://a.cz/f.mp3'); await page.fill('#n-title', 'Skryté'); await page.selectOption('#n-parent', { label: 'Hudba' }); await page.click('#add');
+await page.fill('#n-url', 'https://a.cz/g.mp3'); await page.fill('#n-title', 'Volné'); await page.selectOption('#n-parent', ''); await page.click('#add');
+// schovat „Skryté“
+await page.evaluate(() => {
+  const li = [...document.querySelectorAll('#items li')].find((l) => l.querySelector('input:not([type=checkbox])').value === 'Skryté');
+  const cb = li.querySelector('input[type=checkbox]'); cb.checked = false; cb.dispatchEvent(new Event('change'));
+});
 await page.click('#save');
 await page.waitForFunction(() => /Uloženo/.test(document.querySelector('#msg').textContent));
-assert.equal(puts['library.json'].items.length, 2);
-assert.deepEqual(puts['feed.json'].items.map((i) => i.title), ['Zvony']);
-assert.equal(puts['feed.json'].items[0].url, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+assert.equal(puts['library.json'].items.length, 5);
+const f = puts['feed.json'].items;
+assert.deepEqual(f.map((i) => i.title), ['Volné', 'Hudba']);
+assert.equal(f[1].kind, 'folder');
+assert.deepEqual(f[1].items.map((i) => i.title), ['Rock']);          // „Skryté“ chybí, Rock je podsložka
+assert.equal(f[1].items[0].items[0].url, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 await page.fill('#n-url', 'javascript:alert(1)'); await page.fill('#n-title', 'x'); await page.click('#add');
 assert.match(await page.innerText('#msg'), /platný/);
-console.log('✓ editor: načtení, přidání, schování, uložení knihovny i feedu, odmítnutí zlého odkazu');
+console.log('✓ editor: složky a podsložky, schování, uložení knihovny i stromového feedu, odmítnutí zlého odkazu');
 await browser.close(); server.close();
