@@ -1,5 +1,6 @@
 import { validateFeed, playableIn } from './validate.js';
 import { createPlayer } from './player.js';
+import { parseAdminFile, checkPin } from './admin.js';
 
 const $ = (sel) => document.querySelector(sel);
 const FEED_URL = 'feed.json';
@@ -173,7 +174,7 @@ function goHome() { if (path.length) { path = []; selected = 0; render(); listEl
 /* ---------- přehrávání ---------- */
 function markSeen(it) {
   seen.add(it.id);
-  lsSet(LS_SEEN, JSON.stringify([...seen]));
+  if (!PREVIEW) lsSet(LS_SEEN, JSON.stringify([...seen]));
 }
 function startItem(it, where, q, idx) {
   clearTimeout(timer);
@@ -192,13 +193,15 @@ function playHere(i) {
   shuffle = null;
   startItem(it, pathTitle(trail), q, q.indexOf(it));
 }
+// Webové stránky nemají konec, proto je Automat a „náhodně“ přeskakují.
+function noWeb(a) { return a.filter((x) => x.kind !== 'web'); }
 function pickRandom(pool, avoid) {
   const c = pool.length > 1 ? pool.filter((x) => !avoid || x.id !== avoid.id) : pool;
   return c[Math.floor(Math.random() * c.length)];
 }
 function playRandom(scope) {
   const { nodes, trail } = cwd();
-  const pool = scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true);
+  const pool = noWeb(scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true));
   if (!pool.length) { say('Tady není co pustit.', true); return; }
   shuffle = scope;
   const it = pickRandom(pool, now && now.item);
@@ -206,11 +209,11 @@ function playRandom(scope) {
 }
 function playNext() {
   if (!automat || !queue.length) return;
-  const pool = shuffle === 'all' ? playableIn(tree, true) : queue;
-  if (!pool.length) return;
+  const pool = shuffle === 'all' ? noWeb(playableIn(tree, true)) : queue;
+  if (!noWeb(pool).length) return;
   let it, idx, q = pool;
-  if (shuffle) { it = pickRandom(pool, now && now.item); idx = pool.indexOf(it); }
-  else { idx = (qi + 1) % pool.length; it = pool[idx]; }
+  if (shuffle) { it = pickRandom(noWeb(pool), now && now.item); idx = pool.indexOf(it); }
+  else { idx = (qi + 1) % pool.length; while (pool[idx].kind === 'web') idx = (idx + 1) % pool.length; it = pool[idx]; }
   startItem(it, now ? now.where : '', q, idx);
 }
 
@@ -316,6 +319,63 @@ document.addEventListener('keydown', (ev) => {
 });
 document.addEventListener('fullscreenchange', refresh);
 
+/* ---------- skrytý vstup správce ---------- */
+// Pět rychlých kliknutí na první hvězdičku v nápisu, nebo Ctrl+Alt+Shift+A.
+const PREVIEW = new URLSearchParams(location.search).get('preview') === '1';
+let secretClicks = [];
+async function openAdmin() {
+  if (PREVIEW) return;
+  let admin = null;
+  try {
+    const r = await fetch('admin.json?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' });
+    if (r.ok) admin = parseAdminFile(await r.text());
+  } catch { /* bez admin.json = bez PINu */ }
+  if (!admin) { location.href = 'editor/'; return; }
+  askPin(admin);
+}
+function askPin(admin) {
+  const box = $('#pin'), pad = $('#pinpad'), dots = $('#pin-dots'), msg = $('#pin-msg');
+  let val = '';
+  const draw = () => { dots.textContent = val ? '●'.repeat(val.length) : '—'; };
+  const close = () => { box.hidden = true; pad.textContent = ''; };
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Zrušit', '0', 'OK'];
+  pad.textContent = '';
+  for (const k of keys) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pinkey'; b.textContent = k;
+    b.addEventListener('click', async () => {
+      if (k === 'Zrušit') { close(); return; }
+      if (k === 'OK') {
+        const ok = await checkPin(val, admin);
+        if (ok) { close(); location.href = 'editor/'; } else { val = ''; msg.textContent = 'Špatný PIN.'; draw(); }
+        return;
+      }
+      if (val.length < 8) { val += k; msg.textContent = ''; draw(); }
+    });
+    pad.append(b);
+  }
+  msg.textContent = 'Zadejte PIN správce';
+  draw(); box.hidden = false;
+}
+$('#secret').addEventListener('click', () => {
+  const t = Date.now();
+  secretClicks = secretClicks.filter((x) => t - x < 3000); secretClicks.push(t);
+  if (secretClicks.length >= 5) { secretClicks = []; openAdmin(); }
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.ctrlKey && ev.altKey && ev.shiftKey && ev.key.toLowerCase() === 'a') { ev.preventDefault(); openAdmin(); }
+});
+
+/* ---------- náhled „jako táta“ (jen uvnitř editoru, stejný původ) ---------- */
+if (PREVIEW) {
+  window.addEventListener('message', (ev) => {
+    if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.type !== 'draft' || typeof ev.data.feed !== 'string') return;
+    try { tree = validateFeed(ev.data.feed).items; if (!folderAt(path)) path = []; render(); say('Náhled: tak to uvidí táta.'); } catch { say('Náhled: seznam je neplatný.', true); }
+  });
+  window.parent.postMessage({ type: 'ready' }, location.origin);
+  document.title += ' – náhled';
+}
+
 /* ---------- start ---------- */
 render();
-loadFeed(false);
+if (!PREVIEW) loadFeed(false);

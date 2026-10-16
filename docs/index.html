@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src https:; frame-src https://www.youtube-nocookie.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src https:; frame-src https://www.youtube-nocookie.com https://embed.windy.com https://www.yr.no; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#2a1408">
 <title>Stanleyho Superbox 85</title>
@@ -33,7 +33,7 @@
 
 <main id="app">
   <section id="cabinet" aria-label="Přehrávač">
-    <header class="sign"><div class="bulbs" aria-hidden="true"></div><h1><span class="star">★</span> Stanleyho Superbox 85 <span class="star">★</span></h1><div class="bulbs" aria-hidden="true"></div></header>
+    <header class="sign"><div class="bulbs" aria-hidden="true"></div><h1><span class="star" id="secret">★</span> Stanleyho Superbox 85 <span class="star">★</span></h1><div class="bulbs" aria-hidden="true"></div></header>
     <div id="screen-wrap">
       <div id="stage" aria-label="Obrazovka"><div id="idle" class="idle"><span>♪</span><p>Vyberte pořad a stiskněte Pustit</p></div></div>
       <div id="fs-bar" class="fs-bar">
@@ -74,6 +74,10 @@
   </aside>
 </main>
 
+<div id="pin" class="pinwrap" hidden role="dialog" aria-label="Zámek správce">
+  <div class="pinbox"><div id="pin-dots" class="pin-dots" aria-live="polite"></div><div id="pin-msg" class="pin-msg"></div>
+    <div class="pinpad" id="pinpad"></div></div>
+</div>
 <div id="asleep" class="asleep" hidden>
   <h2>Superbox odpočívá</h2>
   <button type="button" class="btn big" data-act="wake"><span class="lamp"></span><svg class="ico"><use href="#i-play"/></svg><span class="lbl">Zapnout</span></button>

@@ -1,4 +1,5 @@
 import { validateItem, validateFolder, parseMediaUrl, validateFeed } from '../js/validate.js';
+import { makeAdminFile, PIN_RE } from '../js/admin.js';
 import { parseLibrary, libraryToText, buildFeed, canParent } from '../js/library.js';
 
 const $ = (s) => document.querySelector(s);
@@ -108,10 +109,11 @@ function move(x, dir) {
   setDirty(true); render();
 }
 
-function render() {
+function render() { renderList(); sendPreview(); }
+function renderList() {
   const ul = $('#items');
   ul.replaceChildren();
-  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value);
+  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#b-parent'), '', $('#b-parent').value);
   orderedTree().forEach(({ x: it, depth }) => {
     const folder = it.kind === 'folder';
     const li = document.createElement('li'); if (folder) li.className = 'folder';
@@ -162,6 +164,24 @@ $('#add-folder').addEventListener('click', () => {
   $('#f-title').value = ''; setDirty(true); render(); say('Složka přidána. Nezapomeňte uložit.', 'ok');
 });
 
+/* ---------- hromadné vložení (název ; popis ; odkaz) ---------- */
+$('#b-add').addEventListener('click', () => {
+  const rows = $('#b-text').value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  let ok = 0; const bad = [];
+  rows.forEach((line, i) => {
+    const c = line.split(/\t|;/).map((x) => x.trim());
+    const [title, note, url] = c.length >= 3 ? [c[0], c.slice(1, -1).join('; '), c[c.length - 1]] : [c[0], '', c[1]];
+    const n = validateItem({ id: newId() + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
+    if (!n) { bad.push(i + 1); return; }
+    lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: true, added: n.added, parent: $('#b-parent').value });
+    ok++;
+  });
+  if (ok) { setDirty(true); render(); }
+  $('#b-info').textContent = '';
+  if (ok) $('#b-text').value = bad.length ? rows.filter((_, i) => bad.includes(i + 1)).join('\n') : '';
+  say(ok + ' vloženo' + (bad.length ? '; neplatné řádky (zůstaly v poli): ' + bad.join(', ') : '. Nezapomeňte uložit.'), bad.length ? 'err' : 'ok');
+});
+
 /* ---------- uložení ---------- */
 $('#save').addEventListener('click', async () => {
   if (!$('#token').value.trim()) { say('Chybí token (nastavení nahoře).', 'err'); return; }
@@ -176,6 +196,36 @@ $('#save').addEventListener('click', async () => {
     say('Uloženo. Táta to uvidí po stisku Novinky (do několika minut).', 'ok');
   } catch (e) { setDirty(true); say(e.message || 'Uložení selhalo.', 'err'); }
 });
+
+/* ---------- náhled a PIN ---------- */
+function sendPreview() {
+  const f = $('#preview');
+  if (f && f.contentWindow) f.contentWindow.postMessage({ type: 'draft', feed: JSON.stringify(buildFeed(lib)) }, location.origin);
+}
+window.addEventListener('message', (ev) => { if (ev.origin === location.origin && ev.data && ev.data.type === 'ready') sendPreview(); });
+async function savePin(pin) {
+  if (!$('#token').value.trim()) { say('Chybí token (nastavení nahoře).', 'err'); return; }
+  try {
+    say('Ukládám PIN…');
+    const cur = await readFile('admin.json');
+    shas['admin.json'] = cur.sha;
+    if (pin === null) {
+      if (!cur.sha) { say('PIN nebyl nastaven.', 'ok'); return; }
+      await writeFile('admin.json', '{}\n', 'Editor: zrušen PIN');
+      say('PIN zrušen.', 'ok');
+    } else {
+      await writeFile('admin.json', await makeAdminFile(pin), 'Editor: nový PIN');
+      say('PIN nastaven.', 'ok');
+    }
+    $('#pin-new').value = '';
+  } catch (e) { say(e.message || 'PIN se nepodařilo uložit.', 'err'); }
+}
+$('#pin-set').addEventListener('click', () => {
+  const v = $('#pin-new').value.trim();
+  if (!PIN_RE.test(v)) { say('PIN má mít 4 až 8 číslic.', 'err'); return; }
+  savePin(v);
+});
+$('#pin-off').addEventListener('click', () => savePin(null));
 
 $('#load').addEventListener('click', () => {
   lsSet('ed.repo', $('#repo').value.trim()); lsSet('ed.branch', $('#branch').value.trim());

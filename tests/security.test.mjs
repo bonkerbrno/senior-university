@@ -12,10 +12,11 @@ const js = files.filter((f) => f.endsWith('.js'));
 const html = files.filter((f) => f.endsWith('.html'));
 
 test('žádné nebezpečné API v JavaScriptu', () => {
-  const bad = /\.innerHTML|\.outerHTML|insertAdjacentHTML|document\.write|\beval\s*\(|new Function|setTimeout\s*\(\s*['"`]|createContextualFragment|srcdoc|window\.open|location\.(href|assign|replace)\s*=/;
+  const bad = /\.innerHTML|\.outerHTML|insertAdjacentHTML|document\.write|\beval\s*\(|new Function|setTimeout\s*\(\s*['"`]|createContextualFragment|srcdoc|window\.open|location\.(assign|replace)\s*=/;
   for (const f of js) {
     const code = fs.readFileSync(f, 'utf8').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
     assert.doesNotMatch(code, bad, f);
+    for (const m of code.matchAll(/location\.href\s*=\s*([^;]+);/g)) assert.equal(m[1].trim(), "'editor/'", 'jediné povolené přesměrování je do editoru: ' + f);
   }
 });
 
@@ -38,7 +39,7 @@ test('tátova stránka nenačítá nic z cizích serverů kromě YouTube iframe'
   assert.doesNotMatch(t, /(src|href)="https?:/);
   const csp = t.match(/Content-Security-Policy" content="([^"]+)"/)[1];
   assert.match(csp, /connect-src 'self'(;|$)/);
-  assert.match(csp, /frame-src https:\/\/www\.youtube-nocookie\.com(;|$)/);
+  assert.match(csp, /frame-src https:\/\/www\.youtube-nocookie\.com https:\/\/embed\.windy\.com https:\/\/www\.yr\.no(;|$)/);
 });
 
 test('feed.json v repozitáři projde validátorem', async () => {

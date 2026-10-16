@@ -135,3 +135,12 @@ body.mini .infobar { order: 2; flex: 1 1 auto; min-width: 0; }
 body.mini .status { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.mini .sign { display: none; }
 body.mini .controls .btn[data-act="auto"] { display: none; }
+
+/* skrytý zámek správce */
+.pinwrap { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(0,0,0,.8); }
+.pinbox { background: #1d1a16; border: 3px solid var(--brass); border-radius: 16px; padding: 18px; width: min(320px, 92vw); text-align: center; color: #fff; }
+.pin-dots { font-size: 30px; letter-spacing: 6px; min-height: 40px; }
+.pin-msg { min-height: 24px; margin-bottom: 8px; color: #ffd37a; }
+.pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pinkey { padding: 14px 0; font: inherit; font-size: 22px; font-weight: 700; color: #fff; background: #3a342b; border: 2px solid var(--brass); border-radius: 10px; cursor: pointer; }
+.pinkey:active { background: #5b5040; }

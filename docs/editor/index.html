@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; frame-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <title>Superbox 85 – editor</title>
@@ -12,6 +12,7 @@
 <body>
 <header>
   <h1>Stanleyho Superbox 85 – editor</h1>
+  <a href="../" class="back">← Zpět na Superbox</a>
   <div id="msg" role="status" aria-live="polite"></div>
 </header>
 
@@ -27,11 +28,19 @@
 
 <section class="add">
   <h2>Přidat odkaz</h2>
-  <label>Odkaz (https://… YouTube nebo přímý soubor mp4/webm/mp3/m4a/ogg/wav)<input id="n-url" autocomplete="off"></label>
+  <label>Odkaz (https://… YouTube, přímý soubor mp4/webm/mp3/m4a/aac/ogg/wav, rozhlas.stream, nebo stránka z embed.windy.com / www.yr.no)<input id="n-url" autocomplete="off"></label>
   <label>Název<input id="n-title" maxlength="120" autocomplete="off"></label>
   <label>Složka<select id="n-parent"></select></label>
   <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
   <div class="row"><button id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
+</section>
+
+<section class="add">
+  <h2>Vložit více odkazů najednou</h2>
+  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor, takže jde vložit i buňky z Excelu). Popis může být prázdný.</p>
+  <label>Složka<select id="b-parent"></select></label>
+  <textarea id="b-text" rows="5" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
+  <div class="row"><button id="b-add" type="button">Vložit řádky</button><span id="b-info"></span></div>
 </section>
 
 <section class="add">
@@ -49,6 +58,17 @@
     <span id="dirty"></span>
   </div>
 </section>
+<section>
+  <h2>Náhled: tak to vidí táta <small>(živě podle zaškrtnutí, ještě před uložením)</small></h2>
+  <iframe id="preview" src="../?preview=1" title="Náhled Superboxu" sandbox="allow-scripts allow-same-origin"></iframe>
+</section>
+
+<details>
+  <summary>Zámek skrytého vstupu (PIN)</summary>
+  <p class="hint">Do Superboxu se z tátovy stránky dostanete 5 rychlými kliknutími na první hvězdičku v nápisu, nebo klávesami Ctrl+Alt+Shift+A. PIN je jen pojistka proti nechtěnému otevření. Skutečně chrání až přístupový token k GitHubu, bez kterého nikdo nic neuloží.</p>
+  <label>Nový PIN (4 až 8 číslic)<input id="pin-new" inputmode="numeric" maxlength="8" autocomplete="off"></label>
+  <div class="row"><button id="pin-set" type="button">Nastavit PIN</button><button id="pin-off" type="button">Zrušit PIN</button></div>
+</details>
 <script type="module" src="editor.js"></script>
 </body>
 </html>

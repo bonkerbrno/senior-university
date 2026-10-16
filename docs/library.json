@@ -2,6 +2,15 @@
   "schema": 1,
   "items": [
     {
+      "id": "tv",
+      "title": "Televize a rádio",
+      "note": "Živé rozhlasové stanice a počasí.",
+      "added": "2026-10-16",
+      "parent": "",
+      "show": true,
+      "kind": "folder"
+    },
+    {
       "id": "hudba",
       "title": "Zkušební hudba",
       "note": "Zkušební složka s písničkami.",
@@ -117,6 +126,69 @@
       "parent": "tanec",
       "show": true,
       "url": "https://www.youtube.com/watch?v=OPf0YbXqDm0"
+    },
+    {
+      "id": "rzu",
+      "title": "ČRo Radiožurnál živě",
+      "note": "Zprávy a publicistika.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/radiozurnal_aac_128.aac"
+    },
+    {
+      "id": "rplus",
+      "title": "ČRo Plus živě",
+      "note": "Slovo, rozhovory, diskuse.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/plus_mp3_128.mp3"
+    },
+    {
+      "id": "rdvojka",
+      "title": "ČRo Dvojka živě",
+      "note": "Pořady pro celou rodinu.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/dvojka_mp3_128.mp3"
+    },
+    {
+      "id": "rbrno",
+      "title": "ČRo Brno živě",
+      "note": "Regionální vysílání pro Brněnsko.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/brno.mp3"
+    },
+    {
+      "id": "pocasi1",
+      "title": "Počasí Brněnsko: teplota",
+      "note": "Živá mapa teploty, česky.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=temp&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs"
+    },
+    {
+      "id": "pocasi2",
+      "title": "Počasí Brněnsko: srážky",
+      "note": "Živý radar srážek, česky.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=radar&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs"
+    },
+    {
+      "id": "pocasi3",
+      "title": "Počasí Brněnsko: vítr",
+      "note": "Živá mapa větru, česky.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=wind&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs"
     }
   ]
 }
