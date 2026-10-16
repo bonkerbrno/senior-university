@@ -177,16 +177,28 @@ function markSeen(it) {
   seen.add(it.id);
   if (!PREVIEW) lsSet(LS_SEEN, JSON.stringify([...seen]));
 }
-// Oficiální přehrávač (např. ČT24): otevře se v novém okně jedním kliknutím. Odkaz je jen na povolený web.
+// Oficiální přehrávač (např. ČT24): otevře se v novém okně jedním kliknutím. Okno si pamatujeme,
+// aby se zavřelo, jakmile táta pustí něco jiného (jinak by hrálo přes sebe). Otevřít jde jen povolený web.
+let extWin = null;
+function closeExternal() {
+  try { if (extWin && !extWin.closed) extWin.close(); } catch { /* okno už není naše */ }
+  extWin = null;
+}
 function openExternal(it) {
-  const a = document.createElement('a');
-  a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-  document.body.append(a); a.click(); a.remove();
-  say('Otevírám: ' + it.title + ' (nové okno). Až skončíte, zavřete okno křížkem vpravo nahoře.');
+  player.stop(); now = null;
+  closeExternal();
+  extWin = window.open(it.url, 'ct24-superbox');
+  if (!extWin) {
+    const a = document.createElement('a');
+    a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    document.body.append(a); a.click(); a.remove();
+  }
+  say('Otevírám: ' + it.title + ' (nové okno). Pustíte-li něco jiného, okno se samo zavře.');
 }
 function startItem(it, where, q, idx) {
   clearTimeout(timer);
   if (it.kind === 'ext') { openExternal(it); markSeen(it); render(); return; }
+  closeExternal();
   queue = q; qi = idx;
   now = { item: it, where };
   markSeen(it);
@@ -282,6 +294,7 @@ function showChannels() {
 function toggleMini() { document.body.classList.toggle('mini'); refresh(); }
 function sleep() {
   clearTimeout(timer);
+  closeExternal();
   automat = false; shuffle = null;
   player.stop();
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -305,7 +318,7 @@ const actions = {
   news: () => { say('Hledám novinky…'); return loadFeed(true); },
   play: playSelected,
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
-  stop: () => { clearTimeout(timer); player.stop(); },
+  stop: () => { clearTimeout(timer); player.stop(); closeExternal(); },
   full: toggleFullscreen,
   tune,
   channels: showChannels,
