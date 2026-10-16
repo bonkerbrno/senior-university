@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-16T16:55:37.660Z",
+  "updated": "2026-10-16T17:39:40.609Z",
   "items": [
     {
       "id": "tv",
@@ -9,6 +9,13 @@
       "note": "Živé rozhlasové stanice a počasí.",
       "added": "2026-10-16",
       "items": [
+        {
+          "id": "ct24",
+          "title": "ČT24 živě (oficiální přehrávač)",
+          "note": "Otevře se v novém okně. Při prvním otevření stiskněte Souhlasím u okénka s cookies.",
+          "url": "https://ct24.ceskatelevize.cz/video/zive-vysilani",
+          "added": "2026-10-16"
+        },
         {
           "id": "rzu",
           "title": "ČRo Radiožurnál živě",

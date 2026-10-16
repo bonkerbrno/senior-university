@@ -11,6 +11,15 @@
       "kind": "folder"
     },
     {
+      "id": "ct24",
+      "title": "ČT24 živě (oficiální přehrávač)",
+      "note": "Otevře se v novém okně. Při prvním otevření stiskněte Souhlasím u okénka s cookies.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://ct24.ceskatelevize.cz/video/zive-vysilani"
+    },
+    {
       "id": "hudba",
       "title": "Zkušební hudba",
       "note": "Zkušební složka s písničkami.",

@@ -13,6 +13,7 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 let adminBody = null;
 const feed = { schema: 1, items: [
   { id: 'w1', title: 'Počasí', note: '', url: 'https://embed.windy.com/embed.html?lat=49.2&lon=16.6', added: '2026-10-16' },
+  { id: 'c1', title: 'ČT24', note: '', url: 'https://ct24.ceskatelevize.cz/video/zive-vysilani', added: '2026-10-16' },
   { id: 'r1', title: 'Rádio', note: '', url: 'https://rozhlas.stream/brno.mp3', added: '2026-10-16' },
 ] };
 const server = http.createServer((req, res) => {
@@ -41,9 +42,16 @@ await page.click('#controls [data-act="play"]');
 assert.equal(await page.locator('#stage iframe').getAttribute('src'), feed.items[0].url);
 assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts/);
 assert.equal(await page.locator('[data-act="pause"]').first().isDisabled() || true, true);
+await ctx.route('https://ct24.ceskatelevize.cz/**', (r) => r.fulfill({ contentType: 'text/html', body: '<p>ct24</p>' }));
+await page.click('#controls [data-act="stop"]');
+const [popup] = await Promise.all([ctx.waitForEvent('page'), page.locator('.item').nth(1).locator('button').click()]);
+assert.match(popup.url(), /^https:\/\/ct24\.ceskatelevize\.cz\//);
+await popup.close();
+assert.equal(await page.locator('#stage iframe').count(), 0, 'ČT24 se nevkládá do rámečku');
+assert.match(await page.innerText('#status'), /Otevírám/);
+ok('ČT24 se otevře v novém okně a nevkládá se');
 ok('web položka se ukáže v izolovaném rámečku');
 
-await page.click('#controls [data-act="stop"]');
 for (let i = 0; i < 4; i++) await page.click('#secret');
 assert.equal(new URL(page.url()).pathname, '/', 'čtyři kliknutí nestačí');
 await page.click('#secret');
