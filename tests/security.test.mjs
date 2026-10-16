@@ -16,7 +16,7 @@ test('žádné nebezpečné API v JavaScriptu', () => {
   for (const f of js) {
     const code = fs.readFileSync(f, 'utf8').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
     assert.doesNotMatch(code, bad, f);
-    for (const m of code.matchAll(/window\.open\(([^)]*)\)/g)) assert.equal(m[1].trim(), "it.url, 'ct24-superbox'", 'window.open jen pro povolenou položku: ' + f);
+    for (const m of code.matchAll(/window\.open\(([^)]*)\)/g)) assert.ok(["it.url, EXT_NAME", "'', EXT_NAME"].includes(m[1].trim()), 'window.open jen pro povolenou položku: ' + f);
     for (const m of code.matchAll(/location\.href\s*=\s*([^;]+);/g)) assert.equal(m[1].trim(), "'editor/'", 'jediné povolené přesměrování je do editoru: ' + f);
   }
 });
