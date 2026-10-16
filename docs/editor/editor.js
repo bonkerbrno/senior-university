@@ -1,4 +1,5 @@
-import { validateItem, parseMediaUrl, validateFeed } from '../js/validate.js';
+import { validateItem, validateFolder, parseMediaUrl, validateFeed } from '../js/validate.js';
+import { parseLibrary, libraryToText, buildFeed, canParent } from '../js/library.js';
 
 const $ = (s) => document.querySelector(s);
 const msg = $('#msg');
@@ -48,15 +49,6 @@ async function writeFile(name, text, message) {
   shas[name] = (await r.json()).content.sha;
 }
 
-function parseLibrary(text) {
-  const data = JSON.parse(text);
-  if (!data || data.schema !== 1 || !Array.isArray(data.items)) throw new Error('Neznámý formát knihovny.');
-  return data.items.map((x) => {
-    const it = validateItem(x);
-    return it && { id: it.id, title: it.title, note: it.note, url: it.url, show: x.show === true, added: it.added };
-  }).filter(Boolean);
-}
-
 async function load() {
   try {
     say('Načítám…');
@@ -77,11 +69,53 @@ async function load() {
 }
 
 /* ---------- vykreslení (jen textContent / value) ---------- */
+function folders() { return lib.filter((x) => x.kind === 'folder'); }
+function depthOf(x) { let d = 0, p = x.parent; while (p && d < 10) { d++; const f = lib.find((y) => y.id === p); p = f ? f.parent : ''; } return d; }
+
+function fillSelect(sel, excludeId, current) {
+  sel.replaceChildren();
+  const root = document.createElement('option'); root.value = ''; root.textContent = '(hlavní seznam)'; sel.append(root);
+  for (const f of orderedTree().map((o) => o.x).filter((x) => x.kind === 'folder')) {
+    if (excludeId && !canParent(lib, excludeId, f.id)) continue;
+    const o = document.createElement('option'); o.value = f.id;
+    o.textContent = '— '.repeat(depthOf(f)) + f.title; sel.append(o);
+  }
+  sel.value = current || '';
+}
+
+// pořadí pro zobrazení: složky se svými potomky hned pod sebou
+function orderedTree() {
+  const ids = new Set(folders().map((f) => f.id));
+  const out = [], seen = new Set();
+  const walk = (parent) => {
+    for (const x of lib) {
+      const p = x.parent && ids.has(x.parent) ? x.parent : '';
+      if (p !== parent || seen.has(x.id)) continue;
+      seen.add(x.id); out.push({ x, depth: depthOf(x) });
+      if (x.kind === 'folder') walk(x.id);
+    }
+  };
+  walk('');
+  return out;
+}
+
+function move(x, dir) {
+  const sibs = lib.filter((y) => y.parent === x.parent);
+  const k = sibs.indexOf(x) + dir;
+  if (k < 0 || k >= sibs.length) return;
+  const a = lib.indexOf(x), b = lib.indexOf(sibs[k]);
+  [lib[a], lib[b]] = [lib[b], lib[a]];
+  setDirty(true); render();
+}
+
 function render() {
   const ul = $('#items');
   ul.replaceChildren();
-  lib.forEach((it, i) => {
-    const li = document.createElement('li');
+  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value);
+  orderedTree().forEach(({ x: it, depth }) => {
+    const folder = it.kind === 'folder';
+    const li = document.createElement('li'); if (folder) li.className = 'folder';
+    li.style.setProperty('margin-left', (depth * 22) + 'px');
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = it.show; cb.title = 'Ukázat tátovi';
     cb.addEventListener('change', () => { it.show = cb.checked; setDirty(true); });
     const mid = document.createElement('div');
@@ -89,14 +123,20 @@ function render() {
     t.addEventListener('input', () => { it.title = t.value; setDirty(true); });
     const n = document.createElement('textarea'); n.value = it.note; n.rows = 2; n.maxLength = 400;
     n.addEventListener('input', () => { it.note = n.value; setDirty(true); });
-    const m = document.createElement('div'); m.className = 'meta'; m.textContent = it.url;
-    mid.append(t, n, m);
+    const m = document.createElement('div'); m.className = 'meta'; m.textContent = folder ? 'SLOŽKA' : it.url;
+    const pick = document.createElement('label'); pick.className = 'pick'; pick.append(document.createTextNode('Složka: '));
+    const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent);
+    sel.addEventListener('change', () => { it.parent = sel.value; setDirty(true); render(); });
+    pick.append(sel);
+    mid.append(t, n, m, pick);
     const tools = document.createElement('div'); tools.className = 'tools';
-    const mk = (label, title, fn, disabled) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.disabled = disabled; b.addEventListener('click', fn); return b; };
-    tools.append(
-      mk('↑', 'Výš', () => { [lib[i - 1], lib[i]] = [lib[i], lib[i - 1]]; setDirty(true); render(); }, i === 0),
-      mk('↓', 'Níž', () => { [lib[i + 1], lib[i]] = [lib[i], lib[i + 1]]; setDirty(true); render(); }, i === lib.length - 1),
-      mk('✕', 'Smazat', () => { lib.splice(i, 1); setDirty(true); render(); }, false));
+    const mk = (label, title, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.addEventListener('click', fn); return b; };
+    tools.append(mk('↑', 'Výš', () => move(it, -1)), mk('↓', 'Níž', () => move(it, 1)),
+      mk('✕', 'Smazat', () => {
+        const kids = lib.filter((y) => y.parent === it.id);
+        kids.forEach((y) => { y.parent = it.parent; }); // obsah smazané složky zůstane, jen se přesune výš
+        lib.splice(lib.indexOf(it), 1); setDirty(true); render();
+      }));
     li.append(cb, mid, tools);
     ul.append(li);
   });
@@ -110,9 +150,16 @@ $('#n-url').addEventListener('input', () => {
 $('#add').addEventListener('click', () => {
   const it = validateItem({ id: newId(), title: $('#n-title').value, note: $('#n-note').value, url: $('#n-url').value, added: new Date().toISOString().slice(0, 10) });
   if (!it) { say('Vyplňte platný https odkaz (YouTube nebo soubor) a název.', 'err'); return; }
-  lib.unshift({ id: it.id, title: it.title, note: it.note, url: it.url, show: true, added: it.added });
+  lib.unshift({ id: it.id, title: it.title, note: it.note, url: it.url, show: true, added: it.added, parent: $('#n-parent').value });
   $('#n-url').value = $('#n-title').value = $('#n-note').value = ''; $('#n-info').textContent = '';
   setDirty(true); render(); say('Přidáno. Nezapomeňte uložit.', 'ok');
+});
+
+$('#add-folder').addEventListener('click', () => {
+  const f = validateFolder({ id: newId(), title: $('#f-title').value, note: '', added: new Date().toISOString().slice(0, 10) });
+  if (!f) { say('Vyplňte název složky.', 'err'); return; }
+  lib.unshift({ id: f.id, title: f.title, note: '', kind: 'folder', show: true, added: f.added, parent: $('#f-parent').value });
+  $('#f-title').value = ''; setDirty(true); render(); say('Složka přidána. Nezapomeňte uložit.', 'ok');
 });
 
 /* ---------- uložení ---------- */
@@ -120,10 +167,9 @@ $('#save').addEventListener('click', async () => {
   if (!$('#token').value.trim()) { say('Chybí token (nastavení nahoře).', 'err'); return; }
   try {
     $('#save').disabled = true; say('Ukládám…');
-    const libText = JSON.stringify({ schema: 1, items: lib.map(({ id, title, note, url, show, added }) => ({ id, title, note, url, show, added })) }, null, 2) + '\n';
-    const feedItems = lib.filter((x) => x.show).map(({ id, title, note, url, added }) => ({ id, title, note, url, added }));
-    const feedText = JSON.stringify({ schema: 1, updated: new Date().toISOString(), items: feedItems }, null, 2) + '\n';
-    validateFeed(feedText); // pojistka: do tátova seznamu půjde jen to, co projde jeho kontrolou
+    const libText = libraryToText(lib);
+    const feedText = JSON.stringify(buildFeed(lib), null, 2) + '\n';
+    if (validateFeed(feedText).dropped) throw new Error('Seznam pro tátu obsahuje neplatnou položku.'); // pojistka: do tátova seznamu půjde jen to, co projde jeho kontrolou
     await writeFile('library.json', libText, 'Editor: úprava knihovny');
     await writeFile('feed.json', feedText, 'Editor: nový seznam pro tátu');
     setDirty(false);

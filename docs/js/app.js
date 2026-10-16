@@ -1,19 +1,30 @@
-import { validateFeed } from './validate.js';
+import { validateFeed, playableIn } from './validate.js';
 import { createPlayer } from './player.js';
 
 const $ = (sel) => document.querySelector(sel);
 const FEED_URL = 'feed.json';
 const LS_FEED = 'jukebox.feed';
 const LS_SEEN = 'jukebox.seen';
+const BURST_MS = 600; // rychlé vícenásobné kliknutí na totéž tlačítko se počítá jako jedno
 
 const statusEl = $('#status');
+const subEl = $('#substatus');
 const listEl = $('#list');
+const crumbsEl = $('#crumbs');
 const stage = $('#stage');
 const screenWrap = $('#screen-wrap');
 
-let items = [];
+let tree = [];            // kořen: pole uzlů (složky mají children)
+let path = [];            // id složek od kořene k aktuální
 let selected = 0;
 let seen = new Set();
+let automat = false;
+let shuffle = null;       // null | 'here' | 'all'
+let queue = [];           // seznam, ze kterého se hraje dál (složka, kde se začalo)
+let qi = 0;
+let now = null;           // { item, where }
+let errCount = 0;
+let timer = 0;
 
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* bez úložiště to jde také */ } }
@@ -24,59 +35,98 @@ function say(text, warn = false) {
   statusEl.classList.toggle('warn', warn);
 }
 
+/* ---------- strom ---------- */
+function folderAt(ids) {
+  let nodes = tree;
+  const trail = [];
+  for (const id of ids) {
+    const f = nodes.find((n) => n.kind === 'folder' && n.id === id);
+    if (!f) return null;
+    trail.push(f);
+    nodes = f.children;
+  }
+  return { nodes, trail };
+}
+function cwd() { const r = folderAt(path); return r ? r : { nodes: tree, trail: [] }; }
+function newCount(nodes) {
+  let n = 0;
+  for (const x of nodes) n += x.kind === 'folder' ? newCount(x.children) : (seen.has(x.id) ? 0 : 1);
+  return n;
+}
+function pathTitle(trail) { return ['Domů', ...trail.map((f) => f.title)].join(' › '); }
+
 const player = createPlayer(stage, (state, detail) => {
-  const it = player.item;
-  if (state === 'playing') say('Hraje: ' + it.title);
-  else if (state === 'paused') say('Pozastaveno: ' + it.title);
-  else if (state === 'idle') say('Nic nehraje. Vyberte pořad.');
-  else if (state === 'ended') say('Hotovo. Můžete vybrat další pořad.');
+  const it = now && now.item;
+  if (state === 'playing') { errCount = 0; say('▶ Hraje: ' + it.title); }
+  else if (state === 'paused') say('⏸ Pozastaveno: ' + it.title);
+  else if (state === 'idle') { say('Nic nehraje. Vyberte pořad.'); now = null; }
+  else if (state === 'ended') { say('Hotovo: ' + (it ? it.title : '')); if (automat) schedule(1200); }
   else if (state === 'error') {
-    say(detail === 'embed' ? 'Tento pořad nejde přehrát. Zkuste prosím jiný.' : 'Pořad se nepodařilo spustit. Zkuste prosím jiný.', true);
-    setTimeout(() => { if (player.state === 'error') player.stop(); }, 4000);
+    say(detail === 'embed' ? 'Tento pořad nejde přehrát.' : 'Pořad se nepodařilo spustit.', true);
+    errCount++;
+    if (automat && errCount < Math.max(2, poolSize())) schedule(2500);
+    else timer = setTimeout(() => { if (player.state === 'error') player.stop(); }, 4000);
   }
   refresh();
 });
 
+function schedule(ms) { clearTimeout(timer); timer = setTimeout(playNext, ms); }
+function poolSize() { return shuffle === 'all' ? playableIn(tree, true).length : queue.length; }
+
 /* ---------- vykreslení (jen textContent) ---------- */
+function mkBtn(act, label, iconId, index) {
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'btn'; btn.dataset.act = act;
+  if (index !== undefined) btn.dataset.index = String(index);
+  const lamp = document.createElement('span'); lamp.className = 'lamp';
+  const lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = label;
+  btn.append(lamp, lbl);
+  return btn;
+}
+
 function render() {
+  const { nodes, trail } = cwd();
+  crumbsEl.textContent = pathTitle(trail);
   listEl.replaceChildren();
-  if (!items.length) {
+  if (selected >= nodes.length) selected = Math.max(0, nodes.length - 1);
+  if (!nodes.length) {
     const e = document.createElement('div'); e.className = 'empty';
-    e.textContent = 'Zatím tu nic není. Stiskněte Novinky.';
+    e.textContent = tree.length ? 'Tady nic není. Použijte Zpět nebo Domů.' : 'Zatím tu nic není. Stiskněte Novinky.';
     listEl.append(e);
-    return;
   }
-  items.forEach((it, i) => {
+  nodes.forEach((it, i) => {
+    const folder = it.kind === 'folder';
     const card = document.createElement('article');
-    card.className = 'item'; card.dataset.index = String(i);
+    card.className = 'item' + (folder ? ' folder' : ''); card.dataset.index = String(i);
     const h = document.createElement('h3');
-    if (!seen.has(it.id)) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'NOVÉ'; h.append(b); }
+    const fresh = folder ? newCount(it.children) : (seen.has(it.id) ? 0 : 1);
+    if (fresh) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'NOVÉ'; h.append(b); }
     h.append(document.createTextNode(it.title));
+    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = '  (' + playableIn(it.children, true).length + ' pořadů)'; h.append(c); }
     card.append(h);
     if (it.note) { const p = document.createElement('p'); p.textContent = it.note; card.append(p); }
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'btn'; btn.dataset.act = 'item'; btn.dataset.index = String(i);
-    const lamp = document.createElement('span'); lamp.className = 'lamp';
-    const lbl = document.createElement('span'); lbl.className = 'lbl';
-    btn.append(lamp, lbl);
-    card.append(btn);
+    card.append(mkBtn(folder ? 'open' : 'item', '', undefined, i));
     listEl.append(card);
   });
   refresh();
 }
 
-function isCurrent(i) { const c = player.item; return !!c && items[i] && c.id === items[i].id; }
+function isCurrent(it) { return !!now && now.item.id === it.id; }
 
 function refresh() {
   const st = player.state;
   const active = st === 'playing' || st === 'paused';
+  const { nodes, trail } = cwd();
   listEl.querySelectorAll('.item').forEach((card) => {
     const i = Number(card.dataset.index);
-    const cur = active && isCurrent(i);
+    const it = nodes[i];
+    if (!it) return;
+    const folder = it.kind === 'folder';
+    const cur = !folder && active && isCurrent(it);
     card.classList.toggle('selected', i === selected);
     card.classList.toggle('playing', cur);
     const btn = card.querySelector('button');
-    btn.querySelector('.lbl').textContent = cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad';
+    btn.querySelector('.lbl').textContent = folder ? 'Otevřít složku' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad';
     if (cur) btn.dataset.lit = st === 'paused' ? 'orange' : 'green'; else delete btn.dataset.lit;
   });
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
@@ -84,36 +134,84 @@ function refresh() {
   });
   lit('play', st === 'playing' ? 'green' : null);
   lit('pause', st === 'paused' ? 'orange' : null);
-  lit('stop', null);
   lit('full', document.fullscreenElement ? 'blue' : null);
   lit('mini', document.body.classList.contains('mini') ? 'blue' : null);
+  lit('auto', automat ? 'green' : null);
+  lit('rand-here', shuffle === 'here' ? 'blue' : null);
+  lit('rand-all', shuffle === 'all' ? 'blue' : null);
+  document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !path.length; });
   document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : 'Pauza'; });
-  document.querySelectorAll('[data-act="pause"]').forEach((b) => { b.disabled = !active; });
-  document.querySelectorAll('[data-act="stop"]').forEach((b) => { b.disabled = !active; });
+  document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !active; });
   document.querySelectorAll('[data-act="mini"] .lbl').forEach((l) => { l.textContent = document.body.classList.contains('mini') ? 'Zvětšit' : 'Zmenšit'; });
   document.querySelectorAll('#controls [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zpět' : 'Celá obrazovka'; });
+  const parts = [];
+  if (now) parts.push('Složka: ' + now.where);
+  parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
+  if (shuffle) parts.push(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce');
+  subEl.textContent = parts.join('  ·  ');
 }
 
-/* ---------- seznam ---------- */
+/* ---------- navigace ---------- */
 function select(i, scroll = true) {
-  if (!items.length) return;
-  selected = Math.max(0, Math.min(items.length - 1, i));
+  const { nodes } = cwd();
+  if (!nodes.length) return;
+  selected = Math.max(0, Math.min(nodes.length - 1, i));
   refresh();
   if (scroll) {
     const card = listEl.children[selected];
     if (card && card.scrollIntoView) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
+function openFolder(i) {
+  const f = cwd().nodes[i];
+  if (!f || f.kind !== 'folder') return;
+  path = [...path, f.id]; selected = 0; render(); listEl.scrollTop = 0;
+}
+function goBack() { if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
+function goHome() { if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
 
-function playIndex(i) {
-  const it = items[i];
-  if (!it) return;
-  selected = i;
+/* ---------- přehrávání ---------- */
+function markSeen(it) {
   seen.add(it.id);
   lsSet(LS_SEEN, JSON.stringify([...seen]));
-  const badge = listEl.children[i] && listEl.children[i].querySelector('.badge');
-  if (badge) badge.remove();
+}
+function startItem(it, where, q, idx) {
+  clearTimeout(timer);
+  queue = q; qi = idx;
+  now = { item: it, where };
+  markSeen(it);
   player.play(it);
+  render();
+}
+function playHere(i) {
+  const { nodes, trail } = cwd();
+  const it = nodes[i];
+  if (!it || it.kind === 'folder') return;
+  const q = playableIn(nodes);
+  selected = i;
+  shuffle = null;
+  startItem(it, pathTitle(trail), q, q.indexOf(it));
+}
+function pickRandom(pool, avoid) {
+  const c = pool.length > 1 ? pool.filter((x) => !avoid || x.id !== avoid.id) : pool;
+  return c[Math.floor(Math.random() * c.length)];
+}
+function playRandom(scope) {
+  const { nodes, trail } = cwd();
+  const pool = scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true);
+  if (!pool.length) { say('Tady není co pustit.', true); return; }
+  shuffle = scope;
+  const it = pickRandom(pool, now && now.item);
+  startItem(it, scope === 'all' ? 'Všechny složky' : pathTitle(trail), pool, pool.indexOf(it));
+}
+function playNext() {
+  if (!automat || !queue.length) return;
+  const pool = shuffle === 'all' ? playableIn(tree, true) : queue;
+  if (!pool.length) return;
+  let it, idx, q = pool;
+  if (shuffle) { it = pickRandom(pool, now && now.item); idx = pool.indexOf(it); }
+  else { idx = (qi + 1) % pool.length; it = pool[idx]; }
+  startItem(it, now ? now.where : '', q, idx);
 }
 
 async function loadFeed(userAsked) {
@@ -121,18 +219,19 @@ async function loadFeed(userAsked) {
     const res = await fetch(FEED_URL + '?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' });
     if (!res.ok) throw new Error('http');
     const text = await res.text();
-    const { items: fresh } = validateFeed(text);
-    const before = new Set(items.map((x) => x.id));
-    items = fresh;
+    const { items } = validateFeed(text);
+    const before = new Set(playableIn(tree, true).map((x) => x.id));
+    tree = items;
     lsSet(LS_FEED, text);
+    if (!folderAt(path)) path = [];
     render();
-    const n = fresh.filter((x) => !before.has(x.id) && !seen.has(x.id)).length;
-    if (userAsked) say(n ? 'Máte ' + (n === 1 ? 'novou položku' : 'nové položky: ' + n) + '.' : 'Žádné nové pořady.');
+    const n = playableIn(tree, true).filter((x) => !before.has(x.id) && !seen.has(x.id)).length;
+    if (userAsked && !(now && player.state !== 'idle')) say(n ? (n === 1 ? 'Máte jednu novinku.' : 'Máte nové pořady: ' + n + '.') : 'Žádné nové pořady.');
     return true;
   } catch {
     const cached = lsGet(LS_FEED);
-    if (cached) { try { items = validateFeed(cached).items; render(); } catch { /* nic */ } }
-    if (userAsked || !items.length) say(items.length ? 'Nejsem připojen k internetu. Ukazuji poslední seznam.' : 'Nejsem připojen k internetu.', true);
+    if (cached) { try { tree = validateFeed(cached).items; if (!folderAt(path)) path = []; render(); } catch { /* nic */ } }
+    if (userAsked || !tree.length) say(tree.length ? 'Nejsem připojen k internetu. Ukazuji poslední seznam.' : 'Nejsem připojen k internetu.', true);
     return false;
   }
 }
@@ -145,10 +244,10 @@ async function toggleFullscreen() {
   } catch { say('Celou obrazovku se nepodařilo zapnout.', true); }
   refresh();
 }
-
 function toggleMini() { document.body.classList.toggle('mini'); refresh(); }
-
 function sleep() {
+  clearTimeout(timer);
+  automat = false; shuffle = null;
   player.stop();
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   document.body.classList.remove('mini');
@@ -158,35 +257,49 @@ function sleep() {
   try { window.close(); } catch { /* prohlížeč nedovolí zavřít okno; zůstane obrazovka „odpočívá“ */ }
 }
 function wake() { $('#asleep').hidden = true; $('#app').hidden = false; refresh(); }
+function playSelected() {
+  const it = cwd().nodes[selected];
+  if (!it) { say('Nejdřív stiskněte Novinky.', true); return; }
+  if (it.kind === 'folder') openFolder(selected); else playHere(selected);
+}
+function toggleRandom(scope) {
+  if (shuffle === scope) { shuffle = null; refresh(); } else playRandom(scope);
+}
 
 const actions = {
   news: () => { say('Hledám novinky…'); return loadFeed(true); },
-  play: () => { if (items.length) playIndex(selected); else say('Nejdřív stiskněte Novinky.', true); },
+  play: playSelected,
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
-  stop: () => player.stop(),
+  stop: () => { clearTimeout(timer); player.stop(); },
   full: toggleFullscreen,
   mini: toggleMini,
   close: sleep,
   wake,
+  auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
+  'rand-here': () => toggleRandom('here'),
+  'rand-all': () => toggleRandom('all'),
+  home: goHome,
+  back: goBack,
   up: () => select(selected - 1),
   down: () => select(selected + 1),
 };
 
-const lastPress = new Map();
+const lastClick = new Map();
 document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');
   if (btn) {
     const act = btn.dataset.act;
     const key = act + (btn.dataset.index || '');
-    const now = Date.now();
-    if (now - (lastPress.get(key) || 0) < 400) return; // ochrana proti dvojkliku
-    lastPress.set(key, now);
+    const t = Date.now();
+    const burst = t - (lastClick.get(key) || 0) < BURST_MS;
+    lastClick.set(key, t);
+    if (burst) return; // jedno kliknutí, dvojklik i rychlé vícenásobné klikání dělají totéž
+    const i = Number(btn.dataset.index);
     if (act === 'item') {
-      const i = Number(btn.dataset.index);
-      if (isCurrent(i) && player.state !== 'idle') player.stop(); else playIndex(i);
-      return;
-    }
-    if (actions[act]) actions[act]();
+      const it = cwd().nodes[i];
+      if (it && isCurrent(it) && player.state !== 'idle') { clearTimeout(timer); player.stop(); } else playHere(i);
+    } else if (act === 'open') openFolder(i);
+    else if (actions[act]) actions[act]();
     return;
   }
   const card = ev.target.closest('.item');
@@ -197,7 +310,8 @@ document.addEventListener('keydown', (ev) => {
   if (ev.target.closest && ev.target.closest('button')) return;
   if (ev.key === 'ArrowDown') { ev.preventDefault(); select(selected + 1); }
   else if (ev.key === 'ArrowUp') { ev.preventDefault(); select(selected - 1); }
-  else if (ev.key === 'Enter') { ev.preventDefault(); actions.play(); }
+  else if (ev.key === 'Enter') { ev.preventDefault(); playSelected(); }
+  else if (ev.key === 'Backspace') { ev.preventDefault(); goBack(); }
   else if (ev.key === ' ') { ev.preventDefault(); actions.pause(); }
 });
 document.addEventListener('fullscreenchange', refresh);

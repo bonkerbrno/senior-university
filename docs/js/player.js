@@ -39,7 +39,7 @@ export function createPlayer(stage, onState) {
     try { d = typeof ev.data === 'string' ? JSON.parse(ev.data) : null; } catch { return; }
     if (!d) return;
     if (d.event === 'onError') set('error', 'embed');
-    else if (d.event === 'onStateChange' && d.info === 0) { stop(); set('ended'); }
+    else if (d.event === 'onStateChange' && d.info === 0) finish();
   }
 
   function play(item) {
@@ -74,7 +74,7 @@ export function createPlayer(stage, onState) {
     current = { item, el, kind: item.kind };
     if (item.kind !== 'youtube') {
       el.referrerPolicy = 'no-referrer';
-      el.addEventListener('ended', () => { stop(); set('ended'); });
+      el.addEventListener('ended', finish);
       el.addEventListener('error', () => set('error', 'media'));
       el.src = item.url;
       const pr = el.play();
@@ -94,6 +94,8 @@ export function createPlayer(stage, onState) {
     if (current.kind === 'youtube') ytCmd('playVideo'); else current.el.play().catch(() => set('error', 'media'));
     set('playing');
   }
+  function finish() { clear(); idleScreen(); set('ended'); }
+
   function stop() {
     clear();
     idleScreen();

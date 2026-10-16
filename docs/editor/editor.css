@@ -15,3 +15,7 @@ li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items
 li:first-child { border-top: 0; } li input[type=checkbox] { width: 24px; height: 24px; margin-top: 6px; }
 li .meta { font-size: 12px; opacity: .7; word-break: break-all; } li .tools { display: flex; gap: 4px; }
 li input:not([type=checkbox]), li textarea { margin: 0 0 4px; }
+select { display: block; width: 100%; padding: 8px; margin-top: 3px; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+li.folder { background: color-mix(in srgb, var(--acc) 10%, transparent); }
+li .pick { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+li .pick select { width: auto; margin: 0; padding: 4px; }
