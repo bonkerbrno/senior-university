@@ -1,1 +1,85 @@
-{ "schema": 1, "items": [] }
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "demo1",
+      "title": "První video na YouTube",
+      "note": "Zkušební: 19 vteřin ze zoo, historicky první video na YouTube.",
+      "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo2",
+      "title": "Kostarika v 4K",
+      "note": "Zkušební: krásné záběry přírody a zvířat, hezky se dívá.",
+      "url": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo3",
+      "title": "Rick Astley: Never Gonna Give You Up",
+      "note": "Zkušební: slavný hit z 80. let.",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo4",
+      "title": "PSY: Gangnam Style",
+      "note": "Zkušební: veselá písnička a tanec, která obletěla svět.",
+      "url": "https://www.youtube.com/watch?v=9bZkp7q19f0",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo5",
+      "title": "Queen: Bohemian Rhapsody",
+      "note": "Zkušební: klasika rocku od skupiny Queen.",
+      "url": "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo6",
+      "title": "Pharrell Williams: Happy",
+      "note": "Zkušební: optimistická písnička pro dobrou náladu.",
+      "url": "https://www.youtube.com/watch?v=ZbZSe6N_BXs",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo7",
+      "title": "Darude: Sandstorm",
+      "note": "Zkušební: taneční hit z přelomu tisíciletí.",
+      "url": "https://www.youtube.com/watch?v=y6120QOlsfU",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo8",
+      "title": "Alan Walker: Faded",
+      "note": "Zkušební: klidná elektronická melodie.",
+      "url": "https://www.youtube.com/watch?v=60ItHLz5WEA",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo9",
+      "title": "Ed Sheeran: Perfect",
+      "note": "Zkušební: romantická balada.",
+      "url": "https://www.youtube.com/watch?v=2Vv-BfVoq4g",
+      "added": "2026-10-16",
+      "show": true
+    },
+    {
+      "id": "demo10",
+      "title": "Mark Ronson: Uptown Funk",
+      "note": "Zkušební: tanečně funková písnička.",
+      "url": "https://www.youtube.com/watch?v=OPf0YbXqDm0",
+      "added": "2026-10-16",
+      "show": true
+    }
+  ]
+}
