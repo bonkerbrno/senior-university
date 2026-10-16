@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-16T15:51:20.046Z",
+  "updated": "2026-10-16T16:55:37.660Z",
   "items": [
     {
       "id": "tv",
@@ -35,6 +35,34 @@
           "title": "ČRo Brno živě",
           "note": "Regionální vysílání pro Brněnsko.",
           "url": "https://rozhlas.stream/brno.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rjunior",
+          "title": "ČRo Junior živě",
+          "note": "Pro děti.",
+          "url": "https://rozhlas.stream/radio_junior.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rpohoda",
+          "title": "ČRo Pohoda živě",
+          "note": "Pohodová hudba a čtení.",
+          "url": "https://rozhlas.stream/pohoda.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rpovidka",
+          "title": "Rádio Povídka živě",
+          "note": "Povídky a četba.",
+          "url": "https://ice3.abradio.cz/povidka128.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rhumor",
+          "title": "Rádio Humor živě",
+          "note": "Humor, scénky a písničky.",
+          "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_HUMOR.aac",
           "added": "2026-10-16"
         },
         {

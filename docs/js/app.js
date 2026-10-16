@@ -1,6 +1,7 @@
 import { validateFeed, playableIn } from './validate.js';
 import { createPlayer } from './player.js';
 import { parseAdminFile, checkPin } from './admin.js';
+import { clickSound } from './click.js';
 
 const $ = (sel) => document.querySelector(sel);
 const FEED_URL = 'feed.json';
@@ -247,6 +248,28 @@ async function toggleFullscreen() {
   } catch { say('Celou obrazovku se nepodařilo zapnout.', true); }
   refresh();
 }
+// Přeladit: další pořad v seznamu, kde se hraje (dokola); bez hrajícího pořadu další ve složce.
+function tune() {
+  clearTimeout(timer);
+  if (now && queue.length) {
+    const idx = (qi + 1) % queue.length;
+    startItem(queue[idx], now.where, queue, idx);
+    return;
+  }
+  const { nodes } = cwd();
+  let i = selected;
+  for (let k = 1; k <= nodes.length; k++) {
+    const j = (selected + k) % nodes.length;
+    if (nodes[j].kind !== 'folder') { i = j; break; }
+  }
+  if (nodes[i] && nodes[i].kind !== 'folder') playHere(i);
+}
+// Seznam kanálů: zpět na výchozí vzhled (konec celé obrazovky a lišty), hraní pokračuje, seznam ukáže právě hrající.
+function showChannels() {
+  document.body.classList.remove('mini');
+  const done = () => { render(); const c = listEl.querySelector('.item.playing'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center' }); };
+  if (document.fullscreenElement) document.exitFullscreen().then(done, done); else done();
+}
 function toggleMini() { document.body.classList.toggle('mini'); refresh(); }
 function sleep() {
   clearTimeout(timer);
@@ -275,6 +298,8 @@ const actions = {
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
   stop: () => { clearTimeout(timer); player.stop(); },
   full: toggleFullscreen,
+  tune,
+  channels: showChannels,
   mini: toggleMini,
   close: sleep,
   wake,
@@ -287,6 +312,7 @@ const actions = {
   down: () => select(selected + 1),
 };
 
+document.addEventListener('pointerdown', (ev) => { if (ev.target.closest && ev.target.closest('button:not(:disabled)')) clickSound(); });
 const lastClick = new Map();
 document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');

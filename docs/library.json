@@ -164,6 +164,42 @@
       "url": "https://rozhlas.stream/brno.mp3"
     },
     {
+      "id": "rjunior",
+      "title": "ČRo Junior živě",
+      "note": "Pro děti.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/radio_junior.mp3"
+    },
+    {
+      "id": "rpohoda",
+      "title": "ČRo Pohoda živě",
+      "note": "Pohodová hudba a čtení.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://rozhlas.stream/pohoda.mp3"
+    },
+    {
+      "id": "rpovidka",
+      "title": "Rádio Povídka živě",
+      "note": "Povídky a četba.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://ice3.abradio.cz/povidka128.mp3"
+    },
+    {
+      "id": "rhumor",
+      "title": "Rádio Humor živě",
+      "note": "Humor, scénky a písničky.",
+      "added": "2026-10-16",
+      "parent": "tv",
+      "show": true,
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_HUMOR.aac"
+    },
+    {
       "id": "pocasi1",
       "title": "Počasí Brněnsko: teplota",
       "note": "Živá mapa teploty, česky.",

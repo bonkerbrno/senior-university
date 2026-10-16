@@ -239,6 +239,21 @@ await step('Celá obrazovka zapne a vypne režim fullscreen', async () => {
   if (await page.evaluate(() => !!document.fullscreenElement)) { await wait(); await page.locator('#fs-bar [data-act="full"]').click(); await page.waitForFunction(() => !document.fullscreenElement); }
   else console.log('  (headless: fullscreen API nepotvrzeno, přeskočeno)');
 });
+await step('v celé obrazovce: Přeladit přepne dál, Seznam kanálů vrátí výchozí vzhled; stisk tlačítka cvakne', async () => {
+  await page.evaluate(() => { window.__clicks = 0; const o = AudioContext.prototype.createBufferSource; AudioContext.prototype.createBufferSource = function () { window.__clicks++; return o.call(this); }; });
+  await wait(); if (await act('home').isEnabled()) { await act('home').click(); await wait(); } await act('open', 0).click(); await wait(); await act('item', 0).click(); await wait();
+  const before = await text('#status');
+  await act('full').click(); await wait();
+  if (await page.evaluate(() => !!document.fullscreenElement)) {
+    await page.locator('#fs-bar [data-act="tune"]').click(); await wait();
+    assert.notEqual(await text('#status'), before);
+    await page.locator('#fs-bar [data-act="channels"]').click();
+    await page.waitForFunction(() => !document.fullscreenElement);
+    assert.equal(await page.locator('#listbox').isVisible(), true);
+  } else console.log('  (headless: fullscreen API nepotvrzeno, přeskočeno)');
+  assert.ok(await page.evaluate(() => window.__clicks) > 0, 'zvuk kliknutí se nespustil');
+  await act('stop').click(); await wait(); await act('home').click();
+});
 await step('chyba přehrávání ukáže srozumitelnou hlášku', async () => {
   ytMode = 'error';
   await wait(); await act('open', 0).click(); await wait();
