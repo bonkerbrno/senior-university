@@ -5,7 +5,10 @@ export const LIMITS = { bytes: 262144, nodes: 300, depth: 5, title: 120, note: 4
 
 const YT_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'm.youtube.com', 'youtu.be']);
 const VIDEO_EXT = new Set(['mp4', 'webm', 'ogv']);
-const AUDIO_EXT = new Set(['mp3', 'm4a', 'ogg', 'oga', 'wav']);
+const AUDIO_EXT = new Set(['mp3', 'm4a', 'aac', 'ogg', 'oga', 'wav']);
+// Živé rozhlasové streamy (zvuk bez přípony) a webové stránky smějí jen z pevného seznamu hostitelů.
+const STREAM_HOSTS = new Set(['rozhlas.stream']);
+export const WEB_HOSTS = ['embed.windy.com', 'www.yr.no'];
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 
 // eslint-disable-next-line no-control-regex
@@ -35,6 +38,8 @@ export function parseMediaUrl(raw) {
     if (!id || !YT_ID.test(id)) return null;
     return { kind: 'youtube', id, url: 'https://www.youtube.com/watch?v=' + id };
   }
+  if (STREAM_HOSTS.has(host)) return { kind: 'audio', url: u.href };
+  if (WEB_HOSTS.includes(host)) return { kind: 'web', url: u.href };
   const ext = (u.pathname.split('.').pop() || '').toLowerCase();
   if (VIDEO_EXT.has(ext)) return { kind: 'video', url: u.href };
   if (AUDIO_EXT.has(ext)) return { kind: 'audio', url: u.href };

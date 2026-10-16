@@ -84,6 +84,13 @@ export function createPlayer(stage, onState) {
       el.addEventListener('load', () => startHandshake(el));
       window.addEventListener('message', onYtMessage);
       stage.append(el);
+    } else if (item.kind === 'web') {
+      el = document.createElement('iframe');
+      el.title = item.title;
+      el.src = item.url;
+      el.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      el.setAttribute('referrerpolicy', 'no-referrer');
+      stage.append(el);
     } else if (item.kind === 'video') {
       el = document.createElement('video');
       el.playsInline = true;
@@ -97,7 +104,7 @@ export function createPlayer(stage, onState) {
       stage.append(n);
     }
     current = { item, el, kind: item.kind };
-    if (item.kind !== 'youtube') {
+    if (item.kind === 'video' || item.kind === 'audio') {
       el.referrerPolicy = 'no-referrer';
       el.addEventListener('ended', finish);
       el.addEventListener('error', () => set('error', 'media'));
@@ -110,7 +117,7 @@ export function createPlayer(stage, onState) {
   }
 
   function pause() {
-    if (!current || state !== 'playing') return;
+    if (!current || state !== 'playing' || current.kind === 'web') return; // stránku nelze pozastavit
     if (current.kind === 'youtube') ytCmd('pauseVideo'); else current.el.pause();
     set('paused');
   }

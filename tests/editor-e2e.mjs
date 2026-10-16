@@ -32,7 +32,7 @@ await page.route('https://api.github.com/**', async (route) => {
   route.fulfill({ json: { content: { sha: 'new-' + name } } });
 });
 await page.goto(base);
-await page.locator('summary').click();
+await page.locator('#settings summary').click();
 await page.fill('#token', 'tok123');
 await page.click('#load');
 await page.waitForFunction(() => /Seznam načten/.test(document.querySelector('#msg').textContent));

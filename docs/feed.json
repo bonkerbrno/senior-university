@@ -1,7 +1,65 @@
 {
   "schema": 1,
-  "updated": "2026-10-16T14:07:49.773Z",
+  "updated": "2026-10-16T15:51:20.046Z",
   "items": [
+    {
+      "id": "tv",
+      "kind": "folder",
+      "title": "Televize a rádio",
+      "note": "Živé rozhlasové stanice a počasí.",
+      "added": "2026-10-16",
+      "items": [
+        {
+          "id": "rzu",
+          "title": "ČRo Radiožurnál živě",
+          "note": "Zprávy a publicistika.",
+          "url": "https://rozhlas.stream/radiozurnal_aac_128.aac",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rplus",
+          "title": "ČRo Plus živě",
+          "note": "Slovo, rozhovory, diskuse.",
+          "url": "https://rozhlas.stream/plus_mp3_128.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rdvojka",
+          "title": "ČRo Dvojka živě",
+          "note": "Pořady pro celou rodinu.",
+          "url": "https://rozhlas.stream/dvojka_mp3_128.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "rbrno",
+          "title": "ČRo Brno živě",
+          "note": "Regionální vysílání pro Brněnsko.",
+          "url": "https://rozhlas.stream/brno.mp3",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "pocasi1",
+          "title": "Počasí Brněnsko: teplota",
+          "note": "Živá mapa teploty, česky.",
+          "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=temp&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "pocasi2",
+          "title": "Počasí Brněnsko: srážky",
+          "note": "Živý radar srážek, česky.",
+          "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=radar&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs",
+          "added": "2026-10-16"
+        },
+        {
+          "id": "pocasi3",
+          "title": "Počasí Brněnsko: vítr",
+          "note": "Živá mapa větru, česky.",
+          "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=wind&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs",
+          "added": "2026-10-16"
+        }
+      ]
+    },
     {
       "id": "hudba",
       "kind": "folder",

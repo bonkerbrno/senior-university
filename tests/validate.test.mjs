@@ -88,3 +88,16 @@ test('knihovna: strom pro feed jen ze zaškrtnutých a neprázdných složek', (
   assert.equal(canParent(lib, 'f1', 'f1'), false);
   assert.equal(canParent(lib, 'f1', 'f2'), true);
 });
+
+test('stream z rozhlas.stream a stránky jen z povolených hostitelů', async () => {
+  const { parseMediaUrl } = await import('../docs/js/validate.js');
+  assert.equal(parseMediaUrl('https://rozhlas.stream/brno.mp3').kind, 'audio');
+  assert.equal(parseMediaUrl('https://rozhlas.stream/radiozurnal_aac_128.aac').kind, 'audio');
+  assert.equal(parseMediaUrl('https://rozhlas.stream/live').kind, 'audio');
+  assert.equal(parseMediaUrl('https://embed.windy.com/embed.html?lat=49.2&lon=16.6').kind, 'web');
+  assert.equal(parseMediaUrl('https://www.yr.no/en').kind, 'web');
+  assert.equal(parseMediaUrl('https://evil.example/stranka.html'), null);
+  assert.equal(parseMediaUrl('https://embed.windy.com.evil.example/x'), null);
+  assert.equal(parseMediaUrl('http://embed.windy.com/embed.html'), null);
+  assert.equal(parseMediaUrl('https://rozhlas.stream:8443/x'), null);
+});
