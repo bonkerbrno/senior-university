@@ -1,0 +1,2 @@
+# senior-university
+vzdálený přehravač.
