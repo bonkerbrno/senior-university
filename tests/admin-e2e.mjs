@@ -51,6 +51,14 @@ assert.equal(popup.isClosed(), false);
 await page.locator('.item').nth(2).locator('button').click();
 await popup.waitForEvent('close', { timeout: 3000 }).catch(() => {});
 assert.equal(popup.isClosed(), true, 'okno ČT24 se při spuštění rádia zavře');
+// po obnovení stránky Superbox okno najde podle jména a také zavře
+await page.click('#controls [data-act="stop"]').catch(() => {});
+const [popup2] = await Promise.all([ctx.waitForEvent('page'), page.locator('.item').nth(1).locator('button').click()]);
+await popup2.waitForLoadState();
+await page.reload(); await page.waitForSelector('.item');
+await page.locator('.item').nth(2).locator('button').click();
+await popup2.waitForEvent('close', { timeout: 3000 }).catch(() => {});
+assert.equal(popup2.isClosed(), true, 'okno ČT24 se zavře i po obnovení Superboxu');
 assert.equal(await page.locator('#stage iframe').count(), 0, 'ČT24 se nevkládá do rámečku');
 ok('ČT24 se otevře v novém okně a nevkládá se');
 ok('web položka se ukáže v izolovaném rámečku');

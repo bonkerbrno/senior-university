@@ -180,14 +180,21 @@ function markSeen(it) {
 // Oficiální přehrávač (např. ČT24): otevře se v novém okně jedním kliknutím. Okno si pamatujeme,
 // aby se zavřelo, jakmile táta pustí něco jiného (jinak by hrálo přes sebe). Otevřít jde jen povolený web.
 let extWin = null;
+const EXT_NAME = 'ct24-superbox';
+const SS_EXT = 'superbox.ext'; // okno ČT může být otevřené i po obnovení stránky, kdy odkaz na něj zapomeneme
+function ssGet() { try { return sessionStorage.getItem(SS_EXT); } catch { return null; } }
+function ssSet(v) { try { if (v) sessionStorage.setItem(SS_EXT, '1'); else sessionStorage.removeItem(SS_EXT); } catch { /* nic */ } }
 function closeExternal() {
+  // Po obnovení stránky okno najdeme podle jména (bez přechodu jinam) a zavřeme ho.
+  if (!extWin && ssGet()) { try { extWin = window.open('', EXT_NAME); } catch { extWin = null; } }
   try { if (extWin && !extWin.closed) extWin.close(); } catch { /* okno už není naše */ }
-  extWin = null;
+  extWin = null; ssSet(false);
 }
 function openExternal(it) {
   player.stop(); now = null;
   closeExternal();
-  extWin = window.open(it.url, 'ct24-superbox');
+  extWin = window.open(it.url, EXT_NAME);
+  ssSet(!!extWin);
   if (!extWin) {
     const a = document.createElement('a');
     a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
