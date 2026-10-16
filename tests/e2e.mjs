@@ -71,8 +71,23 @@ await ctx.route('https://media.test/**', (route) => {
 });
 let ytMode = 'ok';
 await ctx.route('https://www.youtube-nocookie.com/**', (route) => {
+  // Simulace YouTube přehrávače: odpovídá až na druhé „listening“, hlásí změny stavu a umí skončit nebo selhat.
   route.fulfill({ status: 200, contentType: 'text/html', body: `<!doctype html><body style="background:#123;color:#fff">YT STUB<script>
-    ${ytMode === 'error' ? "parent.postMessage(JSON.stringify({event:'onError',info:150}),'*');" : ''}
+    const mode = ${JSON.stringify(ytMode)};
+    let heard = 0, ready = false;
+    const out = (o) => parent.postMessage(JSON.stringify(o), '*');
+    if (mode === 'error') setTimeout(() => out({ event: 'onError', info: 150 }), 200);
+    addEventListener('message', (e) => {
+      let d; try { d = JSON.parse(e.data); } catch { return; }
+      if (d.event === 'listening' && ++heard >= 2 && !ready) {
+        ready = true;
+        out({ event: 'initialDelivery', info: { playerState: 1 } });
+        out({ event: 'onStateChange', info: 1 });
+        if (mode === 'short') setTimeout(() => out({ event: 'onStateChange', info: 0 }), 1500);
+      }
+      if (d.event === 'command' && d.func === 'pauseVideo') { out({ event: 'onStateChange', info: 2 }); out({ event: 'infoDelivery', info: { playerState: 2 } }); }
+      if (d.event === 'command' && d.func === 'playVideo') { out({ event: 'onStateChange', info: 1 }); out({ event: 'infoDelivery', info: { playerState: 1 } }); }
+    });
     </script>` });
 });
 
@@ -151,6 +166,15 @@ await step('audio ve složce hraje; Ukončit ho zastaví', async () => {
   await act('stop').click();
   assert.equal(await page.locator('#stage audio, #stage iframe, #stage video').count(), 0);
 });
+await step('YouTube: handshake, pauza a pokračování se skutečně předají přehrávači', async () => {
+  await act('item', 0).click();
+  await page.waitForFunction(() => document.querySelector('#stage').dataset.yt === '1', null, { timeout: 5000 });
+  await wait(); await act('pause').click();
+  await page.waitForFunction(() => document.querySelector('#stage').dataset.yt === '2', null, { timeout: 5000 });
+  await wait(); await act('pause').click();
+  await page.waitForFunction(() => document.querySelector('#stage').dataset.yt === '1', null, { timeout: 5000 });
+  await wait(); await act('stop').click();
+});
 await step('Automat: po skončení tónu naváže další pořad ze složky', async () => {
   await act('auto').click();
   assert.equal(await lit('auto'), 'green');
@@ -158,6 +182,15 @@ await step('Automat: po skončení tónu naváže další pořad ze složky', as
   await wait(); await act('item', 1).click();            // au1 (3 s) -> další v pořadí je yt1
   await page.waitForFunction(() => /Hraje: Pražské zvony/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
   await page.screenshot({ path: path.join(shots, '4-automat.png') });
+});
+await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 -> au1)', async () => {
+  ytMode = 'short';
+  await page.reload(); await page.waitForSelector('.item');
+  await act('open', 0).click(); await wait();
+  await act('auto').click(); await wait();
+  await act('item', 0).click();                                  // yt1 skončí po 1,5 s
+  await page.waitForFunction(() => /Hraje: Hudba z/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  ytMode = 'ok'; await act('auto').click(); await wait(); await act('stop').click();
 });
 await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
   await act('rand-here').click();
@@ -174,7 +207,6 @@ await step('Náhodně ze všeho: pustí pořad z celé knihovny', async () => {
   assert.match(await text('#substatus'), /Náhodně ze všeho/);
   await wait(); await act('rand-all').click();
   assert.equal(await lit('rand-all'), null);
-  await act('auto').click(); // vypnout Automat
   assert.equal(await lit('auto'), null);
 });
 await step('podsložka: Zpět vrací o úroveň, Domů do kořene', async () => {
