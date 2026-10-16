@@ -1,0 +1,11 @@
+{
+  "name": "senior-university",
+  "private": true,
+  "type": "module",
+  "description": "Hrací skříň: jednoduchý vzdálený přehrávač pro tátu",
+  "scripts": {
+    "test": "node --test tests/validate.test.mjs tests/security.test.mjs",
+    "e2e": "node tests/e2e.mjs",
+    "serve": "npx http-server docs -p 8080 -c-1"
+  }
+}

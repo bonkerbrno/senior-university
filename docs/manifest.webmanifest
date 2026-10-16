@@ -1,0 +1,9 @@
+{
+  "name": "Hrací skříň",
+  "short_name": "Skříň",
+  "start_url": "./",
+  "display": "fullscreen",
+  "background_color": "#2a1408",
+  "theme_color": "#2a1408",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

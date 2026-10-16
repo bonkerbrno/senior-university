@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Hrací skříň – editor</title>
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<header>
+  <h1>Hrací skříň – editor</h1>
+  <div id="msg" role="status" aria-live="polite"></div>
+</header>
+
+<details id="settings">
+  <summary>Nastavení přístupu k GitHubu</summary>
+  <label>Repozitář <input id="repo" value="bonkerbrno/senior-university" autocomplete="off"></label>
+  <label>Větev <input id="branch" value="main" autocomplete="off"></label>
+  <label>Přístupový token (fine-grained, jen tento repozitář, Contents: read/write)
+    <input id="token" type="password" autocomplete="off"></label>
+  <label class="inline"><input id="remember" type="checkbox"> Zapamatovat token v tomto prohlížeči</label>
+  <button id="load" type="button">Načíst seznam</button>
+</details>
+
+<section class="add">
+  <h2>Přidat odkaz</h2>
+  <label>Odkaz (https://… YouTube nebo přímý soubor mp4/webm/mp3/m4a/ogg/wav)<input id="n-url" autocomplete="off"></label>
+  <label>Název<input id="n-title" maxlength="120" autocomplete="off"></label>
+  <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
+  <div class="row"><button id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
+</section>
+
+<section>
+  <h2>Seznam <small>(zaškrtnuté ukážou tátovi)</small></h2>
+  <ul id="items"></ul>
+  <div class="row">
+    <button id="save" type="button" class="primary" disabled>Uložit a odeslat tátovi</button>
+    <span id="dirty"></span>
+  </div>
+</section>
+<script type="module" src="editor.js"></script>
+</body>
+</html>
