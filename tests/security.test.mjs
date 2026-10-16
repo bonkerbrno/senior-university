@@ -12,10 +12,11 @@ const js = files.filter((f) => f.endsWith('.js'));
 const html = files.filter((f) => f.endsWith('.html'));
 
 test('žádné nebezpečné API v JavaScriptu', () => {
-  const bad = /\.innerHTML|\.outerHTML|insertAdjacentHTML|document\.write|\beval\s*\(|new Function|setTimeout\s*\(\s*['"`]|createContextualFragment|srcdoc|window\.open|location\.(assign|replace)\s*=/;
+  const bad = /\.innerHTML|\.outerHTML|insertAdjacentHTML|document\.write|\beval\s*\(|new Function|setTimeout\s*\(\s*['"`]|createContextualFragment|srcdoc|location\.(assign|replace)\s*=/;
   for (const f of js) {
     const code = fs.readFileSync(f, 'utf8').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
     assert.doesNotMatch(code, bad, f);
+    for (const m of code.matchAll(/window\.open\(([^)]*)\)/g)) assert.equal(m[1].trim(), "it.url, 'ct24-superbox'", 'window.open jen pro povolenou položku: ' + f);
     for (const m of code.matchAll(/location\.href\s*=\s*([^;]+);/g)) assert.equal(m[1].trim(), "'editor/'", 'jediné povolené přesměrování je do editoru: ' + f);
   }
 });

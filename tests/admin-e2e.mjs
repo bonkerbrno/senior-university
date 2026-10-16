@@ -46,9 +46,12 @@ await ctx.route('https://ct24.ceskatelevize.cz/**', (r) => r.fulfill({ contentTy
 await page.click('#controls [data-act="stop"]');
 const [popup] = await Promise.all([ctx.waitForEvent('page'), page.locator('.item').nth(1).locator('button').click()]);
 assert.match(popup.url(), /^https:\/\/ct24\.ceskatelevize\.cz\//);
-await popup.close();
-assert.equal(await page.locator('#stage iframe').count(), 0, 'ČT24 se nevkládá do rámečku');
 assert.match(await page.innerText('#status'), /Otevírám/);
+assert.equal(popup.isClosed(), false);
+await page.locator('.item').nth(2).locator('button').click();
+await popup.waitForEvent('close', { timeout: 3000 }).catch(() => {});
+assert.equal(popup.isClosed(), true, 'okno ČT24 se při spuštění rádia zavře');
+assert.equal(await page.locator('#stage iframe').count(), 0, 'ČT24 se nevkládá do rámečku');
 ok('ČT24 se otevře v novém okně a nevkládá se');
 ok('web položka se ukáže v izolovaném rámečku');
 

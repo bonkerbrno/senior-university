@@ -30,7 +30,7 @@ Ověření: v prohlížeči otevřete `chrome://policy` (v Edge `edge://policy`)
 Přehrávání YouTube s přísným seznamem adres je třeba vyzkoušet na místě; pokud by video nešlo, přidejte do `URLAllowlist` `https://www.youtube.com`.
 
 ## 4. Co chodí a nechodí
-- „Zavřít“ zastaví vše a ukáže obrazovku „Hrací skříň odpočívá“ s tlačítkem Zapnout. Okno prohlížeče zavřít z webu nelze; zavře se kombinací Alt+F4 (zkratku mu můžete ukázat, nebo se počítač prostě vypne).
+- „Zavřít“ zastaví vše a ukáže obrazovku „Stanley Superbox 85 odpočívá“ s tlačítkem Zapnout. Okno prohlížeče zavřít z webu nelze; zavře se kombinací Alt+F4 (zkratku mu můžete ukázat, nebo se počítač prostě vypne).
 - „Zmenšit“ vytvoří lištu s ovládáním dole v okně. Skutečné schování na hlavní panel stránka sama neumí.
 - Při výpadku internetu se ukáže poslední stažený seznam.
 
