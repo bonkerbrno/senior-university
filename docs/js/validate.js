@@ -7,7 +7,7 @@ const YT_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'm.youtube.com', 'yo
 const VIDEO_EXT = new Set(['mp4', 'webm', 'ogv']);
 const AUDIO_EXT = new Set(['mp3', 'm4a', 'aac', 'ogg', 'oga', 'wav']);
 // Živé rozhlasové streamy (zvuk bez přípony) a webové stránky smějí jen z pevného seznamu hostitelů.
-const STREAM_HOSTS = new Set(['rozhlas.stream']);
+const STREAM_HOSTS = new Set(['rozhlas.stream', 'ice3.abradio.cz', 'playerservices.streamtheworld.com']);
 export const WEB_HOSTS = ['embed.windy.com', 'www.yr.no'];
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 

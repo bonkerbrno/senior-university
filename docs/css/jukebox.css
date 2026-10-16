@@ -85,7 +85,7 @@ html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at top
 .fs-bar { display: none; gap: 14px; padding: 12px; background: #000c; justify-content: center; }
 #screen-wrap:fullscreen { border: 0; border-radius: 0; }
 #screen-wrap:fullscreen .fs-bar { display: flex; }
-#screen-wrap:fullscreen .fs-bar .btn { min-width: 220px; }
+#screen-wrap:fullscreen .fs-bar .btn { min-width: 190px; }
 
 /* mini lišta */
 body.mini #app { display: block; padding: 0; }
@@ -144,3 +144,15 @@ body.mini .controls .btn[data-act="auto"] { display: none; }
 .pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pinkey { padding: 14px 0; font: inherit; font-size: 22px; font-weight: 700; color: #fff; background: #3a342b; border: 2px solid var(--brass); border-radius: 10px; cursor: pointer; }
 .pinkey:active { background: #5b5040; }
+
+/* výraznější 3D, stisk a svícení */
+.btn { box-shadow: 0 12px 0 #5a3d0e, 0 18px 18px #000b, inset 0 3px 0 #fffb, inset 0 -4px 0 #0003; margin-bottom: 4px; }
+.btn:active, .btn.pressed { transform: translateY(11px); filter: brightness(.82) saturate(1.1);
+  box-shadow: 0 1px 0 #5a3d0e, 0 2px 4px #000c, inset 0 6px 12px #0009, inset 0 0 0 3px #0003; }
+.btn .lamp { height: 12px; }
+.btn[data-lit] { --glow: var(--green); box-shadow: 0 12px 0 #5a3d0e, 0 18px 18px #000b, inset 0 3px 0 #fffb, 0 0 26px 6px var(--glow), 0 0 60px 10px color-mix(in srgb, var(--glow) 45%, transparent); }
+.btn[data-lit="orange"] { --glow: var(--orange); } .btn[data-lit="red"] { --glow: var(--red); } .btn[data-lit="blue"] { --glow: var(--blue); }
+.btn[data-lit]:active { box-shadow: 0 1px 0 #5a3d0e, 0 2px 4px #000c, inset 0 6px 12px #0009, 0 0 26px 6px var(--glow); }
+.btn[data-lit] .lamp { box-shadow: 0 0 22px 8px var(--glow); }
+.btn.red { box-shadow: 0 12px 0 #5c150f, 0 18px 18px #000b, inset 0 3px 0 #fff9; }
+.btn.red:active { box-shadow: 0 1px 0 #5c150f, 0 2px 4px #000c, inset 0 6px 12px #0009; }
