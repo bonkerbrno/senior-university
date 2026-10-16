@@ -9,6 +9,8 @@ const AUDIO_EXT = new Set(['mp3', 'm4a', 'aac', 'ogg', 'oga', 'wav']);
 // Živé rozhlasové streamy (zvuk bez přípony) a webové stránky smějí jen z pevného seznamu hostitelů.
 const STREAM_HOSTS = new Set(['rozhlas.stream', 'ice3.abradio.cz', 'playerservices.streamtheworld.com']);
 export const WEB_HOSTS = ['embed.windy.com', 'www.yr.no'];
+// Oficiální přehrávače, které nejdou vložit: položka je jen odkaz, který se otevře v novém okně.
+export const EXT_HOSTS = ['ct24.ceskatelevize.cz', 'www.ceskatelevize.cz'];
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 
 // eslint-disable-next-line no-control-regex
@@ -39,6 +41,7 @@ export function parseMediaUrl(raw) {
     return { kind: 'youtube', id, url: 'https://www.youtube.com/watch?v=' + id };
   }
   if (STREAM_HOSTS.has(host)) return { kind: 'audio', url: u.href };
+  if (EXT_HOSTS.includes(host)) return { kind: 'ext', url: u.href };
   if (WEB_HOSTS.includes(host)) return { kind: 'web', url: u.href };
   const ext = (u.pathname.split('.').pop() || '').toLowerCase();
   if (VIDEO_EXT.has(ext)) return { kind: 'video', url: u.href };

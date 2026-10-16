@@ -128,7 +128,7 @@ function refresh() {
     card.classList.toggle('selected', i === selected);
     card.classList.toggle('playing', cur);
     const btn = card.querySelector('button');
-    btn.querySelector('.lbl').textContent = folder ? 'Otevřít složku' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad';
+    btn.querySelector('.lbl').textContent = folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad';
     if (cur) btn.dataset.lit = st === 'paused' ? 'orange' : 'green'; else delete btn.dataset.lit;
   });
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
@@ -177,8 +177,16 @@ function markSeen(it) {
   seen.add(it.id);
   if (!PREVIEW) lsSet(LS_SEEN, JSON.stringify([...seen]));
 }
+// Oficiální přehrávač (např. ČT24): otevře se v novém okně jedním kliknutím. Odkaz je jen na povolený web.
+function openExternal(it) {
+  const a = document.createElement('a');
+  a.href = it.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.append(a); a.click(); a.remove();
+  say('Otevírám: ' + it.title + ' (nové okno). Až skončíte, zavřete okno křížkem vpravo nahoře.');
+}
 function startItem(it, where, q, idx) {
   clearTimeout(timer);
+  if (it.kind === 'ext') { openExternal(it); markSeen(it); render(); return; }
   queue = q; qi = idx;
   now = { item: it, where };
   markSeen(it);
@@ -195,7 +203,8 @@ function playHere(i) {
   startItem(it, pathTitle(trail), q, q.indexOf(it));
 }
 // Webové stránky nemají konec, proto je Automat a „náhodně“ přeskakují.
-function noWeb(a) { return a.filter((x) => x.kind !== 'web'); }
+const endless = (x) => x.kind === 'web' || x.kind === 'ext';
+function noWeb(a) { return a.filter((x) => !endless(x)); }
 function pickRandom(pool, avoid) {
   const c = pool.length > 1 ? pool.filter((x) => !avoid || x.id !== avoid.id) : pool;
   return c[Math.floor(Math.random() * c.length)];
@@ -214,7 +223,7 @@ function playNext() {
   if (!noWeb(pool).length) return;
   let it, idx, q = pool;
   if (shuffle) { it = pickRandom(noWeb(pool), now && now.item); idx = pool.indexOf(it); }
-  else { idx = (qi + 1) % pool.length; while (pool[idx].kind === 'web') idx = (idx + 1) % pool.length; it = pool[idx]; }
+  else { idx = (qi + 1) % pool.length; while (endless(pool[idx])) idx = (idx + 1) % pool.length; it = pool[idx]; }
   startItem(it, now ? now.where : '', q, idx);
 }
 

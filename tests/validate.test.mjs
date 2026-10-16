@@ -101,3 +101,10 @@ test('stream z rozhlas.stream a stránky jen z povolených hostitelů', async ()
   assert.equal(parseMediaUrl('http://embed.windy.com/embed.html'), null);
   assert.equal(parseMediaUrl('https://rozhlas.stream:8443/x'), null);
 });
+
+test('oficiální přehrávač ČT24 je jen odkaz z povolených hostitelů', async () => {
+  const { parseMediaUrl } = await import('../docs/js/validate.js');
+  assert.equal(parseMediaUrl('https://ct24.ceskatelevize.cz/video/zive-vysilani').kind, 'ext');
+  assert.equal(parseMediaUrl('https://ct24.ceskatelevize.cz.evil.example/x'), null);
+  assert.equal(parseMediaUrl('http://ct24.ceskatelevize.cz/x'), null);
+});

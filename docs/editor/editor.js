@@ -147,7 +147,7 @@ function renderList() {
 /* ---------- přidání ---------- */
 $('#n-url').addEventListener('input', () => {
   const m = parseMediaUrl($('#n-url').value);
-  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio nebo živé rádio', web: 'webová stránka (počasí)' })[m.kind] : 'Tento odkaz tátův přehrávač nepřehraje.';
+  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio nebo živé rádio', web: 'webová stránka (počasí)', ext: 'oficiální přehrávač (otevře se v novém okně)' })[m.kind] : 'Tento odkaz tátův přehrávač nepřehraje.';
 });
 $('#add').addEventListener('click', () => {
   const it = validateItem({ id: newId(), title: $('#n-title').value, note: $('#n-note').value, url: $('#n-url').value, added: new Date().toISOString().slice(0, 10) });

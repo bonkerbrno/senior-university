@@ -156,3 +156,6 @@ body.mini .controls .btn[data-act="auto"] { display: none; }
 .btn[data-lit] .lamp { box-shadow: 0 0 22px 8px var(--glow); }
 .btn.red { box-shadow: 0 12px 0 #5c150f, 0 18px 18px #000b, inset 0 3px 0 #fff9; }
 .btn.red:active { box-shadow: 0 1px 0 #5c150f, 0 2px 4px #000c, inset 0 6px 12px #0009; }
+
+.copy { position: fixed; left: 0; right: 0; bottom: 1px; text-align: center; font-size: 10px; line-height: 12px; color: #ffe9a8; opacity: .55; pointer-events: none; z-index: 1; }
+body.mini .copy { display: none; }
