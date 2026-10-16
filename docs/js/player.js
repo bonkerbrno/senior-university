@@ -6,10 +6,13 @@ const YT_ORIGIN = 'https://www.youtube-nocookie.com';
 export function createPlayer(stage, onState) {
   let current = null;      // { item, el, kind }
   let state = 'idle';      // idle | playing | paused | error
+  let hs = 0;              // časovač handshaku s YouTube přehrávačem
 
   function set(s, detail) { state = s; onState(s, detail); }
 
   function clear() {
+    clearInterval(hs);
+    delete stage.dataset.yt;
     window.removeEventListener('message', onYtMessage);
     if (current && current.el) {
       if (current.el.pause) { try { current.el.pause(); } catch { /* nic */ } }
@@ -33,13 +36,37 @@ export function createPlayer(stage, onState) {
     current.el.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), YT_ORIGIN);
   }
 
+  // YouTube načítá přehrávač později než iframe, proto se „listening“ opakuje, dokud neodpoví.
+  function startHandshake(el) {
+    let n = 0;
+    clearInterval(hs);
+    hs = setInterval(() => {
+      if (!current || current.el !== el || ++n > 60) { clearInterval(hs); return; }
+      const post = (m) => el.contentWindow.postMessage(JSON.stringify(m), YT_ORIGIN);
+      post({ event: 'listening', id: 1, channel: 'widget' });
+      post({ event: 'command', func: 'addEventListener', args: ['onStateChange'] });
+      post({ event: 'command', func: 'addEventListener', args: ['onError'] });
+    }, 300);
+  }
+
+  // fromChange: událost onStateChange (změna stavu, např. klepnutí do videa); infoDelivery jen informuje
+  function ytState(code, fromChange) {
+    stage.dataset.yt = String(code);
+    if (code === 0) finish();
+    else if (!fromChange) return;
+    else if (code === 2 && state === 'playing') set('paused');
+    else if (code === 1 && state === 'paused') set('playing');
+  }
+
   function onYtMessage(ev) {
     if (!current || current.kind !== 'youtube' || ev.origin !== YT_ORIGIN || ev.source !== current.el.contentWindow) return;
     let d;
     try { d = typeof ev.data === 'string' ? JSON.parse(ev.data) : null; } catch { return; }
-    if (!d) return;
+    if (!d || typeof d !== 'object') return;
+    clearInterval(hs); // přehrávač odpovídá, další handshake není potřeba
     if (d.event === 'onError') set('error', 'embed');
-    else if (d.event === 'onStateChange' && d.info === 0) finish();
+    else if (d.event === 'onStateChange' && Number.isInteger(d.info)) ytState(d.info, true);
+    else if (d.event === 'infoDelivery' && d.info && Number.isInteger(d.info.playerState)) ytState(d.info.playerState, false);
   }
 
   function play(item) {
@@ -54,9 +81,7 @@ export function createPlayer(stage, onState) {
       el.setAttribute('allow', 'autoplay; encrypted-media');
       el.setAttribute('sandbox', 'allow-scripts allow-same-origin');
       el.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-      el.addEventListener('load', () => {
-        el.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), YT_ORIGIN);
-      });
+      el.addEventListener('load', () => startHandshake(el));
       window.addEventListener('message', onYtMessage);
       stage.append(el);
     } else if (item.kind === 'video') {
@@ -94,7 +119,7 @@ export function createPlayer(stage, onState) {
     if (current.kind === 'youtube') ytCmd('playVideo'); else current.el.play().catch(() => set('error', 'media'));
     set('playing');
   }
-  function finish() { clear(); idleScreen(); set('ended'); }
+  function finish() { if (!current) return; clear(); idleScreen(); set('ended'); }
 
   function stop() {
     clear();
