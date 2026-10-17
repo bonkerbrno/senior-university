@@ -234,6 +234,51 @@
       "parent": "tv",
       "show": true,
       "url": "https://embed.windy.com/embed.html?lat=49.2&lon=16.6&zoom=8&level=surface&overlay=wind&menu=&type=map&location=coordinates&metricWind=km/h&metricTemp=%C2%B0C&lang=cs"
+    },
+    {
+      "id": "pmvc8lbmaxxot0",
+      "title": "ČESKÁ ČTVRŤ v New Yorku",
+      "note": "Procházka a historie české čtvrti v New Yorku",
+      "url": "https://www.youtube.com/watch?v=cOGpBfek9Bo",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
+    },
+    {
+      "id": "pmvc8lbmbbsct1",
+      "title": "KUCHYŇ V KOUPELNĚ? | Hledáme byt v New Yorku",
+      "note": "Prohlídka a hledání dostupného bydlení v New Yorku",
+      "url": "https://www.youtube.com/watch?v=r31-8yE1jHg",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
+    },
+    {
+      "id": "pmvc8lbmcgylt2",
+      "title": "ČESKÁ ČTVRŤ v Chicagu",
+      "note": "Procházka po stopách české historie v Chicagu",
+      "url": "https://www.youtube.com/watch?v=hukcTI_w5jo",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
+    },
+    {
+      "id": "pmvc8lbmc4g4t3",
+      "title": "Slovenka si v LA vydělává VLASTNÍM TĚLEM",
+      "note": "Rozhovor a život v Los Angeles",
+      "url": "https://www.youtube.com/watch?v=0coREDl4_cY",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
+    },
+    {
+      "id": "pmvc8lbmckdht4",
+      "title": "Proč NEŽÍT v USA",
+      "note": "Důvody a nevýhody života v amerických městech",
+      "url": "https://www.youtube.com/watch?v=LSrBQqQDb0c",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
     }
   ]
 }
