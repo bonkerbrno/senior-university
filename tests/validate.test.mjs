@@ -108,3 +108,12 @@ test('oficiální přehrávač ČT24 je jen odkaz z povolených hostitelů', asy
   assert.equal(parseMediaUrl('https://ct24.ceskatelevize.cz.evil.example/x'), null);
   assert.equal(parseMediaUrl('http://ct24.ceskatelevize.cz/x'), null);
 });
+
+test('hromadné vložení: čtení tabulky z Excelu a cesty kategorií', async () => {
+  const { parseTable, categoryPath } = await import('../docs/js/bulk.js');
+  assert.deepEqual(parseTable('a\tb\tc\nd\te\tf\n'), [['a', 'b', 'c'], ['d', 'e', 'f']]);
+  assert.deepEqual(parseTable('"a\nb"\t"c ""q"""\tx'), [['a\nb', 'c "q"', 'x']]);
+  assert.deepEqual(parseTable('\tx\ty'), [['', 'x', 'y']]);
+  assert.deepEqual(categoryPath('Televize / Zprávy'), ['Televize', 'Zprávy']);
+  assert.deepEqual(categoryPath('  '), []);
+});

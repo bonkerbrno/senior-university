@@ -22,3 +22,7 @@ li .pick select { width: auto; margin: 0; padding: 4px; }
 
 #preview { width: 100%; height: 520px; border: 1px solid var(--line); border-radius: 8px; background: #000; }
 .back { font-size: 14px; } .hint { font-size: 13px; opacity: .8; }
+
+.tablewrap { overflow-x: auto; } #b-table { width: 100%; border-collapse: collapse; } #b-table th { text-align: left; font-size: 13px; padding: 4px; }
+#b-table td { padding: 2px; } #b-table input { margin: 0; padding: 6px; min-width: 120px; } #b-table td:nth-child(3) input { min-width: 220px; }
+#b-table tr.bad input { border-color: #c0392b; background: color-mix(in srgb, #c0392b 12%, var(--card)); }
