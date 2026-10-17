@@ -1,7 +1,216 @@
 {
   "schema": 1,
-  "updated": "2026-10-17T10:28:49.868Z",
+  "updated": "2026-10-17T10:47:09.403Z",
   "items": [
+    {
+      "id": "pmvc99bxnx5w",
+      "kind": "folder",
+      "title": "Rozhovory",
+      "note": "",
+      "added": "2026-10-17",
+      "items": [
+        {
+          "id": "pmvc9bzz6cpn",
+          "kind": "folder",
+          "title": "Osobnost PLUS",
+          "note": "",
+          "added": "2026-10-17",
+          "items": [
+            {
+              "id": "pmvc9r7ol9bht0",
+              "title": "Bohumil Pečinka: Pokud v dalších sněmovních volbách vyhraje Babišovo ANO, tak všechny partaje končí",
+              "note": "Rozhovor s politickým komentátorem o budoucnosti české politické scény",
+              "url": "https://www.youtube.com/watch?v=FogQPlPWK24",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omk39t1",
+              "title": "Pavel Barša: Světový řád se hroutí, největší hráči ho sami podkopávají",
+              "note": "Pohled filozofa a politologa na krizi mezinárodního uspořádání",
+              "url": "https://www.youtube.com/watch?v=ASwBLHgBYm4",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omk43t2",
+              "title": "Michael Kocáb: Ze současné politiky by byl Václav Havel zděšen",
+              "note": "Bývalý ministr pro lidská práva o stavu české politické kultury",
+              "url": "https://www.youtube.com/watch?v=DGLBDeSTpqg",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omg8ot3",
+              "title": "Václav Bělohradský: Ve všech rozhodujících konfliktech stáli Rusové po našem boku",
+              "note": "Pohled významného filozofa na globální konflikty a historii",
+              "url": "https://www.youtube.com/watch?v=0Rp2Ch9eS90",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omwt9t4",
+              "title": "Petros Michopulos: Čeká nás občanská válka bez střelby",
+              "note": "Politický komentátor o společenské polarizaci a nadcházejících volbách",
+              "url": "https://www.youtube.com/watch?v=2MpCYYaYd8M",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7om3ght5",
+              "title": "Mirek Topolánek: Petr Macinka to sice hraje velmi agresivně, ale v reálné politice to taková tragédie není",
+              "note": "Bývalý premiér o aktuálním dění v české politice",
+              "url": "https://www.youtube.com/watch?v=KLGbdDb6bE4",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omn7jt6",
+              "title": "Miroslav Kalousek: Obávám se dalšího vývoje po volbách",
+              "note": "Bývalý ministr financí o ekonomické situaci a státním rozpočtu",
+              "url": "https://www.youtube.com/watch?v=eBIXBMdPVBQ",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7om7hct7",
+              "title": "Erik Tabery: Mnoho politiků má pocit, že smyslem novinářské práce je jim pomáhat",
+              "note": "Šéfredaktor Respektu o novinářské etice a tlaku politiků",
+              "url": "https://www.youtube.com/watch?v=enYJEdm_DfM",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omk6mt8",
+              "title": "Miroslav Singer: Cena energií bude vysoká dlouho",
+              "note": "Bývalý guvernér ČNB o dopadech energetické krize na ekonomiku",
+              "url": "https://www.youtube.com/watch?v=9ce0RZG2NNI",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omxlft9",
+              "title": "Miroslav Kalousek",
+              "note": "Obávám se dalšího vývoje po volbách. Ani u jedné strany nevidím světlo v tunelu",
+              "url": "https://www.youtube.com/watch?v=eBIXBMdPVBQ",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7om2b6t10",
+              "title": "Petros Michopulos",
+              "note": "Michopulos: Macinka je produktem a nejlepším žákem toho nejhoršího, co ve svém životě udělal Klaus",
+              "url": "https://www.youtube.com/watch?v=RrGOBAJrypM",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omjf8t11",
+              "title": "Bohumil Pečinka",
+              "note": "Pokud v dalších sněmovních volbách vyhraje Babišovo ANO, tak všechny partaje končí",
+              "url": "https://www.youtube.com/watch?v=FogQPlPWK24",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omxa0t12",
+              "title": "Mirek Topolánek",
+              "note": "Varuju Babiše a Schillerovou před tím, aby měnili parametry důchodového systému",
+              "url": "https://www.youtube.com/watch?v=lGs3Q6FNMas",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omyjrt13",
+              "title": "Miroslav Singer",
+              "note": "Cena energií bude vysoká dlouho. Pochybuji, jestli se dá největším firmám dlouhodobě pomoci",
+              "url": "https://www.youtube.com/watch?v=9ce0RZG2NNI",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7om1g9t14",
+              "title": "Erik Tabery",
+              "note": "Mnoho politiků má pocit, že smyslem novinářské práce je jim pomáhat",
+              "url": "https://www.youtube.com/watch?v=enYJEdm_DfM",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9r7omo16t15",
+              "title": "Michael Kocáb",
+              "note": "Ze současné politiky by byl Václav Havel zděšen, na to dávám hlavu na špalek",
+              "url": "https://www.youtube.com/watch?v=DGLBDeSTpqg",
+              "added": "2026-10-17"
+            }
+          ]
+        },
+        {
+          "id": "pmvc9akyy8s4",
+          "kind": "folder",
+          "title": "Nora Fridrichová",
+          "note": "",
+          "added": "2026-10-17",
+          "items": [
+            {
+              "id": "pmvc9up7nda5t0",
+              "title": "JAN GROLICH: Lidovci už nejsou ti staří lidovci. Za výroky straníků proti gayům jsem se omluvil",
+              "note": "Rozhovor s hejtmanem Jihomoravského kraje o situaci v KDU-ČSL a směřování strany",
+              "url": "https://www.youtube.com/watch?v=4qF4u0NTpCA",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7np57t1",
+              "title": "IVONA REMUNDOVÁ: Porazila Motoristu. Musela dokazovat, že není neonacistka, rozsudek není pravomocný",
+              "note": "Rozhovor s dokumentaristkou o soudním sporu s hnutím Motoristé sobě",
+              "url": "https://www.youtube.com/watch?v=lD9XPwaXnXA",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7na30t2",
+              "title": "JANA FABIÁNOVÁ: Ale udělala bych to znovu. Lidem jako Cimický nesmějí tyhle věci projít",
+              "note": "Rozhovor se zpěvačkou a herčkou o kauze Jana Cimického a boji za oběti",
+              "url": "https://www.youtube.com/watch?v=yGcTXXBIUEU",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7npp6t3",
+              "title": "DANIEL KORTUS: Turek mě ignoruje, do duelu nechce. Říká úplné blbosti a tváří se u toho jako vědec",
+              "note": "Rozhovor s klimatickým analytikem a publicistou o politické debatě a dezinformacích",
+              "url": "https://www.youtube.com/watch?v=NvIQf1Agkgc",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7ovatt4",
+              "title": "JITKA ČVANČAROVÁ: Mého dědu poslali do uranových dolů v Jáchymově. Proto nemůžu mlčet",
+              "note": "Rozhovor s herčkou o rodinné historii, společenských tématech a veřejném angažmá",
+              "url": "https://www.youtube.com/watch?v=7BiyCzFi1Pw",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7o8j3t5",
+              "title": "ONDŘEJ KUNDRA: Macinka bere Turka neustále s sebou, může to být osobní. Za Turkem není žádný výkon",
+              "note": "Rozhovor s investigativním novinářem týdeníku Respekt o dění v české politice",
+              "url": "https://www.youtube.com/watch?v=irenANUFE3Q",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7owx4t6",
+              "title": "Velmi osobní rozhovor se spisovatelem PATRIKEM HARTLEM: O dětství, ženě, úzkostech i výchově dětí",
+              "note": "Rozhovor se spisovatelem a režisérem o jeho tvorbě, soukromí a zvládání úzkostí",
+              "url": "https://www.youtube.com/watch?v=1MaNYB7djp8",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7o9zkt7",
+              "title": "MICHAELA NOSKOVÁ: Když se mě policie zeptala, zda mám fotku dcery, došlo mi, že je vážný problém",
+              "note": "Rozhovor se zpěvačkou o osobních krizích a bezpečnosti dětí",
+              "url": "https://www.youtube.com/watch?v=5BNv3fsgTbo",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7ojhwt8",
+              "title": "Wollner & Fridrichová: SETKÁNÍ",
+              "note": "Společný rozhovor dřívějších klíčových novinářů investigativy České televize",
+              "url": "https://www.youtube.com/watch?v=xBF7iASYb6s",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvc9up7oe23t9",
+              "title": "Šéf Motoristů Petr Macinka: Filip Turek svou kauzou dokázal, že je skutečná celebrita",
+              "note": "Rozhovor s předsedou politického hnutí Motoristé sobě",
+              "url": "https://www.youtube.com/watch?v=uOO8yc6WJlQ",
+              "added": "2026-10-17"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "tv",
       "kind": "folder",
