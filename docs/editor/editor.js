@@ -1,5 +1,5 @@
 import { validateItem, validateFolder, parseMediaUrl, validateFeed } from '../js/validate.js';
-import { parseTable, categoryPath } from '../js/bulk.js';
+import { parseTable, categoryPath, cleanUrl } from '../js/bulk.js';
 import { makeAdminFile, PIN_RE } from '../js/admin.js';
 import { parseLibrary, libraryToText, buildFeed, canParent } from '../js/library.js';
 
@@ -220,7 +220,8 @@ function folderForPath(names) {
 $('#b-add').addEventListener('click', () => {
   let ok = 0, bad = 0;
   bRows().forEach((tr, i) => {
-    const [cat, title, url, note] = [...tr.querySelectorAll('input')].map((x) => x.value.trim());
+    const [cat, title, rawUrl, note] = [...tr.querySelectorAll('input')].map((x) => x.value.trim());
+    const url = cleanUrl(rawUrl);
     tr.classList.remove('bad');
     if (!cat && !title && !url && !note) return;     // prázdný řádek přeskočíme
     const n = validateItem({ id: newId() + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
@@ -241,7 +242,9 @@ $('#t-add').addEventListener('click', () => {
   let ok = 0; const bad = [];
   rows.forEach((line, i) => {
     const c = line.split(/\t|;/).map((x) => x.trim());
-    const [title, note, url] = c.length >= 3 ? [c[0], c.slice(1, -1).join('; '), c[c.length - 1]] : [c[0], '', c[1]];
+    let [title, note, url] = c.length >= 3 ? [c[0], c.slice(1, -1).join('; '), c[c.length - 1]] : [c[0], '', c[1]];
+    if (!url) { const u = cleanUrl(line); const k = line.indexOf(u); if (/^https?:/.test(u) && k > 0) { url = u; title = line.slice(0, k).replace(/[\s;:\-–\[(<]+$/, ''); note = ''; } }
+    url = cleanUrl(url || '');
     const n = validateItem({ id: newId() + 't' + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
     if (!n) { bad.push(i + 1); return; }
     lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: true, added: n.added, parent: $('#t-parent').value });
