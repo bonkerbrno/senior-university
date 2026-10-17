@@ -2,6 +2,15 @@
   "schema": 1,
   "items": [
     {
+      "id": "pmvcb9hz9t1t",
+      "title": "Rybaření",
+      "note": "",
+      "kind": "folder",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": ""
+    },
+    {
       "id": "pmvcautexel1",
       "title": "Taneční hudba 1",
       "note": "",
