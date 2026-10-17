@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-17T10:27:57.293Z",
+  "updated": "2026-10-17T10:28:49.868Z",
   "items": [
     {
       "id": "tv",
@@ -205,6 +205,13 @@
           "added": "2026-10-17"
         },
         {
+          "id": "pmvc8lbmcgylt2",
+          "title": "ČESKÁ ČTVRŤ v Chicagu",
+          "note": "Procházka po stopách české historie v Chicagu",
+          "url": "https://www.youtube.com/watch?v=hukcTI_w5jo",
+          "added": "2026-10-17"
+        },
+        {
           "id": "pmvc8lbmc4g4t3",
           "title": "Slovenka si v LA vydělává VLASTNÍM TĚLEM",
           "note": "Rozhovor a život v Los Angeles",
@@ -219,13 +226,6 @@
           "added": "2026-10-17"
         }
       ]
-    },
-    {
-      "id": "pmvc8lbmcgylt2",
-      "title": "ČESKÁ ČTVRŤ v Chicagu",
-      "note": "Procházka po stopách české historie v Chicagu",
-      "url": "https://www.youtube.com/watch?v=hukcTI_w5jo",
-      "added": "2026-10-17"
     }
   ]
 }
