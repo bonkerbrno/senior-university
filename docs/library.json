@@ -2,6 +2,15 @@
   "schema": 1,
   "items": [
     {
+      "id": "pmvc9z2qi05q",
+      "title": "Václav Moravec",
+      "note": "",
+      "kind": "folder",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc99bxnx5w"
+    },
+    {
       "id": "pmvc9bzz6cpn",
       "title": "Osobnost PLUS",
       "note": "",
@@ -540,6 +549,60 @@
       "show": true,
       "added": "2026-10-17",
       "parent": "pmvc9akyy8s4"
+    },
+    {
+      "id": "pmvca01iyt2wt0",
+      "title": "PM Extra: CO JE PODLE VÁCLAVA MORAVCE NEJVĚTŠÍ BIZÁR?",
+      "note": "Speciální epizoda a ohlédnutí za bizarními momenty v české politice a médiích",
+      "url": "https://www.youtube.com/watch?v=qtWVs5ckqrc",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
+    },
+    {
+      "id": "pmvca01iy6qjt1",
+      "title": "JAN ŠPAČEK: Generační vzpouru čekám už nějakou dobu, ale ona nepřichází",
+      "note": "Rozhovor s internetovým tvůrcem a novinářem o politické kultuře mládeže",
+      "url": "https://www.youtube.com/watch?v=cKkgyEMvtTU",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
+    },
+    {
+      "id": "pmvca01iy4wgt2",
+      "title": "MIREK TOPOLÁNEK: Jestli lidé s rakovinou slinivky něco nechtějí, je to nekrolog v hlavě",
+      "note": "Rozhovor s bývalým premiérem o politice, osobním životě a zdraví",
+      "url": "https://www.youtube.com/watch?v=y1-VWPES8ew",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
+    },
+    {
+      "id": "pmvca01iyehft3",
+      "title": "MARTIN KUBA: Současná politika je devastační",
+      "note": "Rozhovor s jihočeským hejtmanem o stavu tuzemské politické scény",
+      "url": "https://www.youtube.com/watch?v=-kfLD3RIrHk",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
+    },
+    {
+      "id": "pmvca01iy2bzt4",
+      "title": "DAVID ONDRÁČKA: Nic se tu nemění, všechno hnije",
+      "note": "Rozhovor s bývalým šéfem Transparency International o korupci a fungování institucí",
+      "url": "https://www.youtube.com/watch?v=k-7ZqCiHXos",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
+    },
+    {
+      "id": "pmvca01iydgyt5",
+      "title": "PETR MACINKA: Neřeším s Babišem pitomosti",
+      "note": "Rozhovor s předsedou hnutí Motoristé sobě o spojenectvích a politické taktice",
+      "url": "https://www.youtube.com/watch?v=Hz1QWvNf15M",
+      "show": true,
+      "added": "2026-10-17",
+      "parent": "pmvc9z2qi05q"
     }
   ]
 }
