@@ -114,7 +114,7 @@ function render() { renderList(); sendPreview(); }
 function renderList() {
   const ul = $('#items');
   ul.replaceChildren();
-  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value);
+  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#t-parent'), '', $('#t-parent').value);
   orderedTree().forEach(({ x: it, depth }) => {
     const folder = it.kind === 'folder';
     const li = document.createElement('li'); if (folder) li.className = 'folder';
@@ -231,6 +231,24 @@ $('#b-add').addEventListener('click', () => {
   if (ok) { setDirty(true); render(); }
   $('#b-info').textContent = '';
   say(ok + ' vloženo' + (bad ? '; chybné řádky (červené, zůstaly v tabulce): ' + bad + '. Zkontrolujte název a https odkaz.' : '. Nezapomeňte uložit.'), bad ? 'err' : 'ok');
+});
+
+/* ---------- hromadné vložení textem (název ; popis ; odkaz) ---------- */
+$('#t-add').addEventListener('click', () => {
+  const rows = $('#t-text').value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  let ok = 0; const bad = [];
+  rows.forEach((line, i) => {
+    const c = line.split(/\t|;/).map((x) => x.trim());
+    const [title, note, url] = c.length >= 3 ? [c[0], c.slice(1, -1).join('; '), c[c.length - 1]] : [c[0], '', c[1]];
+    const n = validateItem({ id: newId() + 't' + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
+    if (!n) { bad.push(i + 1); return; }
+    lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: true, added: n.added, parent: $('#t-parent').value });
+    ok++;
+  });
+  if (ok) { setDirty(true); render(); }
+  $('#t-info').textContent = '';
+  if (ok) $('#t-text').value = bad.length ? rows.filter((_, i) => bad.includes(i + 1)).join('\n') : '';
+  say(ok + ' vloženo' + (bad.length ? '; neplatné řádky (zůstaly v poli): ' + bad.join(', ') : '. Nezapomeňte uložit.'), bad.length ? 'err' : 'ok');
 });
 
 /* ---------- uložení ---------- */

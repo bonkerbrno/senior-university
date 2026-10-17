@@ -36,6 +36,14 @@
 </section>
 
 <section class="add">
+  <h2>Vložit více odkazů textem (název ; popis ; odkaz)</h2>
+  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor). Popis může být prázdný. Všechny řádky půjdou do vybrané složky.</p>
+  <label>Složka<select id="t-parent"></select></label>
+  <textarea id="t-text" rows="5" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
+  <div class="row"><button id="t-add" type="button">Vložit řádky</button><span id="t-info"></span></div>
+</section>
+
+<section class="add">
   <h2>Vložit více odkazů najednou</h2>
   <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název složky; neexistuje-li, vytvoří se. Podsložku zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
   <div class="tablewrap"><table id="b-table"><thead><tr><th>Kategorie</th><th>Název</th><th>Odkaz</th><th>Popis (nepovinný)</th></tr></thead><tbody id="b-body"></tbody></table></div>
