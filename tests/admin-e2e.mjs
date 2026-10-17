@@ -111,4 +111,11 @@ await pv.locator('.item', { hasText: 'Nová' }).waitFor();
 
 ok('hromadné vložení z Excelu: kategorie → složky, platné projdou, chybný zůstane červený');
 
+// textové pole: odkazy zkopírované z chatu jako markdown [url](url) se rozpoznají
+await page.fill('#t-text', 'Oliver Twist ; Tanec 1967 ; [https://www.youtube.com/watch?v=aaaaaaaaaaa](https://www.youtube.com/watch?v=aaaaaaaaaaa)\nBez popisu [https://www.youtube.com/watch?v=bbbbbbbbbbb](https://www.youtube.com/watch?v=bbbbbbbbbbb)\nSpatny ; neni odkaz');
+await page.click('#t-add');
+assert.match(await page.innerText('#msg'), /2 vloženo.*3/);
+assert.equal(await page.inputValue('#t-text'), 'Spatny ; neni odkaz');
+ok('textové vložení rozumí odkazům v markdownu a chybné řádky nechá v poli');
+
 await browser.close(); server.close();

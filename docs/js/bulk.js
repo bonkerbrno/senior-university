@@ -24,3 +24,11 @@ export function parseTable(text) {
 export function categoryPath(text) {
   return String(text).split(/\s*[\/>]\s*/).map((x) => x.trim()).filter(Boolean);
 }
+
+// Odkaz po vložení z chatu nebo webu: "[https://x](https://x)", "<https://x>", "https://x)." -> "https://x"
+export function cleanUrl(text) {
+  const s = String(text).trim();
+  const md = s.match(/\]\(\s*<?(https?:\/\/[^)\s>]+)/i);
+  const raw = md ? md[1] : (s.match(/https?:\/\/[^\s<>"'\]\)\[]+/i) || [s])[0];
+  return raw.replace(/[.,;:!?]+$/, '');
+}
