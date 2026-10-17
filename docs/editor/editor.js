@@ -1,4 +1,5 @@
 import { validateItem, validateFolder, parseMediaUrl, validateFeed } from '../js/validate.js';
+import { parseTable, categoryPath } from '../js/bulk.js';
 import { makeAdminFile, PIN_RE } from '../js/admin.js';
 import { parseLibrary, libraryToText, buildFeed, canParent } from '../js/library.js';
 
@@ -113,7 +114,7 @@ function render() { renderList(); sendPreview(); }
 function renderList() {
   const ul = $('#items');
   ul.replaceChildren();
-  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#b-parent'), '', $('#b-parent').value);
+  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value);
   orderedTree().forEach(({ x: it, depth }) => {
     const folder = it.kind === 'folder';
     const li = document.createElement('li'); if (folder) li.className = 'folder';
@@ -164,22 +165,72 @@ $('#add-folder').addEventListener('click', () => {
   $('#f-title').value = ''; setDirty(true); render(); say('Složka přidána. Nezapomeňte uložit.', 'ok');
 });
 
-/* ---------- hromadné vložení (název ; popis ; odkaz) ---------- */
-$('#b-add').addEventListener('click', () => {
-  const rows = $('#b-text').value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  let ok = 0; const bad = [];
-  rows.forEach((line, i) => {
-    const c = line.split(/\t|;/).map((x) => x.trim());
-    const [title, note, url] = c.length >= 3 ? [c[0], c.slice(1, -1).join('; '), c[c.length - 1]] : [c[0], '', c[1]];
-    const n = validateItem({ id: newId() + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
-    if (!n) { bad.push(i + 1); return; }
-    lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: true, added: n.added, parent: $('#b-parent').value });
-    ok++;
+/* ---------- hromadné vložení: tabulka Kategorie | Název | Odkaz | Popis ---------- */
+const BCOLS = 4;
+const bbody = $('#b-body');
+function bRows() { return [...bbody.querySelectorAll('tr')]; }
+function bAddRows(n) {
+  for (let k = 0; k < n; k++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < BCOLS; c++) {
+      const td = document.createElement('td'), inp = document.createElement('input');
+      inp.autocomplete = 'off'; inp.dataset.col = String(c);
+      inp.setAttribute('aria-label', ['Kategorie', 'Název', 'Odkaz', 'Popis'][c]);
+      td.append(inp); tr.append(td);
+    }
+    bbody.append(tr);
+  }
+}
+bAddRows(6);
+bbody.addEventListener('paste', (ev) => {
+  const inp = ev.target.closest && ev.target.closest('input');
+  if (!inp) return;
+  const text = (ev.clipboardData || window.clipboardData).getData('text');
+  if (!/[\t\n]/.test(text.trim())) return;          // obyčejný text do jedné buňky vložíme normálně
+  ev.preventDefault();
+  const grid = parseTable(text);
+  const r0 = bRows().indexOf(inp.closest('tr')), c0 = Number(inp.dataset.col);
+  while (bRows().length < r0 + grid.length) bAddRows(1);
+  grid.forEach((cells, i) => {
+    const inputs = bRows()[r0 + i].querySelectorAll('input');
+    cells.forEach((v, j) => { if (c0 + j < BCOLS) inputs[c0 + j].value = v.trim(); });
   });
+  $('#b-info').textContent = 'Vloženo řádků: ' + grid.length + '. Zkontrolujte a stiskněte „Vložit do seznamu“.';
+});
+$('#b-more').addEventListener('click', () => bAddRows(5));
+$('#b-clear').addEventListener('click', () => { bbody.replaceChildren(); bAddRows(6); $('#b-info').textContent = ''; });
+
+// najde (nebo vytvoří) složku podle cesty názvů; vrátí id nebo '' pro hlavní seznam
+function folderForPath(names) {
+  let parent = '';
+  for (const name of names) {
+    let f = lib.find((x) => x.kind === 'folder' && x.parent === parent && x.title.trim().toLowerCase() === name.toLowerCase());
+    if (!f) {
+      const nf = validateFolder({ id: newId() + 'f', title: name, note: '', added: new Date().toISOString().slice(0, 10) });
+      if (!nf) return null;
+      f = { id: nf.id, title: nf.title, note: '', kind: 'folder', show: true, added: nf.added, parent };
+      lib.push(f);
+    }
+    parent = f.id;
+  }
+  return parent;
+}
+$('#b-add').addEventListener('click', () => {
+  let ok = 0, bad = 0;
+  bRows().forEach((tr, i) => {
+    const [cat, title, url, note] = [...tr.querySelectorAll('input')].map((x) => x.value.trim());
+    tr.classList.remove('bad');
+    if (!cat && !title && !url && !note) return;     // prázdný řádek přeskočíme
+    const n = validateItem({ id: newId() + i, title, note, url, added: new Date().toISOString().slice(0, 10) });
+    const parent = n ? folderForPath(categoryPath(cat)) : null;
+    if (!n || parent === null) { tr.classList.add('bad'); bad++; return; }
+    lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: true, added: n.added, parent });
+    tr.remove(); ok++;                                // vložený řádek z tabulky zmizí, špatné zůstanou k opravě
+  });
+  if (!bRows().length) bAddRows(6);
   if (ok) { setDirty(true); render(); }
   $('#b-info').textContent = '';
-  if (ok) $('#b-text').value = bad.length ? rows.filter((_, i) => bad.includes(i + 1)).join('\n') : '';
-  say(ok + ' vloženo' + (bad.length ? '; neplatné řádky (zůstaly v poli): ' + bad.join(', ') : '. Nezapomeňte uložit.'), bad.length ? 'err' : 'ok');
+  say(ok + ' vloženo' + (bad ? '; chybné řádky (červené, zůstaly v tabulce): ' + bad + '. Zkontrolujte název a https odkaz.' : '. Nezapomeňte uložit.'), bad ? 'err' : 'ok');
 });
 
 /* ---------- uložení ---------- */

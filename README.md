@@ -25,7 +25,7 @@ Testy e2e potřebují `playwright` s Chromiem (ve vývojovém prostředí je př
 - Skrytý vstup: 5 rychlých kliknutí na první hvězdičku v nápisu, nebo Ctrl+Alt+Shift+A. Otevře se (případně po PINu) editor na `editor/`.
 - PIN (4 až 8 číslic) se nastavuje v editoru. Je to jen pojistka proti omylu, jeho hash leží ve veřejném repozitáři. Skutečná ochrana úprav je přístupový token k GitHubu.
 - Editor má dole živý náhled „tak to vidí táta“ (`?preview=1`, jen uvnitř editoru, nic neukládá).
-- Odkazy jdou vkládat i hromadně: řádky `název ; popis ; odkaz` (i vložené z Excelu).
+- Odkazy jdou vkládat i hromadně do tabulky Kategorie | Název | Odkaz | Popis (Ctrl+V z Excelu nebo psaní do buněk); kategorie = složka, chybějící se vytvoří, podsložka `A / B`.
 - Povolené zdroje: YouTube, přímé soubory, živé streamy z `rozhlas.stream` a stránky z `embed.windy.com` a `www.yr.no` (v izolovaném rámečku). Další hostitele je nutné přidat v `validate.js` a v CSP.
 
 ## Jak to funguje

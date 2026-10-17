@@ -37,10 +37,9 @@
 
 <section class="add">
   <h2>Vložit více odkazů najednou</h2>
-  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor, takže jde vložit i buňky z Excelu). Popis může být prázdný.</p>
-  <label>Složka<select id="b-parent"></select></label>
-  <textarea id="b-text" rows="5" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
-  <div class="row"><button id="b-add" type="button">Vložit řádky</button><span id="b-info"></span></div>
+  <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název složky; neexistuje-li, vytvoří se. Podsložku zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
+  <div class="tablewrap"><table id="b-table"><thead><tr><th>Kategorie</th><th>Název</th><th>Odkaz</th><th>Popis (nepovinný)</th></tr></thead><tbody id="b-body"></tbody></table></div>
+  <div class="row"><button id="b-add" type="button">Vložit do seznamu</button><button id="b-more" type="button">Přidat řádky</button><button id="b-clear" type="button">Vyčistit tabulku</button><span id="b-info"></span></div>
 </section>
 
 <section class="add">
