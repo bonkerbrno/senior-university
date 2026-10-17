@@ -9,6 +9,7 @@ button { padding: 8px 14px; font: inherit; color: inherit; background: var(--car
 button.primary { background: var(--acc); color: #fff; border-color: var(--acc); } button:disabled { opacity: .5; cursor: default; }
 details, section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.save-msg.err { color: #c0392b; font-weight: 600; } .save-msg.ok { color: #1e8449; font-weight: 600; }
 #msg { min-height: 1.4em; } #msg.err { color: #c0392b; font-weight: 600; } #msg.ok { color: #1e8449; font-weight: 600; }
 ul { list-style: none; margin: 0; padding: 0; }
 li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
