@@ -139,6 +139,7 @@ function refresh() {
   lit('full', document.fullscreenElement ? 'blue' : null);
   lit('mini', document.body.classList.contains('mini') ? 'blue' : null);
   lit('auto', automat ? 'green' : null);
+  lit('news', newCount(tree) ? 'green' : null);
   lit('rand-here', shuffle === 'here' ? 'blue' : null);
   lit('rand-all', shuffle === 'all' ? 'blue' : null);
   document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !path.length; });
@@ -246,26 +247,55 @@ function playNext() {
   startItem(it, now ? now.where : '', q, idx);
 }
 
+let lastFeedText = lsGet(LS_FEED) || '';
+let lastSync = 0, syncing = false;
 async function loadFeed(userAsked) {
+  syncing = true;
   try {
-    const res = await fetch(FEED_URL + '?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' });
+    const res = await fetch(FEED_URL + '?t=' + Date.now(), { cache: 'reload', credentials: 'omit' });
     if (!res.ok) throw new Error('http');
     const text = await res.text();
     const { items } = validateFeed(text);
+    const changed = text !== lastFeedText || !tree.length;
     const before = new Set(playableIn(tree, true).map((x) => x.id));
-    tree = items;
-    lsSet(LS_FEED, text);
-    if (!folderAt(path)) path = [];
-    render();
+    lastSync = Date.now();
+    if (changed) {
+      tree = items;
+      lastFeedText = text;
+      lsSet(LS_FEED, text);
+      if (!folderAt(path)) path = [];
+      render();
+    }
     const n = playableIn(tree, true).filter((x) => !before.has(x.id) && !seen.has(x.id)).length;
-    if (userAsked && !(now && player.state !== 'idle')) say(n ? (n === 1 ? 'Máte jednu novinku.' : 'Máte nové pořady: ' + n + '.') : 'Žádné nové pořady.');
+    if (userAsked && !(now && player.state !== 'idle')) say(newCount(tree) ? (newCount(tree) === 1 ? 'Máte jednu novinku.' : 'Máte nové pořady: ' + newCount(tree) + '.') : 'Žádné nové pořady.');
     return true;
   } catch {
     const cached = lsGet(LS_FEED);
-    if (cached) { try { tree = validateFeed(cached).items; if (!folderAt(path)) path = []; render(); } catch { /* nic */ } }
+    if (!tree.length && cached) { try { tree = validateFeed(cached).items; if (!folderAt(path)) path = []; render(); } catch { /* nic */ } }
     if (userAsked || !tree.length) say(tree.length ? 'Nejsem připojen k internetu. Ukazuji poslední seznam.' : 'Nejsem připojen k internetu.', true);
     return false;
-  }
+  } finally { syncing = false; }
+}
+// Tichá synchronizace: kdykoli táta na něco klikne (nejvýš jednou za 15 s), vrátí se do aplikace nebo uplyne pár minut, stáhne se čerstvý seznam.
+function maybeSync() { if (!PREVIEW && !syncing && Date.now() - lastSync > 2000) { loadFeed(false); checkCode(); } }
+
+// Aktuální program: soubory aplikace se při startu zapamatují; když se na serveru změní a nic nehraje, stránka se sama načte znovu.
+const CODE_FILES = ['./', 'js/app.js', 'js/player.js', 'js/validate.js', 'css/jukebox.css'];
+const codeSnap = new Map();
+let checking = false;
+async function checkCode() {
+  if (checking) return;
+  checking = true;
+  try {
+    let changed = false;
+    for (const f of CODE_FILES) {
+      const res = await fetch(f + '?t=' + Date.now(), { cache: 'reload', credentials: 'omit' });
+      if (!res.ok) return;
+      const text = await res.text();
+      if (!codeSnap.has(f)) codeSnap.set(f, text); else if (codeSnap.get(f) !== text) changed = true;
+    }
+    if (changed && (!now || player.state === 'idle')) location.reload();
+  } catch { /* bez připojení nic neděláme */ } finally { checking = false; }
 }
 
 /* ---------- akce ---------- */
@@ -433,4 +463,12 @@ if (PREVIEW) {
 
 /* ---------- start ---------- */
 render();
-if (!PREVIEW) loadFeed(false);
+if (!PREVIEW) {
+  loadFeed(false);
+  checkCode();
+  document.addEventListener('click', () => setTimeout(maybeSync, 400));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) maybeSync(); });
+  window.addEventListener('focus', maybeSync);
+  window.addEventListener('online', () => loadFeed(false));
+  setInterval(maybeSync, 3 * 60 * 1000);
+}
