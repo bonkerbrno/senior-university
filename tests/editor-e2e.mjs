@@ -51,8 +51,10 @@ await page.evaluate(() => {
   const li = [...document.querySelectorAll('#items li')].find((l) => l.querySelector('input:not([type=checkbox])').value === 'Skryté');
   const cb = li.querySelector('input[type=checkbox]'); cb.checked = false; cb.dispatchEvent(new Event('change'));
 });
-await page.click('#save');
+assert.ok(await page.locator('.save-btn').count() >= 6, 'tlačítko Uložit je v každé sekci');
+await page.locator('.save-btn').nth(1).click();   // uložit jde z kterékoli sekce
 await page.waitForFunction(() => /Uloženo/.test(document.querySelector('#msg').textContent));
+assert.ok(await page.evaluate(() => [...document.querySelectorAll('.save-msg')].every((e) => /Uloženo/.test(e.textContent))), 'výsledek je vidět u každého tlačítka');
 assert.equal(puts['library.json'].items.length, 5);
 const f = puts['feed.json'].items;
 assert.deepEqual(f.map((i) => i.title), ['Volné', 'Hudba']);

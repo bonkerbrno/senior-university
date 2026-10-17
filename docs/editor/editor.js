@@ -10,6 +10,8 @@ let shas = {};      // sha souborů pro GitHub API
 let dirty = false;
 
 function say(t, cls = '') { msg.textContent = t; msg.className = cls; }
+// výsledek ukládání ukážeme u každého tlačítka, aby nebyl jen nahoře mimo obrazovku
+function saySave(t, cls = '') { say(t, cls); document.querySelectorAll('.save-msg').forEach((e) => { e.textContent = t; e.className = 'save-msg ' + cls; }); }
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* nic */ } }
 
@@ -18,7 +20,7 @@ $('#branch').value = lsGet('ed.branch') || $('#branch').value;
 $('#token').value = lsGet('ed.token') || '';
 $('#remember').checked = !!lsGet('ed.token');
 
-function setDirty(d) { dirty = d; $('#save').disabled = !d; $('#dirty').textContent = d ? 'Neuložené změny' : ''; }
+function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neuložené změny' : ''; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 
 /* ---------- GitHub API ---------- */
@@ -252,19 +254,20 @@ $('#t-add').addEventListener('click', () => {
 });
 
 /* ---------- uložení ---------- */
-$('#save').addEventListener('click', async () => {
-  if (!$('#token').value.trim()) { say('Chybí token (nastavení nahoře).', 'err'); return; }
+async function saveAll() {
+  if (!$('#token').value.trim()) { saySave('Chybí token (nastavení nahoře).', 'err'); return; }
   try {
-    $('#save').disabled = true; say('Ukládám…');
+    document.querySelectorAll('.save-btn').forEach((x) => { x.disabled = true; }); saySave('Ukládám…');
     const libText = libraryToText(lib);
     const feedText = JSON.stringify(buildFeed(lib), null, 2) + '\n';
     if (validateFeed(feedText).dropped) throw new Error('Seznam pro tátu obsahuje neplatnou položku.'); // pojistka: do tátova seznamu půjde jen to, co projde jeho kontrolou
     await writeFile('library.json', libText, 'Editor: úprava knihovny');
     await writeFile('feed.json', feedText, 'Editor: nový seznam pro tátu');
     setDirty(false);
-    say('Uloženo. Táta to uvidí po stisku Novinky (do několika minut).', 'ok');
-  } catch (e) { setDirty(true); say(e.message || 'Uložení selhalo.', 'err'); }
-});
+    saySave('Uloženo. Táta to uvidí po stisku Novinky (do několika minut).', 'ok');
+  } catch (e) { setDirty(true); saySave(e.message || 'Uložení selhalo.', 'err'); }
+}
+document.querySelectorAll('.save-btn').forEach((b) => b.addEventListener('click', saveAll));
 
 /* ---------- náhled a PIN ---------- */
 function sendPreview() {
