@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-17T10:51:13.618Z",
+  "updated": "2026-10-17T10:56:50.591Z",
   "items": [
     {
       "id": "pmvc99bxnx5w",
@@ -9,6 +9,57 @@
       "note": "",
       "added": "2026-10-17",
       "items": [
+        {
+          "id": "pmvca72zjl04",
+          "kind": "folder",
+          "title": "Čestmír Strakatý",
+          "note": "",
+          "added": "2026-10-17",
+          "items": [
+            {
+              "id": "pmvca7h5ksvpt0",
+              "title": "PM Extra: CO JE PODLE VÁCLAVA MORAVCE NEJVĚTŠÍ BIZÁR?",
+              "note": "Speciální epizoda a ohlédnutí za bizarními momenty v české politice a médiích",
+              "url": "https://www.youtube.com/watch?v=qtWVs5ckqrc",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvca7h5k9dvt1",
+              "title": "JAN ŠPAČEK: Generační vzpouru čekám už nějakou dobu, ale ona nepřichází",
+              "note": "Rozhovor s internetovým tvůrcem a novinářem o politické kultuře mládeže",
+              "url": "https://www.youtube.com/watch?v=cKkgyEMvtTU",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvca7h5kc0vt2",
+              "title": "MIREK TOPOLÁNEK: Jestli lidé s rakovinou slinivky něco nechtějí, je to nekrolog v hlavě",
+              "note": "Rozhovor s bývalým premiérem o politice, osobním životě a zdraví",
+              "url": "https://www.youtube.com/watch?v=y1-VWPES8ew",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvca7h5k53yt3",
+              "title": "MARTIN KUBA: Současná politika je devastační",
+              "note": "Rozhovor s jihočeským hejtmanem o stavu tuzemské politické scény",
+              "url": "https://www.youtube.com/watch?v=-kfLD3RIrHk",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvca7h5kn6dt4",
+              "title": "DAVID ONDRÁČKA: Nic se tu nemění, všechno hnije",
+              "note": "Rozhovor s bývalým šéfem Transparency International o korupci a fungování institucí",
+              "url": "https://www.youtube.com/watch?v=k-7ZqCiHXos",
+              "added": "2026-10-17"
+            },
+            {
+              "id": "pmvca7h5krrut5",
+              "title": "PETR MACINKA: Neřeším s Babišem pitomosti",
+              "note": "Rozhovor s předsedou hnutí Motoristé sobě o spojenectvích a politické taktice",
+              "url": "https://www.youtube.com/watch?v=Hz1QWvNf15M",
+              "added": "2026-10-17"
+            }
+          ]
+        },
         {
           "id": "pmvc9z2qi05q",
           "kind": "folder",
