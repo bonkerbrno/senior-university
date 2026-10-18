@@ -1,6 +1,6 @@
 /* Mobilní verze: stejný přehrávač a stejná data, jen tři obrazovky pod sebou (body.m, data-screen = start | list | play).
    Na počítači se z toho nic nezobrazí. */
-.m-flags, .m-panel, .m-start, .m-play, .m-bottom { display: none; }
+.m-flags, .m-panel, .m-browse, .m-start, .m-play, .m-bottom { display: none; }
 
 body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou výšku */
 body.m #app { display: block; height: 100dvh; padding: 6px; }
@@ -39,7 +39,7 @@ body.m .btn.big { font-size: 20px; }
 
 /* oválné přepínače se dvěma stavy */
 body.m .m-flags { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.flag { min-height: 40px; padding: 4px 4px; font: inherit; font-size: 11px; font-weight: 700; line-height: 1.15; text-align: center; color: #8a7a60;
+.flag { min-height: 32px; padding: 3px 4px; font: inherit; font-size: 10px; font-weight: 700; line-height: 1.15; text-align: center; color: #8a7a60;
   background: #33261a; border: 2px solid #4a3622; border-radius: 14px; box-shadow: 0 3px 0 #1a120b; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .flag:active { transform: translateY(3px); box-shadow: none; }
 .flag.on { color: #9dff9d; background: #1d3a1f; border-color: var(--green); box-shadow: 0 3px 0 #0e2410, 0 0 10px var(--green); }
@@ -52,6 +52,11 @@ body.m[data-screen="start"] .m-start { display: flex; flex-direction: column; fl
 /* obrazovka 3 */
 body.m[data-screen="play"] .m-flags { display: grid; }
 body.m[data-screen="play"] .m-panel { display: block; }
+body.m[data-screen="play"] .m-browse { display: block; }
+body.m[data-screen="play"] .m-play .m-row { grid-template-columns: repeat(3, 1fr); }
+body.m .m-browse .btn { width: 100%; flex-direction: row; gap: 10px; padding-top: 13px; }
+body.m .m-browse .btn .lbl { font-size: 17px; }
+body.m .m-browse .btn .ico { width: 24px; height: 24px; }
 body.m[data-screen="play"] .m-play { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 body.m[data-screen="play"] .m-bottom { display: grid; }
 body.m[data-screen="play"] .infobar { padding-bottom: 8px; }

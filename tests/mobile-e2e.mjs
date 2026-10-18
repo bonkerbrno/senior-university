@@ -122,7 +122,8 @@ await step('klepnutí na program spustí přehrávání a přepne na obrazovku 3
   assert.match(await status(), /Hraje: První tón/);
   assert.equal(await vis('#cabinet'), true);
   assert.equal(await page.locator('#m-panel .btn:visible').count(), 4);
-  assert.equal(await page.locator('#m-play .btn:visible').count(), 4);
+  assert.equal(await page.locator('#m-play .btn:visible').count(), 3);
+  assert.equal(await page.locator('#m-browse .btn:visible .lbl').innerText(), 'Listuj programy');
   assert.equal(await page.locator('#m-bottom .btn:visible').count(), 4);
   assert.equal(await page.locator('.flag:visible').count(), 3);
   assert.equal(await act('play').getAttribute('data-lit'), 'green');
@@ -132,8 +133,12 @@ await step('panel Vypnout, Pustit, Pozastavit, Ukončit je hned pod přepínači
   assert.deepEqual(await page.locator('#m-panel .lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit']);
   const f = await page.locator('#m-flags').boundingBox(), p = await page.locator('#m-panel').boundingBox(), r2 = await page.locator('#m-play').boundingBox();
   assert.ok(p.y >= f.y + f.height - 1 && p.y < f.y + f.height + 40, 'panel je pod přepínači');
-  assert.ok(r2.y > p.y + p.height, 'ostatní tlačítka jsou pod panelem');
-  const hs = await page.locator('#m-panel .btn, #m-play .btn, #m-bottom .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+  const br = await page.locator('#m-browse').boundingBox();
+  assert.ok(br.y >= p.y + p.height - 1 && br.y < p.y + p.height + 24, 'Listuj programy je hned pod panelem');
+  assert.ok(r2.y > br.y + br.height, 'ostatní tlačítka jsou pod ním');
+  const fh = await page.locator('.flag:visible').first().evaluate((e) => e.getBoundingClientRect().height);
+  assert.ok(fh <= 34, 'přepínače jsou o 20 % nižší: ' + fh);
+  const hs = await page.locator('#m-panel .btn, #m-browse .btn, #m-play .btn, #m-bottom .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
   assert.equal(new Set(hs).size, 1, 'stejná výška tlačítek: ' + hs);
 });
 await page.screenshot({ path: path.join(shots, 'm3-hraje.png') });
