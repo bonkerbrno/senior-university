@@ -3,7 +3,7 @@
 
 const YT_ORIGIN = 'https://www.youtube-nocookie.com';
 
-export function createPlayer(stage, onState) {
+export function createPlayer(stage, opts, onState) {
   let current = null;      // { item, el, kind }
   let state = 'idle';      // idle | playing | paused | error
   let hs = 0;              // časovač handshaku s YouTube přehrávačem
@@ -26,7 +26,7 @@ export function createPlayer(stage, onState) {
     const wrap = document.createElement('div');
     wrap.className = 'idle';
     const s = document.createElement('span'); s.textContent = '♪';
-    const p = document.createElement('p'); p.textContent = 'Vyberte pořad a stiskněte Pustit';
+    const p = document.createElement('p'); p.textContent = opts.idleText || 'Vyberte pořad a stiskněte Pustit';
     wrap.append(s, p);
     stage.replaceChildren(wrap);
   }
@@ -69,13 +69,14 @@ export function createPlayer(stage, onState) {
     else if (d.event === 'infoDelivery' && d.info && Number.isInteger(d.info.playerState)) ytState(d.info.playerState, false);
   }
 
-  function play(item) {
+  function play(item, o = {}) {
     clear();
     let el;
     if (item.kind === 'youtube') {
       el = document.createElement('iframe');
       const q = new URLSearchParams({ enablejsapi: '1', autoplay: '1', controls: '0', rel: '0', playsinline: '1',
         modestbranding: '1', fs: '0', disablekb: '1', origin: location.origin });
+      if (o.subs) { q.set('cc_load_policy', '1'); q.set('cc_lang_pref', 'cs'); q.set('hl', 'cs'); }
       el.src = YT_ORIGIN + '/embed/' + encodeURIComponent(item.mediaId) + '?' + q;
       el.title = item.title;
       el.setAttribute('allow', 'autoplay; encrypted-media');

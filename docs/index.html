@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/jukebox.css">
+<link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
 <svg width="0" height="0" aria-hidden="true" focusable="false" class="sprite">
@@ -26,6 +27,10 @@
     <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3l10 9h-3v9h-5v-6h-4v6H5v-9H2z"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M10 4L2 12l8 8v-5h10V9H10z"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2 5h8l2 3h10v11H2z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21C5 15.5 2 12.2 2 8.5 2 5.5 4.3 3.5 7 3.5c2 0 3.9 1.1 5 2.9 1.1-1.8 3-2.9 5-2.9 2.7 0 5 2 5 5 0 3.7-3 7-10 12.5z"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 1 1 9.9V14h-2v-2.1A5 5 0 0 1 12 2zm0 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM4 15h16v7H4z"/></symbol>
+    <symbol id="i-cc" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5h18v14H3zm4 4a3 3 0 0 0 0 6h1.5v-1.8H7a1.2 1.2 0 0 1 0-2.4h1.5V9zm8 0a3 3 0 0 0 0 6h1.5v-1.8H15a1.2 1.2 0 0 1 0-2.4h1.5V9z"/></symbol>
+    <symbol id="i-pow" viewBox="0 0 24 24"><path d="M11 2h2v10h-2zM6.3 5.3l1.4 1.4a7 7 0 1 0 8.6 0l1.4-1.4A9 9 0 1 1 6.3 5.3z"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 20L3 8h18z"/></symbol>
   </defs>
@@ -45,6 +50,35 @@
       </div>
     </div>
     <div id="infobar" class="infobar"><div id="status" class="status" role="status" aria-live="polite">Vítejte. Vyberte pořad.</div><div id="substatus" class="substatus"></div></div>
+    <div id="m-flags" class="m-flags">
+      <button type="button" class="flag" data-act="auto" data-flag="auto"></button>
+      <button type="button" class="flag" data-act="subs" data-flag="subs"></button>
+      <button type="button" class="flag" data-act="shuf" data-flag="shuf"></button>
+    </div>
+    <div id="m-start" class="m-start">
+      <button type="button" class="btn big" data-act="m-choose"><span class="lamp"></span><svg class="ico"><use href="#i-folder"/></svg><span class="lbl">Vyberte program</span></button>
+    </div>
+    <div id="m-play" class="m-play">
+      <div class="m-row">
+        <button type="button" class="btn grey" data-act="stop"><span class="lamp"></span><svg class="ico"><use href="#i-stop"/></svg><span class="lbl">Ukončit</span></button>
+        <button type="button" class="btn grey" data-act="pause"><span class="lamp"></span><svg class="ico"><use href="#i-pause"/></svg><span class="lbl">Pauza</span></button>
+        <button type="button" class="btn go" data-act="play"><span class="lamp"></span><svg class="ico"><use href="#i-play"/></svg><span class="lbl">Pustit</span></button>
+        <button type="button" class="btn pwr" data-act="close"><span class="lamp"></span><svg class="ico"><use href="#i-pow"/></svg><span class="lbl">Vypnout</span></button>
+      </div>
+      <div class="m-row">
+        <button type="button" class="btn" data-act="full"><span class="lamp"></span><svg class="ico"><use href="#i-full"/></svg><span class="lbl">Celá obrazovka</span></button>
+        <button type="button" class="btn" data-act="mini"><span class="lamp"></span><svg class="ico"><use href="#i-mini"/></svg><span class="lbl">Zmenšit</span></button>
+        <button type="button" class="btn" data-act="auto"><span class="lamp"></span><svg class="ico"><use href="#i-auto"/></svg><span class="lbl">Automat</span></button>
+        <button type="button" class="btn" data-act="shuf"><span class="lamp"></span><svg class="ico"><use href="#i-dice"/></svg><span class="lbl">Náhodně</span></button>
+      </div>
+    </div>
+    <div id="m-bottom" class="m-row m-bottom">
+      <button type="button" class="btn half" data-act="fav"><span class="lamp"></span><svg class="ico"><use href="#i-heart"/></svg><span class="lbl">Oblíbené</span></button>
+      <button type="button" class="btn half" data-act="news"><span class="lamp"></span><svg class="ico"><use href="#i-news"/></svg><span class="lbl">Nové</span></button>
+      <button type="button" class="btn half" data-act="offer"><span class="lamp"></span><svg class="ico"><use href="#i-gift"/></svg><span class="lbl">Nabídni mi</span></button>
+      <button type="button" class="btn half" data-act="subs"><span class="lamp"></span><svg class="ico"><use href="#i-cc"/></svg><span class="lbl">Titulky</span></button>
+    </div>
+    <button type="button" class="btn" id="m-restore" data-act="mini"><span class="lamp"></span><svg class="ico"><use href="#i-full"/></svg><span class="lbl">Zvětšit</span></button>
     <div id="controls" class="controls">
       <button type="button" class="btn" data-act="news"><span class="lamp"></span><svg class="ico"><use href="#i-news"/></svg><span class="lbl">Novinky</span></button>
       <button type="button" class="btn" data-act="play"><span class="lamp"></span><svg class="ico"><use href="#i-play"/></svg><span class="lbl">Pustit</span></button>
@@ -62,7 +96,7 @@
   </section>
 
   <aside id="listbox" aria-label="Seznam pořadů">
-    <h2 class="marquee">Pořady</h2>
+    <h2 class="marquee" id="marquee">Pořady</h2>
     <div class="navrow">
       <button type="button" class="btn nav" data-act="home"><span class="lamp"></span><svg class="ico"><use href="#i-home"/></svg><span class="lbl">Domů</span></button>
       <button type="button" class="btn nav" data-act="back"><span class="lamp"></span><svg class="ico"><use href="#i-back"/></svg><span class="lbl">Zpět</span></button>

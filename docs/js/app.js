@@ -7,7 +7,19 @@ const $ = (sel) => document.querySelector(sel);
 const FEED_URL = 'feed.json';
 const LS_FEED = 'jukebox.feed';
 const LS_SEEN = 'jukebox.seen';
+const LS_FAV = 'jukebox.fav';
+const LS_SUBS = 'jukebox.subs';
 const BURST_MS = 600; // rychlé vícenásobné kliknutí na totéž tlačítko se počítá jako jedno
+
+// Mobilní verze: stejná data a stejný přehrávač, jen tři obrazovky (start, program = seznam, play = přehrávání).
+const qs = new URLSearchParams(location.search);
+const MOBILE = qs.get('mobil') === '1' || (qs.get('pc') !== '1' && matchMedia('(hover: none) and (pointer: coarse) and (max-width: 1000px)').matches);
+if (MOBILE) document.body.classList.add('m');
+// Ve mobilní verzi se místo „složka“ a „pořad“ říká „program“. Vyrábí se jen z textů aplikace, nikdy z názvů od Stanleyho.
+const WORDS = [[/pořadů/g, 'programů'], [/pořady/g, 'programy'], [/Pořady/g, 'Programy'], [/pořad/g, 'program'], [/Pořad/g, 'Program'],
+  [/Otevřít složku/g, 'Otevřít program'], [/Všechny složky/g, 'Všechny programy'], [/Složka: /g, 'Program: '], [/ve složce/g, 'v programu'],
+  [/Stiskněte Novinky/g, 'Stiskněte Nové'], [/stiskněte Novinky/g, 'stiskněte Nové']];
+const m = (t) => (MOBILE ? WORDS.reduce((x, [re, to]) => x.replace(re, to), t) : t);
 
 const statusEl = $('#status');
 const subEl = $('#substatus');
@@ -27,10 +39,15 @@ let qi = 0;
 let now = null;           // { item, where }
 let errCount = 0;
 let timer = 0;
+let screen = 'start';     // jen mobil: start | list | play
+let powered = true;       // jen mobil: false = jukebox spí (vše zešedlo)
+let favs = new Set();
+let subs = lsGet(LS_SUBS) === '1';
 
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* bez úložiště to jde také */ } }
 try { seen = new Set(JSON.parse(lsGet(LS_SEEN) || '[]')); } catch { seen = new Set(); }
+try { favs = new Set(JSON.parse(lsGet(LS_FAV) || '[]')); } catch { favs = new Set(); }
 
 function say(text, warn = false) {
   statusEl.textContent = text;
@@ -38,8 +55,19 @@ function say(text, warn = false) {
 }
 
 /* ---------- strom ---------- */
+// Mobil: na začátku seznamu jsou programy „Novinky“ a „Oblíbené“. Obsahují tytéž položky jako programy, ve kterých leží (duplicitně).
+function rootNodes() {
+  if (!MOBILE) return tree;
+  const all = playableIn(tree, true);
+  const fresh = all.filter((x) => !seen.has(x.id));
+  const fav = all.filter((x) => favs.has(x.id));
+  const v = [];
+  if (fresh.length) v.push({ kind: 'folder', id: '__news', title: 'Novinky', note: '', children: fresh });
+  if (fav.length) v.push({ kind: 'folder', id: '__fav', title: 'Oblíbené', note: '', children: fav });
+  return v.length ? [...v, ...tree] : tree;
+}
 function folderAt(ids) {
-  let nodes = tree;
+  let nodes = rootNodes();
   const trail = [];
   for (const id of ids) {
     const f = nodes.find((n) => n.kind === 'folder' && n.id === id);
@@ -49,7 +77,7 @@ function folderAt(ids) {
   }
   return { nodes, trail };
 }
-function cwd() { const r = folderAt(path); return r ? r : { nodes: tree, trail: [] }; }
+function cwd() { const r = folderAt(path); return r ? r : { nodes: rootNodes(), trail: [] }; }
 function newCount(nodes) {
   let n = 0;
   for (const x of nodes) n += x.kind === 'folder' ? newCount(x.children) : (seen.has(x.id) ? 0 : 1);
@@ -57,14 +85,14 @@ function newCount(nodes) {
 }
 function pathTitle(trail) { return ['Domů', ...trail.map((f) => f.title)].join(' › '); }
 
-const player = createPlayer(stage, (state, detail) => {
+const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pustit') }, (state, detail) => {
   const it = now && now.item;
   if (state === 'playing') { errCount = 0; say('▶ Hraje: ' + it.title); }
   else if (state === 'paused') say('⏸ Pozastaveno: ' + it.title);
-  else if (state === 'idle') { say('Nic nehraje. Vyberte pořad.'); now = null; }
+  else if (state === 'idle') { say(m('Nic nehraje. Vyberte pořad.')); now = null; if (MOBILE && powered && screen === 'play') setScreen('list'); }
   else if (state === 'ended') { say('Hotovo: ' + (it ? it.title : '')); if (automat) schedule(1200); }
   else if (state === 'error') {
-    say(detail === 'embed' ? 'Tento pořad nejde přehrát.' : 'Pořad se nepodařilo spustit.', true);
+    say(m(detail === 'embed' ? 'Tento pořad nejde přehrát.' : 'Pořad se nepodařilo spustit.'), true);
     errCount++;
     if (automat && errCount < Math.max(2, poolSize())) schedule(2500);
     else timer = setTimeout(() => { if (player.state === 'error') player.stop(); }, 4000);
@@ -93,7 +121,7 @@ function render() {
   if (selected >= nodes.length) selected = Math.max(0, nodes.length - 1);
   if (!nodes.length) {
     const e = document.createElement('div'); e.className = 'empty';
-    e.textContent = tree.length ? 'Tady nic není. Použijte Zpět nebo Domů.' : 'Zatím tu nic není. Stiskněte Novinky.';
+    e.textContent = m(tree.length ? 'Tady nic není. Použijte Zpět nebo Domů.' : 'Zatím tu nic není. Stiskněte Novinky.');
     listEl.append(e);
   }
   nodes.forEach((it, i) => {
@@ -104,7 +132,7 @@ function render() {
     const fresh = folder ? newCount(it.children) : (seen.has(it.id) ? 0 : 1);
     if (fresh) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'NOVÉ'; h.append(b); }
     h.append(document.createTextNode(it.title));
-    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = '  (' + playableIn(it.children, true).length + ' pořadů)'; h.append(c); }
+    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = MOBILE ? '  (' + playableIn(it.children, true).length + ')' : '  (' + playableIn(it.children, true).length + ' pořadů)'; h.append(c); }
     card.append(h);
     if (it.note) { const p = document.createElement('p'); p.textContent = it.note; card.append(p); }
     card.append(mkBtn(folder ? 'open' : 'item', '', undefined, i));
@@ -128,7 +156,7 @@ function refresh() {
     card.classList.toggle('selected', i === selected);
     card.classList.toggle('playing', cur);
     const btn = card.querySelector('button');
-    btn.querySelector('.lbl').textContent = folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad';
+    btn.querySelector('.lbl').textContent = m(folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad');
     if (cur) btn.dataset.lit = st === 'paused' ? 'orange' : 'green'; else delete btn.dataset.lit;
   });
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
@@ -148,10 +176,74 @@ function refresh() {
   document.querySelectorAll('[data-act="mini"] .lbl').forEach((l) => { l.textContent = document.body.classList.contains('mini') ? 'Zvětšit' : 'Zmenšit'; });
   document.querySelectorAll('#controls [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zpět' : 'Celá obrazovka'; });
   const parts = [];
-  if (now) parts.push('Složka: ' + now.where);
+  if (now) parts.push(m('Složka: ') + now.where);
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
-  if (shuffle) parts.push(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce');
+  if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
   subEl.textContent = parts.join('  ·  ');
+  if (MOBILE) refreshMobile();
+}
+
+/* ---------- mobil ---------- */
+function setScreen(name) {
+  screen = name;
+  document.body.dataset.screen = name;
+  if (name !== 'list') document.body.classList.remove('mini');
+}
+function showList() {
+  if (now && player.state !== 'idle') document.body.classList.add('mini');
+  setScreen('list');
+}
+function refreshMobile() {
+  document.body.dataset.power = powered ? 'on' : 'off';
+  $('#marquee').textContent = 'Programy';
+  const set = (key, on, yes, no) => document.querySelectorAll('[data-flag="' + key + '"]').forEach((b) => {
+    b.textContent = on ? yes : no; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  });
+  set('auto', automat, 'Hraje automaticky', 'Přehraje jeden');
+  set('subs', subs, 'Titulky zapnuty', 'Titulky vypnuty');
+  set('shuf', !!shuffle, 'Náhodné pořadí', 'Hraje za sebou');
+  const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
+  lit('shuf', shuffle ? 'blue' : null);
+  lit('subs', subs ? 'green' : null);
+  const target = now ? now.item : null;
+  lit('fav', screen === 'play' && target && favs.has(target.id) ? 'red' : null);
+  document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
+  document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !(player.state === 'playing' || player.state === 'paused'); });
+}
+function toggleFav() {
+  const it = now ? now.item : null;
+  if (screen === 'play' && it) {
+    if (favs.has(it.id)) { favs.delete(it.id); say('Odebráno z oblíbených.'); } else { favs.add(it.id); say('Přidáno do oblíbených.'); }
+    lsSet(LS_FAV, JSON.stringify([...favs]));
+    render();
+    return;
+  }
+  if (!favs.size) { say('Zatím nemáte žádné oblíbené. Při přehrávání stiskněte srdce.', true); return; }
+  path = ['__fav']; selected = 0; showList(); render(); listEl.scrollTop = 0;
+}
+function offerSomething() {
+  const all = noWeb(playableIn(tree, true));
+  const fav = all.filter((x) => favs.has(x.id));
+  const pool = fav.length ? fav : all;
+  if (!pool.length) { say('Zatím není co nabídnout.', true); return; }
+  shuffle = null;
+  const it = pickRandom(pool, now && now.item);
+  startItem(it, fav.length ? 'Oblíbené' : m('Všechny složky'), pool, pool.indexOf(it));
+}
+function toggleSubs() {
+  subs = !subs; lsSet(LS_SUBS, subs ? '1' : '0');
+  const it = now ? now.item : null;
+  if (it && player.state !== 'idle') {
+    if (it.kind === 'youtube') { player.play(it, { subs }); say((subs ? 'Titulky zapnuty' : 'Titulky vypnuty') + '. Program se spustil znovu.'); }
+    else say('Tento program nemá titulky.', true);
+  }
+  refresh();
+}
+function toggleShuffle() {
+  if (shuffle) shuffle = null;
+  else if (now && queue.length) shuffle = 'here';
+  else { playRandom('here'); return; }
+  refresh();
 }
 
 /* ---------- navigace ---------- */
@@ -210,7 +302,8 @@ function startItem(it, where, q, idx) {
   queue = q; qi = idx;
   now = { item: it, where };
   markSeen(it);
-  player.play(it);
+  if (MOBILE) { document.body.classList.remove('fakefs'); setScreen('play'); }
+  player.play(it, { subs });
   render();
 }
 function playHere(i) {
@@ -267,7 +360,7 @@ async function loadFeed(userAsked) {
       render();
     }
     const n = playableIn(tree, true).filter((x) => !before.has(x.id) && !seen.has(x.id)).length;
-    if (userAsked && !(now && player.state !== 'idle')) say(newCount(tree) ? (newCount(tree) === 1 ? 'Máte jednu novinku.' : 'Máte nové pořady: ' + newCount(tree) + '.') : 'Žádné nové pořady.');
+    if (userAsked && !(now && player.state !== 'idle')) say(newCount(tree) ? (newCount(tree) === 1 ? 'Máte jednu novinku.' : m('Máte nové pořady: ') + newCount(tree) + '.') : m('Žádné nové pořady.'));
     return true;
   } catch {
     const cached = lsGet(LS_FEED);
@@ -280,7 +373,7 @@ async function loadFeed(userAsked) {
 function maybeSync() { if (!PREVIEW && !syncing && Date.now() - lastSync > 2000) { loadFeed(false); checkCode(); } }
 
 // Aktuální program: soubory aplikace se při startu zapamatují; když se na serveru změní a nic nehraje, stránka se sama načte znovu.
-const CODE_FILES = ['./', 'js/app.js', 'js/player.js', 'js/validate.js', 'css/jukebox.css'];
+const CODE_FILES = ['./', 'js/app.js', 'js/player.js', 'js/validate.js', 'css/jukebox.css', 'css/mobile.css'];
 const codeSnap = new Map();
 let checking = false;
 async function checkCode() {
@@ -302,8 +395,9 @@ async function checkCode() {
 async function toggleFullscreen() {
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
+    else if (MOBILE && (document.body.classList.contains('fakefs') || !screenWrap.requestFullscreen)) document.body.classList.toggle('fakefs');
     else await screenWrap.requestFullscreen();
-  } catch { say('Celou obrazovku se nepodařilo zapnout.', true); }
+  } catch { if (MOBILE) document.body.classList.toggle('fakefs'); else say('Celou obrazovku se nepodařilo zapnout.', true); }
   refresh();
 }
 // Přeladit: další pořad v seznamu, kde se hraje (dokola); bez hrajícího pořadu další ve složce.
@@ -324,12 +418,31 @@ function tune() {
 }
 // Seznam kanálů: zpět na výchozí vzhled (konec celé obrazovky a lišty), hraní pokračuje, seznam ukáže právě hrající.
 function showChannels() {
-  document.body.classList.remove('mini');
+  document.body.classList.remove('mini', 'fakefs');
   const done = () => { render(); const c = listEl.querySelector('.item.playing'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center' }); };
   if (document.fullscreenElement) document.exitFullscreen().then(done, done); else done();
 }
-function toggleMini() { document.body.classList.toggle('mini'); refresh(); }
+function toggleMini() {
+  if (MOBILE) {
+    if (document.body.classList.contains('mini')) setScreen('play');
+    else { document.body.classList.remove('fakefs'); showList(); }
+    refresh(); return;
+  }
+  document.body.classList.toggle('mini'); refresh();
+}
+function sleepMobile() {
+  clearTimeout(timer);
+  closeExternal();
+  automat = false; shuffle = null; powered = false;
+  player.stop();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  document.body.classList.remove('mini', 'fakefs');
+  setScreen('play');
+  say('Vypnuto. Stiskněte Zapnout.');
+  refresh();
+}
 function sleep() {
+  if (MOBILE) { sleepMobile(); return; }
   clearTimeout(timer);
   closeExternal();
   automat = false; shuffle = null;
@@ -341,10 +454,15 @@ function sleep() {
   $('#asleep .btn').focus();
   try { window.close(); } catch { /* prohlížeč nedovolí zavřít okno; zůstane obrazovka „odpočívá“ */ }
 }
-function wake() { $('#asleep').hidden = true; $('#app').hidden = false; refresh(); }
+function wake() {
+  if (MOBILE) { powered = true; setScreen('start'); say(m('Vítejte. Vyberte pořad.')); refresh(); return; }
+  $('#asleep').hidden = true; $('#app').hidden = false; refresh();
+}
 function playSelected() {
+  if (player.state === 'paused') { player.resume(); return; }
+  if (MOBILE && player.state === 'playing') return;
   const it = cwd().nodes[selected];
-  if (!it) { say('Nejdřív stiskněte Novinky.', true); return; }
+  if (!it) { say(m('Nejdřív stiskněte Novinky.'), true); return; }
   if (it.kind === 'folder') openFolder(selected); else playHere(selected);
 }
 function toggleRandom(scope) {
@@ -352,7 +470,17 @@ function toggleRandom(scope) {
 }
 
 const actions = {
-  news: () => { say('Hledám novinky…'); return loadFeed(true); },
+  news: async () => {
+    say('Hledám novinky…');
+    await loadFeed(true);
+    if (!MOBILE) return;
+    if (newCount(tree)) { path = ['__news']; selected = 0; showList(); render(); listEl.scrollTop = 0; } else say(m('Žádné nové pořady.'));
+  },
+  'm-choose': () => { selected = 0; showList(); render(); },
+  fav: toggleFav,
+  offer: offerSomething,
+  subs: toggleSubs,
+  shuf: toggleShuffle,
   play: playSelected,
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
   stop: () => { clearTimeout(timer); player.stop(); closeExternal(); },
@@ -360,7 +488,7 @@ const actions = {
   tune,
   channels: showChannels,
   mini: toggleMini,
-  close: sleep,
+  close: () => { if (MOBILE && !powered) wake(); else sleep(); },
   wake,
   auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
   'rand-here': () => toggleRandom('here'),
@@ -377,6 +505,7 @@ document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');
   if (btn) {
     const act = btn.dataset.act;
+    if (MOBILE && !powered && act !== 'close') return;
     const key = act + (btn.dataset.index || '');
     const t = Date.now();
     const burst = t - (lastClick.get(key) || 0) < BURST_MS;
@@ -462,6 +591,7 @@ if (PREVIEW) {
 }
 
 /* ---------- start ---------- */
+if (MOBILE) { setScreen('start'); say(m('Vítejte. Vyberte pořad.')); }
 render();
 if (!PREVIEW) {
   loadFeed(false);
