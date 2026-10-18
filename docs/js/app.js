@@ -115,6 +115,7 @@ function mkBtn(act, label, iconId, index) {
 }
 
 function render() {
+  if (MOBILE) { renderTree(); refresh(); return; }
   const { nodes, trail } = cwd();
   crumbsEl.textContent = pathTitle(trail);
   listEl.replaceChildren();
@@ -189,12 +190,85 @@ function setScreen(name) {
   document.body.dataset.screen = name;
   if (name !== 'list') document.body.classList.remove('mini');
 }
-function showList() {
-  if (now && player.state !== 'idle') document.body.classList.add('mini');
-  setScreen('list');
+function showList() { setScreen('list'); }
+
+/* Strom programů: složky se rozbalují na místě, programy jsou odsazené pod nimi. Klíč řádku je cesta z id od kořene. */
+const expanded = new Set();
+let openOrder = [];       // v jakém pořadí se složky rozbalily (Zpět je sbaluje od poslední)
+const rowMap = new Map(); // klíč řádku -> { node, siblings, trail }
+function chainFor(id, nodes = tree, prefix = '') {
+  for (const n of nodes) {
+    const key = prefix + '/' + n.id;
+    if (n.kind === 'folder') { const sub = chainFor(id, n.children, key); if (sub) return [key, ...sub]; } else if (n.id === id) return [];
+  }
+  return null;
+}
+function collapse(key) {
+  for (const k of [...expanded]) if (k === key || k.startsWith(key + '/')) expanded.delete(k);
+  openOrder = openOrder.filter((k) => expanded.has(k));
+}
+function expand(key) { if (!expanded.has(key)) { expanded.add(key); openOrder.push(key); } }
+function renderTree() {
+  rowMap.clear();
+  listEl.replaceChildren();
+  const rows = [];
+  const walk = (nodes, trail, prefix) => {
+    for (const n of nodes) {
+      const key = prefix + '/' + n.id;
+      rowMap.set(key, { node: n, siblings: nodes, trail });
+      rows.push({ key, node: n, depth: trail.length });
+      if (n.kind === 'folder' && expanded.has(key)) walk(n.children, [...trail, n], key);
+    }
+  };
+  walk(rootNodes(), [], '');
+  if (!rows.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Zatím tu nic není. Stiskněte Nové.'; listEl.append(e); }
+  for (const { key, node, depth } of rows) {
+    const folder = node.kind === 'folder';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'trow d' + Math.min(depth, 5) + (folder ? ' folder' : ''); b.dataset.act = 'trow'; b.dataset.key = key;
+    if (folder) b.setAttribute('aria-expanded', String(expanded.has(key)));
+    const mark = document.createElement('span'); mark.className = 'mark'; mark.textContent = folder ? (expanded.has(key) ? '▾' : '▸') : '♪';
+    const title = document.createElement('span'); title.className = 'tt';
+    const fresh = folder ? newCount(node.children) : (seen.has(node.id) ? 0 : 1);
+    if (fresh) { const bd = document.createElement('span'); bd.className = 'badge'; bd.textContent = 'NOVÉ'; title.append(bd); }
+    title.append(document.createTextNode(node.title));
+    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = ' (' + playableIn(node.children, true).length + ')'; title.append(c); }
+    b.append(mark, title);
+    listEl.append(b);
+  }
+}
+function tapRow(key) {
+  const row = rowMap.get(key);
+  if (!row) return;
+  const it = row.node;
+  if (it.kind === 'folder') {
+    if (expanded.has(key)) collapse(key); else expand(key);
+    render();
+    const el = [...listEl.querySelectorAll('.trow')].find((x) => x.dataset.key === key);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  if (isCurrent(it) && (player.state === 'playing' || player.state === 'paused')) { leaveList(); return; }
+  const q = playableIn(row.siblings);
+  shuffle = null;
+  startItem(it, pathTitle(row.trail), q, q.indexOf(it));
+}
+function showListAtPlaying() {
+  if (now) chainFor(now.item.id).forEach(expand);
+  setScreen('list'); render();
+  const row = listEl.querySelector('.trow.playing');
+  if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center' });
+}
+function markTree() {
+  const active = player.state === 'playing' || player.state === 'paused';
+  listEl.querySelectorAll('.trow').forEach((el) => {
+    const row = rowMap.get(el.dataset.key);
+    el.classList.toggle('playing', !!(active && now && row && row.node.kind !== 'folder' && row.node.id === now.item.id));
+  });
 }
 function refreshMobile() {
   document.body.dataset.power = powered ? 'on' : 'off';
+  markTree();
   $('#marquee').textContent = 'Programy';
   const set = (key, on, yes, no) => document.querySelectorAll('[data-flag="' + key + '"]').forEach((b) => {
     b.textContent = on ? yes : no; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
@@ -211,16 +285,6 @@ function refreshMobile() {
   document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !(player.state === 'playing' || player.state === 'paused'); });
 }
-function normName(t) { return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
-// Rychlá volba: otevře nejvyšší program tohoto jména (přesně, pak od začátku, pak obsahující).
-function quick(name) {
-  const key = normName(name).slice(0, 5);
-  const top = tree.filter((n) => n.kind === 'folder');
-  const t = (n) => normName(n.title);
-  const hit = top.find((n) => t(n) === normName(name)) || top.find((n) => t(n).startsWith(key)) || top.find((n) => t(n).includes(key));
-  if (!hit) { say('Program „' + name + '“ zatím není.', true); return; }
-  path = [hit.id]; selected = 0; showList(); render(); listEl.scrollTop = 0;
-}
 function toggleFav() {
   const it = now ? now.item : null;
   if (screen === 'play' && it) {
@@ -230,7 +294,8 @@ function toggleFav() {
     return;
   }
   if (!favs.size) { say('Zatím nemáte žádné oblíbené. Při přehrávání stiskněte srdce.', true); return; }
-  path = ['__fav']; selected = 0; showList(); render(); listEl.scrollTop = 0;
+  expand('/__fav'); showList(); render();
+  const el = [...listEl.querySelectorAll('.trow')].find((x) => x.dataset.key === '/__fav'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' });
 }
 function offerSomething() {
   const all = noWeb(playableIn(tree, true));
@@ -274,8 +339,8 @@ function openFolder(i) {
   path = [...path, f.id]; selected = 0; render(); listEl.scrollTop = 0;
 }
 function leaveList() { setScreen(now && player.state !== 'idle' ? 'play' : 'start'); refresh(); }
-function goBack() { if (MOBILE && !path.length) { leaveList(); return; } if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
-function goHome() { if (MOBILE && !path.length) { leaveList(); return; } if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
+function goBack() { if (MOBILE) { const k = openOrder[openOrder.length - 1]; if (k) { collapse(k); render(); } else leaveList(); return; } if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
+function goHome() { if (MOBILE) { if (expanded.size) { expanded.clear(); openOrder = []; render(); listEl.scrollTop = 0; } else leaveList(); return; } if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
 
 /* ---------- přehrávání ---------- */
 function markSeen(it) {
@@ -432,7 +497,7 @@ function tune() {
 function showChannels() {
   if (MOBILE) {
     document.body.classList.remove('fakefs');
-    const go = () => { showList(); render(); };
+    const go = () => showListAtPlaying();
     if (document.fullscreenElement) document.exitFullscreen().then(go, go); else go();
     return;
   }
@@ -441,11 +506,6 @@ function showChannels() {
   if (document.fullscreenElement) document.exitFullscreen().then(done, done); else done();
 }
 function toggleMini() {
-  if (MOBILE) {
-    if (document.body.classList.contains('mini')) setScreen('play');
-    else { document.body.classList.remove('fakefs'); showList(); }
-    refresh(); return;
-  }
   document.body.classList.toggle('mini'); refresh();
 }
 function sleepMobile() {
@@ -478,7 +538,11 @@ function wake() {
 }
 function playSelected() {
   if (player.state === 'paused') { player.resume(); return; }
-  if (MOBILE && player.state === 'playing') return;
+  if (MOBILE) {
+    if (player.state === 'playing') return;
+    if (now) startItem(now.item, now.where, queue, qi); else { showList(); render(); }
+    return;
+  }
   const it = cwd().nodes[selected];
   if (!it) { say(m('Nejdřív stiskněte Novinky.'), true); return; }
   if (it.kind === 'folder') openFolder(selected); else playHere(selected);
@@ -492,9 +556,10 @@ const actions = {
     say('Hledám novinky…');
     await loadFeed(true);
     if (!MOBILE) return;
-    if (newCount(tree)) { path = ['__news']; selected = 0; showList(); render(); listEl.scrollTop = 0; } else say(m('Žádné nové pořady.'));
+    if (newCount(tree)) { expand('/__news'); showList(); render(); const el = [...listEl.querySelectorAll('.trow')].find((x) => x.dataset.key === '/__news'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); } else say(m('Žádné nové pořady.'));
   },
-  'm-choose': () => { selected = 0; showList(); render(); },
+  'm-choose': () => { showList(); render(); },
+  browse: showListAtPlaying,
   fav: toggleFav,
   offer: offerSomething,
   subs: toggleSubs,
@@ -524,7 +589,7 @@ document.addEventListener('click', (ev) => {
   if (btn) {
     const act = btn.dataset.act;
     if (MOBILE && !powered && act !== 'close') return;
-    const key = act + (btn.dataset.index || '') + (btn.dataset.name || '');
+    const key = act + (btn.dataset.index || '') + (btn.dataset.key || '');
     const t = Date.now();
     const burst = t - (lastClick.get(key) || 0) < BURST_MS;
     lastClick.set(key, t);
@@ -534,7 +599,7 @@ document.addEventListener('click', (ev) => {
       const it = cwd().nodes[i];
       if (it && isCurrent(it) && player.state !== 'idle') { clearTimeout(timer); player.stop(); } else playHere(i);
     } else if (act === 'open') openFolder(i);
-    else if (act === 'quick') quick(btn.dataset.name);
+    else if (act === 'trow') tapRow(btn.dataset.key);
     else if (actions[act]) actions[act]();
     return;
   }

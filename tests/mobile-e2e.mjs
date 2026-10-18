@@ -64,61 +64,77 @@ const noOverflow = async () => assert.equal(await page.evaluate(() => document.d
 
 await page.goto(base);
 await page.waitForSelector('#m-start .btn');
+const row = (name) => page.locator('.trow', { hasText: name }).first();
+const rows = () => page.locator('.trow .tt').allInnerTexts();
 
-await step('telefon se pozná sám a ukáže obrazovku 1', async () => {
+await step('telefon se pozná sám a ukáže úvod: Listování mezi pořady, Oblíbené a Nové vedle sebe, bez rychlé volby', async () => {
   assert.equal(await page.evaluate(() => document.body.classList.contains('m')), true);
   assert.equal(await screenName(), 'start');
-  assert.equal(await vis('#m-start .btn'), true);
   assert.match(await page.locator('#m-start .lbl').first().innerText(), /Listování mezi pořady/);
-  assert.match(await page.locator('.m-caption').innerText(), /Rychlá volba/i);
+  assert.deepEqual(await page.locator('#m-start .lbl').allInnerTexts(), ['Listování mezi pořady', 'Oblíbené', 'Nové']);
+  assert.equal(await page.locator('.m-quick, .m-caption').count(), 0);
   assert.equal(await vis('#listbox'), false);
   assert.equal(await vis('#controls'), false);
-  assert.deepEqual(await page.locator('.m-quick .lbl').allInnerTexts(), ['Rozhovory', 'Hudba', 'Zajímavosti', 'Relaxační', 'Oblíbené', 'Nové']);
-  assert.equal(await page.locator('#m-bottom').isVisible(), false);
   const hs = await page.locator('#m-start .btn:visible').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
   assert.equal(new Set(hs).size, 1, 'všechna tlačítka na úvodu mají stejnou výšku: ' + hs);
   await noOverflow();
 });
 await page.screenshot({ path: path.join(shots, 'm1-start.png') });
 
-await step('Listování otevře seznam; Domů a Zpět jsou aktivní a Nahoru/Dolů tam není', async () => {
+await step('seznam programů je strom: složky jsou sbalené, bez Nahoru/Dolů', async () => {
   await act('m-choose').tap();
   assert.equal(await screenName(), 'list');
-  assert.equal(await vis('#listbox'), true);
-  assert.equal(await vis('#cabinet'), false);
   assert.match(await page.locator('#marquee').innerText(), /^programy$/i);
   assert.equal(await vis('.arrowrow'), false);
+  assert.equal(await vis('#crumbs'), false);
   assert.equal(await act('back').isDisabled(), false);
   assert.equal(await act('home').isDisabled(), false);
-  assert.equal(await page.locator('.item').count(), 3); // Novinky, Hudba, Rádio
+  const r = await rows();
+  assert.equal(r.length, 3); // Novinky, Hudba, Rádio
+  assert.match(r[0], /Novinky/);
   await noOverflow();
 });
-await step('v seznamu se nikde neukáže slovo adresář ani složka', async () => {
-  await page.locator('button[data-act="open"][data-index="2"]').tap();
+await step('klepnutí na složku ji rozbalí na místě a program je odsazený; vnořená složka se rozbalí také', async () => {
+  await row('Rádio').tap();
+  assert.equal(await row('Hlubší').isVisible(), true);
+  assert.equal(await row('Hlubší').evaluate((e) => e.classList.contains('d1')), true);
+  await row('Hlubší').tap();
+  assert.equal(await row('Třetí tón').evaluate((e) => e.classList.contains('d2')), true);
+  assert.equal(await row('Rádio').getAttribute('aria-expanded'), 'true');
   const t = await page.locator('body').innerText();
   assert.doesNotMatch(t, /adresář|složk/i);
-  await act('home').tap();
 });
 await page.screenshot({ path: path.join(shots, 'm2-seznam.png') });
-
-await step('program se otevře, Zpět a Domů se rozsvítí', async () => {
-  await page.locator('button[data-act="open"][data-index="1"]').tap();
-  assert.equal(await page.locator('#crumbs').innerText(), 'Domů › Hudba');
-  assert.equal(await act('back').isDisabled(), false);
+await step('Zpět sbalí naposledy rozbalenou složku, Domů sbalí vše', async () => {
+  await act('back').tap();
+  assert.equal(await page.locator('.trow', { hasText: 'Třetí tón' }).count(), 0);
+  assert.equal(await row('Hlubší').isVisible(), true);
+  await wait();
+  await row('Hudba').tap();
+  await wait();
+  await act('home').tap();
+  assert.equal((await rows()).length, 3);
 });
 await step('klepnutí na program spustí přehrávání a přepne na obrazovku 3', async () => {
-  await page.locator('button[data-act="item"][data-index="0"]').tap();
+  await row('Hudba').tap();
+  await row('První tón').tap();
   assert.equal(await screenName(), 'play');
   assert.match(await status(), /Hraje: První tón/);
   assert.equal(await vis('#cabinet'), true);
-  assert.equal(await page.locator('#m-play .btn:visible').count(), 8);
-  assert.deepEqual(await page.locator('#m-play .m-row').first().locator('.lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit']);
-  const hs = await page.locator('#m-play .btn:visible, #m-bottom .btn:visible').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
-  assert.equal(new Set(hs).size, 1, 'stejná výška tlačítek: ' + hs);
+  assert.equal(await page.locator('#m-panel .btn:visible').count(), 4);
+  assert.equal(await page.locator('#m-play .btn:visible').count(), 4);
   assert.equal(await page.locator('#m-bottom .btn:visible').count(), 4);
   assert.equal(await page.locator('.flag:visible').count(), 3);
   assert.equal(await act('play').getAttribute('data-lit'), 'green');
   await noOverflow();
+});
+await step('panel Vypnout, Pustit, Pozastavit, Ukončit je hned pod přepínači a před ostatními tlačítky', async () => {
+  assert.deepEqual(await page.locator('#m-panel .lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit']);
+  const f = await page.locator('#m-flags').boundingBox(), p = await page.locator('#m-panel').boundingBox(), r2 = await page.locator('#m-play').boundingBox();
+  assert.ok(p.y >= f.y + f.height - 1 && p.y < f.y + f.height + 40, 'panel je pod přepínači');
+  assert.ok(r2.y > p.y + p.height, 'ostatní tlačítka jsou pod panelem');
+  const hs = await page.locator('#m-panel .btn, #m-play .btn, #m-bottom .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+  assert.equal(new Set(hs).size, 1, 'stejná výška tlačítek: ' + hs);
 });
 await page.screenshot({ path: path.join(shots, 'm3-hraje.png') });
 
@@ -138,26 +154,30 @@ await step('oválné přepínače mají dva stavy', async () => {
   await flip('shuf', 'Hraje za sebou', 'Náhodné pořadí');
   await flip('subs', 'Titulky vypnuty', 'Titulky zapnuty');
 });
-await step('Pauza a Pokračovat', async () => {
+await step('Pozastavit a Pokračovat', async () => {
   await act('pause').tap();
   assert.match(await status(), /Pozastaveno/);
   await wait();
   await act('pause').tap();
   assert.match(await status(), /Hraje/);
 });
-await step('srdce přidá hrající program do oblíbených a Oblíbené se objeví v seznamu', async () => {
+await step('srdce přidá hrající program do oblíbených', async () => {
   await act('fav').tap();
   assert.match(await status(), /Přidáno do oblíbených/);
   assert.equal(await act('fav').getAttribute('data-lit'), 'red');
 });
-await step('Zmenšit ukáže seznam a malé okno, Zvětšit se vrátí', async () => {
-  await act('mini').tap();
-  assert.equal(await screenName(), 'list');
-  assert.equal(await page.evaluate(() => document.body.classList.contains('mini')), true);
-  assert.equal(await vis('#screen-wrap'), true);
-  await page.screenshot({ path: path.join(shots, 'm4-mini.png') });
+await step('Listuj programy ukáže seznam rozbalený u hrajícího programu, bez malého okna; hudba hraje dál', async () => {
   await wait();
-  await page.locator('#m-restore').tap();
+  await act('browse').tap();
+  assert.equal(await screenName(), 'list');
+  assert.equal(await row('První tón').evaluate((e) => e.classList.contains('playing')), true);
+  assert.equal(await vis('#screen-wrap'), false);
+  assert.equal(await page.evaluate(() => !document.querySelector('audio').paused), true);
+  await page.screenshot({ path: path.join(shots, 'm4-seznam-hraje.png') });
+  await wait();
+  await act('home').tap();
+  await wait();
+  await act('home').tap();
   assert.equal(await screenName(), 'play');
 });
 await step('Ukončit vrátí na seznam programů', async () => {
@@ -166,31 +186,30 @@ await step('Ukončit vrátí na seznam programů', async () => {
 });
 await page.goto(base + '?mobil=1');
 await page.waitForSelector('#m-start .btn');
-await step('Nové otevře program Novinky s duplicitami (pustený tón už není nový)', async () => {
+await step('Nové otevře strom s rozbalenými Novinkami; pustený tón v nich už není', async () => {
   await act('news').tap();
   await wait();
   assert.equal(await screenName(), 'list');
-  assert.equal(await page.locator('#crumbs').innerText(), 'Domů › Novinky');
-  const titles = await page.locator('.item h3').allInnerTexts();
-  assert.equal(titles.length, 3);
-  assert.ok(!titles.some((t) => /První tón/.test(t)));
-  await act('home').tap();
-  const root = await page.locator('.item h3').allInnerTexts();
-  assert.match(root[0], /Novinky/);
-  assert.match(root[1], /Oblíbené/);
-  assert.ok(root.some((t) => /Hudba/.test(t)));
+  const r = await rows();
+  assert.match(r[0], /Novinky/);
+  assert.equal(await row('Novinky').getAttribute('aria-expanded'), 'true');
+  const inNews = await page.locator('.trow.d1 .tt').allInnerTexts();
+  assert.equal(inNews.filter((t) => /tón|zvony/.test(t)).length >= 3, true);
+  assert.ok(!inNews.slice(0, 3).some((t) => /První tón/.test(t)));
 });
-await step('Oblíbené obsahuje srdíčkem označený program', async () => {
-  await page.locator('button[data-act="open"][data-index="1"]').tap();
-  assert.equal(await page.locator('#crumbs').innerText(), 'Domů › Oblíbené');
-  assert.match(await page.locator('.item h3').first().innerText(), /První tón/);
+await step('Oblíbené je složka na začátku stromu a obsahuje označený program', async () => {
+  await act('home').tap();
+  await wait();
+  await row('Oblíbené').tap();
+  assert.equal(await row('Oblíbené').getAttribute('aria-expanded'), 'true');
+  assert.match(await page.locator('.trow.d1 .tt').first().innerText(), /První tón/);
 });
 await page.goto(base + '?mobil=1');
 await page.waitForSelector('#m-start .btn');
 await step('Nabídni mi pustí program z oblíbených', async () => {
   await act('m-choose').tap();
-  await page.locator('button[data-act="open"][data-index="2"]').tap();
-  await page.locator('button[data-act="item"][data-index="2"]').tap();
+  await row('Hudba').tap();
+  await row('Pražské zvony').tap();
   assert.equal(await screenName(), 'play');
   await act('offer').tap();
   assert.match(await status(), /Hraje: První tón/);
@@ -199,66 +218,43 @@ await step('Titulky u YouTube přidají cc_load_policy a spustí program znovu',
   await page.goto(base + '?mobil=1');
   await page.waitForSelector('#m-start .btn');
   await act('m-choose').tap();
-  await page.locator('button[data-act="open"][data-index="2"]').tap();
-  await page.locator('button[data-act="item"][data-index="2"]').tap();
+  await row('Hudba').tap();
+  await row('Pražské zvony').tap();
   assert.match(await status(), /Hraje: Pražské zvony/);
   ytUrl = '';
   await page.locator('.flag[data-flag="subs"]').tap();
   await wait(400);
   assert.match(ytUrl, /cc_load_policy=1/);
+  await wait();
   await page.locator('.flag[data-flag="subs"]').tap();
 });
-
-await page.goto(base + '?mobil=1');
-await page.waitForSelector('#m-start .btn');
-await step('rychlá volba Hudba otevře program Hudba; Zpět v kořeni vrátí na úvod', async () => {
-  await page.locator('.m-quick [data-name="Hudba"]').tap();
-  assert.equal(await screenName(), 'list');
-  assert.equal(await page.locator('#crumbs').innerText(), 'Domů › Hudba');
-  await act('home').tap();
-  assert.equal(await page.locator('#crumbs').innerText(), 'Domů');
-  await wait();
-  await act('back').tap();
-  assert.equal(await screenName(), 'start');
-});
-await step('rychlá volba bez takového programu to řekne', async () => {
-  await page.locator('.m-quick [data-name="Rozhovory"]').tap();
-  assert.match(await status(), /Rozhovory.*zatím není/);
-  assert.equal(await screenName(), 'start');
-});
 await step('na celou obrazovku zůstane Pozastavit, Ukončit, Zmenšit a Seznam programů', async () => {
-  await act('m-choose').tap();
-  await page.locator('button[data-act="open"][data-index="2"]').tap();
-  await page.locator('button[data-act="item"][data-index="0"]').tap();
   await wait();
   await act('full').tap();
   await wait();
   assert.equal(await page.evaluate(() => document.body.classList.contains('fakefs') || !!document.fullscreenElement), true);
-  const labels = await page.locator('.fs-bar .btn:visible .lbl').allInnerTexts();
-  assert.deepEqual(labels, ['Pozastavit', 'Ukončit', 'Zmenšit', 'Seznam programů']);
+  assert.deepEqual(await page.locator('.fs-bar .btn:visible .lbl').allInnerTexts(), ['Pozastavit', 'Ukončit', 'Zmenšit', 'Seznam programů']);
   await page.screenshot({ path: path.join(shots, 'm6-cela.png') });
   await page.locator('.fs-bar [data-act="channels"]').tap();
   assert.equal(await screenName(), 'list');
 });
-
 await step('Vypnout: vše zešedne, jen Zapnout je aktivní; Zapnout vrátí na začátek', async () => {
   await page.goto(base + '?mobil=1');
   await page.waitForSelector('#m-start .btn');
   await act('m-choose').tap();
-  await page.locator('button[data-act="open"][data-index="2"]').tap();
-  await page.locator('button[data-act="item"][data-index="0"]').tap();
+  await row('Hudba').tap();
+  await row('První tón').tap();
   assert.equal(await page.locator('[data-act="close"] .lbl:visible').first().innerText(), 'Vypnout');
   await act('close').tap();
   assert.equal(await page.evaluate(() => document.body.dataset.power), 'off');
   assert.equal(await page.locator('[data-act="close"] .lbl:visible').first().innerText(), 'Zapnout');
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#m-play [data-act="play"]')).pointerEvents), 'none');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#m-play [data-act="auto"]')).pointerEvents), 'none');
   await page.screenshot({ path: path.join(shots, 'm5-spi.png') });
   await wait();
   await act('close').tap();
   assert.equal(await page.evaluate(() => document.body.dataset.power), 'on');
   assert.equal(await screenName(), 'start');
 });
-
 await step('na počítači se mobilní prvky nezobrazí', async () => {
   const d = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const pg = await d.newPage();
@@ -267,6 +263,7 @@ await step('na počítači se mobilní prvky nezobrazí', async () => {
   assert.equal(await pg.evaluate(() => document.body.classList.contains('m')), false);
   assert.equal(await pg.locator('#m-start').isVisible(), false);
   assert.equal(await pg.locator('#m-play').isVisible(), false);
+  assert.equal(await pg.locator('#m-panel').isVisible(), false);
   assert.equal(await pg.locator('.m-flags').isVisible(), false);
   await d.close();
 });
