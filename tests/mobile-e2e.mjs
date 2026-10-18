@@ -69,22 +69,27 @@ await step('telefon se pozná sám a ukáže obrazovku 1', async () => {
   assert.equal(await page.evaluate(() => document.body.classList.contains('m')), true);
   assert.equal(await screenName(), 'start');
   assert.equal(await vis('#m-start .btn'), true);
-  assert.match(await page.locator('#m-start .lbl').innerText(), /Vyberte program/);
+  assert.match(await page.locator('#m-start .lbl').first().innerText(), /Listování mezi pořady/);
+  assert.match(await page.locator('.m-caption').innerText(), /Rychlá volba/i);
   assert.equal(await vis('#listbox'), false);
   assert.equal(await vis('#controls'), false);
-  assert.equal(await page.locator('#m-bottom .btn:visible').count(), 2);
+  assert.deepEqual(await page.locator('.m-quick .lbl').allInnerTexts(), ['Rozhovory', 'Hudba', 'Zajímavosti', 'Relaxační', 'Oblíbené', 'Nové']);
+  assert.equal(await page.locator('#m-bottom').isVisible(), false);
+  const hs = await page.locator('#m-start .btn:visible').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+  assert.equal(new Set(hs).size, 1, 'všechna tlačítka na úvodu mají stejnou výšku: ' + hs);
   await noOverflow();
 });
 await page.screenshot({ path: path.join(shots, 'm1-start.png') });
 
-await step('Vyberte program otevře seznam; Domů a Zpět jsou vypnuté a nahoře není Nahoru/Dolů', async () => {
+await step('Listování otevře seznam; Domů a Zpět jsou aktivní a Nahoru/Dolů tam není', async () => {
   await act('m-choose').tap();
   assert.equal(await screenName(), 'list');
   assert.equal(await vis('#listbox'), true);
   assert.equal(await vis('#cabinet'), false);
   assert.match(await page.locator('#marquee').innerText(), /^programy$/i);
   assert.equal(await vis('.arrowrow'), false);
-  assert.equal(await act('back').isDisabled(), true);
+  assert.equal(await act('back').isDisabled(), false);
+  assert.equal(await act('home').isDisabled(), false);
   assert.equal(await page.locator('.item').count(), 3); // Novinky, Hudba, Rádio
   await noOverflow();
 });
@@ -107,6 +112,9 @@ await step('klepnutí na program spustí přehrávání a přepne na obrazovku 3
   assert.match(await status(), /Hraje: První tón/);
   assert.equal(await vis('#cabinet'), true);
   assert.equal(await page.locator('#m-play .btn:visible').count(), 8);
+  assert.deepEqual(await page.locator('#m-play .m-row').first().locator('.lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit']);
+  const hs = await page.locator('#m-play .btn:visible, #m-bottom .btn:visible').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+  assert.equal(new Set(hs).size, 1, 'stejná výška tlačítek: ' + hs);
   assert.equal(await page.locator('#m-bottom .btn:visible').count(), 4);
   assert.equal(await page.locator('.flag:visible').count(), 3);
   assert.equal(await act('play').getAttribute('data-lit'), 'green');
@@ -199,6 +207,38 @@ await step('Titulky u YouTube přidají cc_load_policy a spustí program znovu',
   await wait(400);
   assert.match(ytUrl, /cc_load_policy=1/);
   await page.locator('.flag[data-flag="subs"]').tap();
+});
+
+await page.goto(base + '?mobil=1');
+await page.waitForSelector('#m-start .btn');
+await step('rychlá volba Hudba otevře program Hudba; Zpět v kořeni vrátí na úvod', async () => {
+  await page.locator('.m-quick [data-name="Hudba"]').tap();
+  assert.equal(await screenName(), 'list');
+  assert.equal(await page.locator('#crumbs').innerText(), 'Domů › Hudba');
+  await act('home').tap();
+  assert.equal(await page.locator('#crumbs').innerText(), 'Domů');
+  await wait();
+  await act('back').tap();
+  assert.equal(await screenName(), 'start');
+});
+await step('rychlá volba bez takového programu to řekne', async () => {
+  await page.locator('.m-quick [data-name="Rozhovory"]').tap();
+  assert.match(await status(), /Rozhovory.*zatím není/);
+  assert.equal(await screenName(), 'start');
+});
+await step('na celou obrazovku zůstane Pozastavit, Ukončit, Zmenšit a Seznam programů', async () => {
+  await act('m-choose').tap();
+  await page.locator('button[data-act="open"][data-index="2"]').tap();
+  await page.locator('button[data-act="item"][data-index="0"]').tap();
+  await wait();
+  await act('full').tap();
+  await wait();
+  assert.equal(await page.evaluate(() => document.body.classList.contains('fakefs') || !!document.fullscreenElement), true);
+  const labels = await page.locator('.fs-bar .btn:visible .lbl').allInnerTexts();
+  assert.deepEqual(labels, ['Pozastavit', 'Ukončit', 'Zmenšit', 'Seznam programů']);
+  await page.screenshot({ path: path.join(shots, 'm6-cela.png') });
+  await page.locator('.fs-bar [data-act="channels"]').tap();
+  assert.equal(await screenName(), 'list');
 });
 
 await step('Vypnout: vše zešedne, jen Zapnout je aktivní; Zapnout vrátí na začátek', async () => {

@@ -2,7 +2,7 @@
    Na počítači se z toho nic nezobrazí. */
 .m-flags, .m-start, .m-play, .m-bottom, #m-restore { display: none; }
 
-body.m { overflow: hidden; }
+body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou výšku */
 body.m #app { display: block; height: 100dvh; padding: 6px; }
 body.m #cabinet, body.m #listbox { height: 100%; padding: 10px 9px; gap: 8px; border-width: 4px; border-radius: 24px; }
 body.m .copy { display: none; }
@@ -24,7 +24,7 @@ body.m .status { font-size: 17px; min-height: 1.3em; line-height: 1.25; }
 body.m .substatus { font-size: 13px; }
 
 /* tlačítka: menší než na počítači, pořád s 3D stiskem */
-body.m .btn { min-height: 62px; padding: 14px 2px 5px; font-size: 13px; border-radius: 14px; gap: 2px; margin-bottom: 0;
+body.m .btn { min-height: var(--mh); padding: 14px 2px 5px; font-size: 13px; border-radius: 14px; gap: 2px; margin-bottom: 0;
   box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, inset 0 -3px 0 #0003; }
 body.m .btn:active { transform: translateY(5px); box-shadow: 0 1px 0 #5a3d0e, 0 2px 3px #000c, inset 0 4px 8px #0009; }
 body.m .btn .ico { width: 24px; height: 24px; }
@@ -33,15 +33,11 @@ body.m .btn[data-lit] { box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2p
 body.m .btn[data-lit] .lamp { box-shadow: 0 0 10px 3px var(--glow); }
 body.m .btn:disabled { filter: grayscale(.8) brightness(.7); }
 .m-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-body.m .btn.half { min-height: 44px; padding: 10px 2px 3px; flex-direction: row; gap: 4px; font-size: 11px; border-radius: 11px; box-shadow: 0 4px 0 #5a3d0e, 0 6px 6px #000b, inset 0 2px 0 #fffb; }
-body.m .btn.half .ico { width: 16px; height: 16px; } body.m .btn.half .lamp { top: 4px; height: 4px; }
-body.m .btn.half[data-lit] { box-shadow: 0 4px 0 #5a3d0e, 0 6px 6px #000b, inset 0 2px 0 #fffb, 0 0 12px 2px var(--glow); }
 body.m .btn.grey { background: linear-gradient(#cfc8bb, #9b9385); box-shadow: 0 6px 0 #5f594e, 0 9px 9px #000b, inset 0 2px 0 #fffa; }
 body.m .btn.grey[data-lit] { background: linear-gradient(#fff3b0, #ffd34d); box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--glow); }
 body.m .btn.go { background: linear-gradient(#cfe9c9, #7fb878); }
 body.m .btn.go[data-lit] { background: linear-gradient(#fff3b0, #ffd34d); }
-body.m .btn.big { min-height: 96px; font-size: 24px; border-radius: 22px; padding-top: 20px; box-shadow: 0 9px 0 #5a3d0e, 0 14px 14px #000b, inset 0 2px 0 #fffb; flex-direction: column; }
-body.m .btn.big .ico { width: 36px; height: 36px; } body.m .btn.big .lamp { top: 9px; height: 8px; }
+body.m .btn.big { font-size: 20px; }
 
 /* oválné přepínače se dvěma stavy */
 body.m .m-flags { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -51,15 +47,17 @@ body.m .m-flags { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px
 .flag.on { color: #9dff9d; background: #1d3a1f; border-color: var(--green); box-shadow: 0 3px 0 #0e2410, 0 0 10px var(--green); }
 
 /* obrazovka 1 */
-body.m[data-screen="start"] .m-start { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: center; }
-body.m[data-screen="start"] .m-bottom { display: grid; grid-template-columns: 1fr 1fr; }
-body.m[data-screen="start"] .m-bottom [data-act="offer"], body.m[data-screen="start"] .m-bottom [data-act="subs"] { display: none; }
+body.m[data-screen="start"] .m-start { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: flex-start; gap: 10px; margin-top: 4px; }
+.m-caption { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-align: center; color: #ffd27a; margin-top: -2px; }
+.m-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 10px; }
+.m-quick .btn { flex-direction: column; }
 
 /* obrazovka 3 */
 body.m[data-screen="play"] .m-flags { display: grid; }
 body.m[data-screen="play"] .m-play { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 body.m[data-screen="play"] .m-bottom { display: grid; }
 body.m[data-screen="play"] .infobar { padding-bottom: 8px; }
+body.m[data-screen="start"] .m-bottom { display: none; }
 body.m .btn.pwr { background: linear-gradient(#fff3b0, #ffd34d); color: #d6291d; --glow: var(--green); }
 body.m .btn.pwr .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
 body.m .btn.pwr { box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green), 0 0 30px 6px #35d35f66; }
@@ -73,9 +71,9 @@ body.m .item { padding: 10px 12px; border-width: 3px; border-radius: 14px; }
 body.m .item h3 { font-size: 19px; margin-bottom: 4px; }
 body.m .item p { font-size: 14px; margin-bottom: 8px; }
 body.m .item .badge { font-size: 12px; padding: 1px 7px; }
-body.m .item .btn { min-height: 52px; font-size: 15px; padding-top: 14px; flex-direction: row; }
+body.m .item .btn { font-size: 15px; padding-top: 14px; flex-direction: row; }
 body.m .navrow { display: flex; justify-content: center; gap: 14px; }
-body.m .btn.nav { width: 128px; min-height: 60px; font-size: 17px; flex-direction: row; padding-top: 14px; flex: none; }
+body.m .btn.nav { width: 128px; font-size: 17px; flex-direction: row; padding-top: 14px; flex: none; }
 body.m .btn.nav .ico { width: 22px; height: 22px; }
 body.m .btn.nav { background: linear-gradient(#fff3b0, #ffd34d); color: #000; box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green); }
 body.m .btn.nav .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
@@ -92,9 +90,12 @@ body.m.mini #m-restore { display: flex; order: 3; flex: 0 0 74px; min-height: 52
 /* celá obrazovka tam, kde ji prohlížeč (iPhone) neumí */
 body.m.fakefs #screen-wrap { position: fixed; inset: 0; z-index: 30; border: 0; border-radius: 0; aspect-ratio: auto; }
 body.m.fakefs .fs-bar { display: flex; flex-wrap: wrap; position: absolute; left: 0; right: 0; bottom: 0; }
-body.m.fakefs .fs-bar .btn { min-width: 0; flex: 1 1 28%; min-height: 56px; font-size: 13px; }
+body.m.fakefs .fs-bar .btn { min-width: 0; flex: 1 1 28%; font-size: 13px; }
 body.m #screen-wrap:fullscreen .fs-bar { flex-wrap: wrap; }
-body.m #screen-wrap:fullscreen .fs-bar .btn { min-width: 0; flex: 1 1 28%; min-height: 56px; font-size: 13px; }
+body.m #screen-wrap:fullscreen .fs-bar .btn { min-width: 0; flex: 1 1 28%; font-size: 13px; }
+body.m .fs-bar [data-act="tune"] { display: none; }
+body.m .fs-bar [data-act="channels"] { flex: 1 1 100%; }
+body.m .fs-bar { padding: 8px 8px 14px; gap: 10px; }
 
 /* vypnuto: vše zhasne a zešedne, svítí jen jemně červený Zapnout */
 body.m[data-power="off"] #cabinet { background: linear-gradient(145deg, #4a3a2c, #33261b); border-color: #7a6a45; }
@@ -114,3 +115,11 @@ body.m #listbox .list { flex: 1 1 0; }
 body.m .list { max-height: none; }
 body.m.mini[data-screen="list"] #listbox { display: flex; }
 body.m.mini[data-screen="list"] #listbox .marquee { display: block; }
+
+/* pevná výška, aby dvouřádkový nápis („Celá obrazovka“) nezvětšil řadu */
+body.m .btn { height: var(--mh); padding-top: 13px; }
+body.m .btn .ico { width: 20px; height: 20px; }
+body.m .btn .lbl { font-size: 12.5px; }
+body.m .btn.big .lbl { font-size: 20px; }
+body.m .m-quick .btn .lbl, body.m .btn.nav .lbl, body.m .item .btn .lbl { font-size: 16px; }
+body.m #m-restore { height: 52px; }

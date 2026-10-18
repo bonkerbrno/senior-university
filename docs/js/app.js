@@ -170,8 +170,8 @@ function refresh() {
   lit('news', newCount(tree) ? 'green' : null);
   lit('rand-here', shuffle === 'here' ? 'blue' : null);
   lit('rand-all', shuffle === 'all' ? 'blue' : null);
-  document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !path.length; });
-  document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : 'Pauza'; });
+  document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !MOBILE && !path.length; });
+  document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : (MOBILE ? 'Pozastavit' : 'Pauza'); });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !active; });
   document.querySelectorAll('[data-act="mini"] .lbl').forEach((l) => { l.textContent = document.body.classList.contains('mini') ? 'Zvětšit' : 'Zmenšit'; });
   document.querySelectorAll('#controls [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zpět' : 'Celá obrazovka'; });
@@ -207,8 +207,19 @@ function refreshMobile() {
   lit('subs', subs ? 'green' : null);
   const target = now ? now.item : null;
   lit('fav', screen === 'play' && target && favs.has(target.id) ? 'red' : null);
+  document.querySelectorAll('.fs-bar [data-act="channels"] .lbl').forEach((l) => { l.textContent = 'Seznam programů'; });
   document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !(player.state === 'playing' || player.state === 'paused'); });
+}
+function normName(t) { return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+// Rychlá volba: otevře nejvyšší program tohoto jména (přesně, pak od začátku, pak obsahující).
+function quick(name) {
+  const key = normName(name).slice(0, 5);
+  const top = tree.filter((n) => n.kind === 'folder');
+  const t = (n) => normName(n.title);
+  const hit = top.find((n) => t(n) === normName(name)) || top.find((n) => t(n).startsWith(key)) || top.find((n) => t(n).includes(key));
+  if (!hit) { say('Program „' + name + '“ zatím není.', true); return; }
+  path = [hit.id]; selected = 0; showList(); render(); listEl.scrollTop = 0;
 }
 function toggleFav() {
   const it = now ? now.item : null;
@@ -262,8 +273,9 @@ function openFolder(i) {
   if (!f || f.kind !== 'folder') return;
   path = [...path, f.id]; selected = 0; render(); listEl.scrollTop = 0;
 }
-function goBack() { if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
-function goHome() { if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
+function leaveList() { setScreen(now && player.state !== 'idle' ? 'play' : 'start'); refresh(); }
+function goBack() { if (MOBILE && !path.length) { leaveList(); return; } if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
+function goHome() { if (MOBILE && !path.length) { leaveList(); return; } if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
 
 /* ---------- přehrávání ---------- */
 function markSeen(it) {
@@ -418,6 +430,12 @@ function tune() {
 }
 // Seznam kanálů: zpět na výchozí vzhled (konec celé obrazovky a lišty), hraní pokračuje, seznam ukáže právě hrající.
 function showChannels() {
+  if (MOBILE) {
+    document.body.classList.remove('fakefs');
+    const go = () => { showList(); render(); };
+    if (document.fullscreenElement) document.exitFullscreen().then(go, go); else go();
+    return;
+  }
   document.body.classList.remove('mini', 'fakefs');
   const done = () => { render(); const c = listEl.querySelector('.item.playing'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center' }); };
   if (document.fullscreenElement) document.exitFullscreen().then(done, done); else done();
@@ -506,7 +524,7 @@ document.addEventListener('click', (ev) => {
   if (btn) {
     const act = btn.dataset.act;
     if (MOBILE && !powered && act !== 'close') return;
-    const key = act + (btn.dataset.index || '');
+    const key = act + (btn.dataset.index || '') + (btn.dataset.name || '');
     const t = Date.now();
     const burst = t - (lastClick.get(key) || 0) < BURST_MS;
     lastClick.set(key, t);
@@ -516,6 +534,7 @@ document.addEventListener('click', (ev) => {
       const it = cwd().nodes[i];
       if (it && isCurrent(it) && player.state !== 'idle') { clearTimeout(timer); player.stop(); } else playHere(i);
     } else if (act === 'open') openFolder(i);
+    else if (act === 'quick') quick(btn.dataset.name);
     else if (actions[act]) actions[act]();
     return;
   }
