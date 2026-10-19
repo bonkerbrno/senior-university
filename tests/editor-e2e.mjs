@@ -32,12 +32,24 @@ await page.route('https://api.github.com/**', async (route) => {
   route.fulfill({ json: { content: { sha: 'new-' + name } } });
 });
 await page.goto(base);
-await page.locator('#settings summary').click();
+// úvodní strana: bez tří souhlasů se nevstoupí
+assert.ok(await page.locator('#gate').isVisible(), 'úvodní strana je vidět');
+assert.ok(await page.locator('#enter').isDisabled(), 'vstup je zamčený bez souhlasů');
+for (const c of ['#c-terms', '#c-gdpr', '#c-liab']) await page.check(c);
+assert.ok(await page.locator('#enter').isEnabled());
+await page.click('#enter');
+assert.ok(await page.locator('#gate').isHidden());
+await page.reload();                                   // souhlasy se pamatují
+assert.ok(await page.locator('#gate').isHidden(), 'souhlasy se pamatují');
+assert.equal(await page.getAttribute('#to-player', 'href'), '../');
+await page.click('#gear');
 await page.fill('#token', 'tok123');
 await page.click('#load');
 await page.waitForFunction(() => /Seznam načten/.test(document.querySelector('#msg').textContent));
+await page.click('#x'); await page.click('[data-open=prog]');
 await page.fill('#f-title', 'Hudba'); await page.click('#add-folder');
 await page.fill('#f-title', 'Rock'); await page.selectOption('#f-parent', { label: 'Hudba' }); await page.click('#add-folder');
+await page.click('#tabs [data-tab=link]');
 await page.fill('#n-url', 'https://youtu.be/dQw4w9WgXcQ');
 assert.match(await page.innerText('#n-info'), /YouTube/);
 await page.fill('#n-title', 'Zvony');
@@ -46,13 +58,14 @@ await page.selectOption('#n-parent', { label: '— Rock' });
 await page.click('#add');
 await page.fill('#n-url', 'https://a.cz/f.mp3'); await page.fill('#n-title', 'Skryté'); await page.selectOption('#n-parent', { label: 'Hudba' }); await page.click('#add');
 await page.fill('#n-url', 'https://a.cz/g.mp3'); await page.fill('#n-title', 'Volné'); await page.selectOption('#n-parent', ''); await page.click('#add');
-// schovat „Skryté“
-await page.evaluate(() => {
-  const li = [...document.querySelectorAll('#items li')].find((l) => l.querySelector('input:not([type=checkbox])').value === 'Skryté');
-  const cb = li.querySelector('input[type=checkbox]'); cb.checked = false; cb.dispatchEvent(new Event('change'));
-});
-assert.ok(await page.locator('.save-btn').count() >= 6, 'tlačítko Uložit je v každé sekci');
-await page.locator('.save-btn').nth(1).click();   // uložit jde z kterékoli sekce
+await page.click('#x');
+// schovat „Skryté“ (leží v programu Hudba)
+await page.locator('.node', { hasText: 'Hudba' }).first().click();
+const idx = await page.evaluate(() => [...document.querySelectorAll('#items li')].findIndex((l) => l.querySelector('input.t') && l.querySelector('input.t').value === 'Skryté'));
+const row = page.locator('#items li').nth(idx);
+await row.locator('.sw').uncheck();
+assert.ok(await page.locator('.save-btn').count() >= 2, 'tlačítko Uložit je nahoře i v okně přidání');
+await page.click('#save');
 await page.waitForFunction(() => /Uloženo/.test(document.querySelector('#msg').textContent));
 assert.ok(await page.evaluate(() => [...document.querySelectorAll('.save-msg')].every((e) => /Uloženo/.test(e.textContent))), 'výsledek je vidět u každého tlačítka');
 assert.equal(puts['library.json'].items.length, 5);
@@ -61,6 +74,7 @@ assert.deepEqual(f.map((i) => i.title), ['Volné', 'Hudba']);
 assert.equal(f[1].kind, 'folder');
 assert.deepEqual(f[1].items.map((i) => i.title), ['Rock']);          // „Skryté“ chybí, Rock je podsložka
 assert.equal(f[1].items[0].items[0].url, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+await page.click('[data-open=link]');
 await page.fill('#n-url', 'javascript:alert(1)'); await page.fill('#n-title', 'x'); await page.click('#add');
 assert.match(await page.innerText('#msg'), /platný/);
 console.log('✓ editor: složky a podsložky, schování, uložení knihovny i stromového feedu, odmítnutí zlého odkazu');

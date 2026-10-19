@@ -87,10 +87,13 @@ await page.waitForSelector('#pin:not([hidden])');
 ok('klávesová zkratka také ukáže zámek');
 
 await page.goto(base + 'editor/');
-await page.locator('#settings summary').click(); await page.fill('#token', 'tok');
+await page.evaluate(() => localStorage.setItem('ed.consent', '1')); await page.reload();
+await page.click('#gear'); await page.fill('#token', 'tok');
 await page.click('#load');
 await page.waitForFunction(() => /Seznam načten/.test(document.querySelector('#msg').textContent));
+await page.click('#x'); await page.click('[data-open=prog]');
 await page.fill('#f-title', 'Nová'); await page.click('#add-folder');
+await page.click('#tabs [data-tab=xls]');
 // vložení bloku z Excelu (tabulátory) do první buňky: Kategorie, Název, Odkaz, Popis
 await page.evaluate(() => {
   const inp = document.querySelector('#b-body input');
@@ -102,16 +105,18 @@ assert.equal(await page.locator('#b-body tr').nth(1).locator('input').nth(1).inp
 await page.click('#b-add');
 assert.match(await page.innerText('#msg'), /3 vloženo.*chybné řádky.*: 1/);
 assert.equal(await page.locator('#b-body tr.bad').count(), 1);
-assert.equal(await page.locator('#items li input:not([type=checkbox])[value="Skladba"]').count() + await page.evaluate(() => [...document.querySelectorAll('#items li input')].filter((i) => i.value === 'Skladba').length) > 0, true);
-const vals = await page.evaluate(() => [...document.querySelectorAll('#items li input:not([type=checkbox])')].map((i) => i.value));
-assert.ok(vals.includes('Rock') && vals.includes('Volná') && vals.includes('Tvrdá'), 'složka Rock a položky se vytvořily');
-assert.equal(vals.filter((v) => v === 'Nová').length, 1, 'složka Nová se nezdvojila');
+const nodes = await page.locator('.node .nm').allTextContents();
+assert.ok(nodes.includes('Rock'), 'složka Rock se vytvořila');
+assert.equal(nodes.filter((v) => v === 'Nová').length, 1, 'složka Nová se nezdvojila');
+const vals = await page.evaluate(() => [...document.querySelectorAll('#items li input.t')].map((i) => i.value));
+assert.ok(vals.includes('Volná'), 'položka bez kategorie je v hlavním seznamu');
 const pv = page.frameLocator('#preview');
 await pv.locator('.item', { hasText: 'Nová' }).waitFor();
 
 ok('hromadné vložení z Excelu: kategorie → složky, platné projdou, chybný zůstane červený');
 
 // textové pole: odkazy zkopírované z chatu jako markdown [url](url) se rozpoznají
+await page.click('#tabs [data-tab=text]');
 await page.fill('#t-text', 'Oliver Twist ; Tanec 1967 ; [https://www.youtube.com/watch?v=aaaaaaaaaaa](https://www.youtube.com/watch?v=aaaaaaaaaaa)\nBez popisu [https://www.youtube.com/watch?v=bbbbbbbbbbb](https://www.youtube.com/watch?v=bbbbbbbbbbb)\nSpatny ; neni odkaz');
 await page.click('#t-add');
 assert.match(await page.innerText('#msg'), /2 vloženo.*3/);
