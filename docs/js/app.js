@@ -140,7 +140,6 @@ function render() {
     if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = '  (' + playableIn(it.children, true).length + ' programů)'; h.append(c); }
     btn.append(lamp, h);
     if (it.note) { const p = document.createElement('span'); p.className = 'note'; p.textContent = it.note; btn.append(p); }
-    const hint = document.createElement('span'); hint.className = 'lbl'; btn.append(hint);
     card.append(btn);
     listEl.append(card);
   });
@@ -164,7 +163,7 @@ function refresh() {
     card.classList.toggle('selected', i === selected);
     card.classList.toggle('playing', cur);
     const btn = card.querySelector('button');
-    btn.querySelector('.lbl').textContent = m(folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad');
+    btn.setAttribute('aria-label', it.title + '. ' + m(folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad'));
     if (cur) btn.dataset.lit = st === 'paused' ? 'orange' : 'green'; else delete btn.dataset.lit;
   });
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
