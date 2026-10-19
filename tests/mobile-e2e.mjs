@@ -304,14 +304,16 @@ await step('na šířku: video, dva řádky a jedna řada tlačítek Vypnout, Pu
   await pg.screenshot({ path: path.join(shots, 'm7-sirka.png') });
   await l.close();
 });
-await step('na počítači se mobilní prvky nezobrazí', async () => {
+await step('na počítači se mobilní rozvržení nezobrazí (panel je společný)', async () => {
   const d = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const pg = await d.newPage();
   await pg.goto(base);
-  await pg.waitForSelector('#controls');
+  await pg.waitForSelector('#d-row');
   assert.equal(await pg.evaluate(() => document.body.classList.contains('m')), false);
   assert.equal(await pg.locator('#m-play').isVisible(), false);
-  assert.equal(await pg.locator('#m-panel').isVisible(), false);
+  assert.equal(await pg.locator('#m-panel').isVisible(), true);
+  assert.equal(await pg.locator('#m-bottom').isVisible(), false);
+  assert.equal(await pg.locator('#m-browse').isVisible(), false);
   assert.equal(await pg.locator('#m-land').isVisible(), false);
   assert.equal(await pg.locator('.m-only').first().isVisible(), false);
   assert.equal(await pg.locator('.m-flags').isVisible(), false);

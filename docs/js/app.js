@@ -15,12 +15,12 @@ const BURST_MS = 600; // rychlé vícenásobné kliknutí na totéž tlačítko 
 const qs = new URLSearchParams(location.search);
 const MOBILE = qs.get('mobil') === '1' || (qs.get('pc') !== '1' && matchMedia('(hover: none) and (pointer: coarse) and (max-width: 1000px)').matches);
 if (MOBILE) document.body.classList.add('m');
-// Ve mobilní verzi se místo „složka“ a „pořad“ říká „program“. Vyrábí se jen z textů aplikace, nikdy z názvů od Stanleyho.
+// V celé aplikaci se místo „složka“ a „pořad“ říká „program“. Vyrábí se jen z textů aplikace, nikdy z názvů od Stanleyho.
 const WORDS = [[/pořadů/g, 'programů'], [/pořady/g, 'programy'], [/Pořady/g, 'Programy'], [/pořad/g, 'program'], [/Pořad/g, 'Program'],
   [/Otevřít složku/g, 'Otevřít program'], [/Všechny složky/g, 'Všechny programy'], [/Složka: /g, 'Program: '], [/ve složce/g, 'v programu'],
   [/Stiskněte Novinky/g, 'Stiskněte Nové'], [/stiskněte Novinky/g, 'stiskněte Nové']];
 const PREVIEW_MODE = qs.get('preview') === '1';
-const m = (t) => (MOBILE ? WORDS.reduce((x, [re, to]) => x.replace(re, to), t) : t);
+const m = (t) => WORDS.reduce((x, [re, to]) => x.replace(re, to), t);
 
 const statusEl = $('#status');
 const subEl = $('#substatus');
@@ -130,14 +130,18 @@ function render() {
     const folder = it.kind === 'folder';
     const card = document.createElement('article');
     card.className = 'item' + (folder ? ' folder' : ''); card.dataset.index = String(i);
-    const h = document.createElement('h3');
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn';
+    btn.dataset.act = folder ? 'open' : 'item'; btn.dataset.index = String(i);
+    const lamp = document.createElement('span'); lamp.className = 'lamp';
+    const h = document.createElement('span'); h.className = 'ttl';
     const fresh = folder ? newCount(it.children) : (seen.has(it.id) ? 0 : 1);
     if (fresh) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'NOVÉ'; h.append(b); }
     h.append(document.createTextNode(it.title));
-    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = MOBILE ? '  (' + playableIn(it.children, true).length + ')' : '  (' + playableIn(it.children, true).length + ' pořadů)'; h.append(c); }
-    card.append(h);
-    if (it.note) { const p = document.createElement('p'); p.textContent = it.note; card.append(p); }
-    card.append(mkBtn(folder ? 'open' : 'item', '', undefined, i));
+    if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = '  (' + playableIn(it.children, true).length + ' programů)'; h.append(c); }
+    btn.append(lamp, h);
+    if (it.note) { const p = document.createElement('span'); p.className = 'note'; p.textContent = it.note; btn.append(p); }
+    const hint = document.createElement('span'); hint.className = 'lbl'; btn.append(hint);
+    card.append(btn);
     listEl.append(card);
   });
   refresh();
@@ -182,7 +186,18 @@ function refresh() {
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
   if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
   subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
-  if (MOBILE) refreshMobile();
+  if (MOBILE) refreshMobile(); else refreshDesktop();
+}
+function refreshDesktop() {
+  const pl = player.state === 'playing';
+  const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
+  lit('pp', pl ? 'green' : player.state === 'paused' ? 'orange' : null);
+  document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
+  lit('subs', subs ? 'green' : null);
+  lit('shuf', shuffle ? 'blue' : null);
+  lit('full', 'blue');
+  document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
+  document.querySelectorAll('#d-row [data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
 }
 
 /* ---------- mobil ---------- */
@@ -410,7 +425,7 @@ function playRandom(scope) {
   if (!pool.length) { say('Tady není co pustit.', true); return; }
   shuffle = scope;
   const it = pickRandom(pool, now && now.item);
-  startItem(it, scope === 'all' ? 'Všechny složky' : pathTitle(trail), pool, pool.indexOf(it));
+  startItem(it, scope === 'all' ? m('Všechny složky') : pathTitle(trail), pool, pool.indexOf(it));
 }
 function playNext() {
   if (!automat || !queue.length) return;
