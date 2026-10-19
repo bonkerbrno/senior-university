@@ -7,7 +7,7 @@ body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou v�
 body.m #app { display: block; height: 100dvh; padding: 6px; }
 body.m #cabinet, body.m #listbox { height: 100%; padding: 10px 9px; gap: 8px; border-width: 4px; border-radius: 24px; }
 body.m .copy { display: none; }
-body.m #controls, body.m #extras, body.m .arrowrow, body.m .bulbs { display: none; }
+body.m .arrowrow, body.m .bulbs { display: none; }
 
 /* které obrazovky jsou vidět */
 body.m[data-screen="list"] #cabinet { display: none; }
@@ -74,8 +74,8 @@ body.m .item .btn { font-size: 15px; padding-top: 14px; flex-direction: row; }
 body.m .navrow { display: flex; justify-content: center; gap: 14px; }
 body.m .btn.nav { flex: 1 1 0; min-width: 0; font-size: 17px; flex-direction: row; padding-top: 14px; }
 body.m .btn.nav .ico { width: 22px; height: 22px; }
-body.m .btn.nav { background: linear-gradient(#fff3b0, #ffd34d); color: #000; box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green); }
-body.m .btn.nav .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
+body.m .btn.nav { background: linear-gradient(#fff3b0, #ffd34d); color: #000; box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--blue); }
+body.m .btn.nav .lamp { background: var(--blue); box-shadow: 0 0 10px 3px var(--blue); }
 body.m .btn.nav:disabled { background: linear-gradient(#8f897d, #6b665c); box-shadow: 0 6px 0 #403c34, 0 9px 9px #000b; filter: none; color: #3b372f; }
 body.m .btn.nav:disabled .lamp { background: #3b372f; box-shadow: none; }
 

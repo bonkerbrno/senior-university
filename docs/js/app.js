@@ -34,7 +34,7 @@ let path = [];            // id složek od kořene k aktuální
 let selected = 0;
 let seen = new Set();
 let automat = false;
-let shuffle = null;       // null | 'here' | 'all'
+let shuffle = null;       // null | 'here'
 let queue = [];           // seznam, ze kterého se hraje dál (složka, kde se začalo)
 let qi = 0;
 let now = null;           // { item, where }
@@ -102,7 +102,7 @@ const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pu
 });
 
 function schedule(ms) { clearTimeout(timer); timer = setTimeout(playNext, ms); }
-function poolSize() { return shuffle === 'all' ? playableIn(tree, true).length : queue.length; }
+function poolSize() { return queue.length; }
 
 /* ---------- vykreslení (jen textContent) ---------- */
 function mkBtn(act, label, iconId, index) {
@@ -169,25 +169,28 @@ function refresh() {
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
     if (color) b.dataset.lit = color; else delete b.dataset.lit;
   });
-  lit('play', st === 'playing' ? 'green' : null);
   lit('pause', st === 'paused' ? 'orange' : null);
   lit('full', document.fullscreenElement ? 'blue' : null);
-  lit('mini', document.body.classList.contains('mini') ? 'blue' : null);
   lit('auto', automat ? 'green' : null);
   lit('news', newCount(tree) ? 'green' : null);
-  lit('rand-here', shuffle === 'here' ? 'blue' : null);
-  lit('rand-all', shuffle === 'all' ? 'blue' : null);
   document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !MOBILE && !path.length; });
   document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : (MOBILE ? 'Pozastavit' : 'Pauza'); });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !active; });
-  document.querySelectorAll('[data-act="mini"] .lbl').forEach((l) => { l.textContent = document.body.classList.contains('mini') ? 'Zvětšit' : 'Zmenšit'; });
-  document.querySelectorAll('#controls [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zpět' : 'Celá obrazovka'; });
   const parts = [];
   if (now) parts.push(m('Složka: ') + now.where);
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
-  if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
+  if (shuffle) parts.push(m('Náhodně ve složce'));
   subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
   if (MOBILE) refreshMobile(); else refreshDesktop();
+  applyHints();
+}
+// Modrá = návod, co lze teď stisknout: svítí každé použitelné tlačítko, které nesvítí zeleně (zapnuto) ani oranžově (pozastaveno).
+const HINT_SEL = '.btn[data-act]:not([data-act="close"]):not([data-act="item"]):not([data-act="open"])';
+function applyHints() {
+  document.querySelectorAll(HINT_SEL).forEach((b) => {
+    if (b.dataset.hint) { delete b.dataset.hint; if (b.dataset.lit === 'blue') delete b.dataset.lit; }
+    if (powered && !b.disabled && !b.dataset.lit) { b.dataset.lit = 'blue'; b.dataset.hint = '1'; }
+  });
 }
 function refreshDesktop() {
   const pl = player.state === 'playing';
@@ -196,7 +199,7 @@ function refreshDesktop() {
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
   document.querySelectorAll('#d-row [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; });
   document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { b.dataset.lit = 'blue'; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
-  lit('shuf', shuffle ? 'blue' : null);
+  lit('shuf', shuffle ? 'green' : null);
   lit('full', 'blue');
   document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   document.querySelectorAll('#d-row [data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
@@ -206,7 +209,6 @@ function refreshDesktop() {
 function setScreen(name) {
   screen = name;
   document.body.dataset.screen = name;
-  if (name !== 'list') document.body.classList.remove('mini');
 }
 function showList() { setScreen('list'); }
 
@@ -295,14 +297,15 @@ function refreshMobile() {
   set('subs', subs, 'Titulky zapnuty', 'Titulky vypnuty');
   set('shuf', !!shuffle, 'Náhodné pořadí', 'Hraje za sebou');
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
-  lit('shuf', shuffle ? 'blue' : null);
+  lit('shuf', shuffle ? 'green' : null);
   lit('full', 'blue');
   document.querySelectorAll('[data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
+  document.querySelectorAll('[data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
   lit('subs', subs ? 'green' : null);
   lit('pp', player.state === 'playing' ? 'green' : player.state === 'paused' ? 'orange' : null);
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { const pl = player.state === 'playing'; b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
   const target = now ? now.item : null;
-  lit('fav', screen === 'play' && target && favs.has(target.id) ? 'red' : null);
+  lit('fav', screen === 'play' && target && favs.has(target.id) ? 'green' : null);
   document.querySelectorAll('.fs-bar [data-act="channels"] .lbl').forEach((l) => { l.textContent = 'Seznam programů'; });
   document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !(player.state === 'playing' || player.state === 'paused'); });
@@ -340,7 +343,7 @@ function toggleSubs() {
 function toggleShuffle() {
   if (shuffle) shuffle = null;
   else if (now && queue.length) shuffle = 'here';
-  else { playRandom('here'); return; }
+  else { playRandom(); return; }
   refresh();
 }
 
@@ -421,17 +424,18 @@ function pickRandom(pool, avoid) {
   const c = pool.length > 1 ? pool.filter((x) => !avoid || x.id !== avoid.id) : pool;
   return c[Math.floor(Math.random() * c.length)];
 }
-function playRandom(scope) {
+function playRandom() {
   const { nodes, trail } = cwd();
-  const pool = noWeb(scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true));
-  if (!pool.length) { say('Tady není co pustit.', true); return; }
-  shuffle = scope;
+  // Náhodně se drží jen programu, ve kterém jsme (nikdy celého seznamu).
+  const pool = noWeb(playableIn(nodes));
+  if (!pool.length) { say(m('Nejdřív otevřete program a pusťte z něj pořad.'), true); return; }
+  shuffle = 'here';
   const it = pickRandom(pool, now && now.item);
-  startItem(it, scope === 'all' ? m('Všechny složky') : pathTitle(trail), pool, pool.indexOf(it));
+  startItem(it, pathTitle(trail), pool, pool.indexOf(it));
 }
 function playNext() {
   if (!automat || !queue.length) return;
-  const pool = shuffle === 'all' ? noWeb(playableIn(tree, true)) : queue;
+  const pool = queue;
   if (!noWeb(pool).length) return;
   let it, idx, q = pool;
   if (shuffle) { it = pickRandom(noWeb(pool), now && now.item); idx = pool.indexOf(it); }
@@ -532,12 +536,9 @@ function showChannels() {
     if (document.fullscreenElement) document.exitFullscreen().then(go, go); else go();
     return;
   }
-  document.body.classList.remove('mini', 'fakefs');
+  document.body.classList.remove('fakefs');
   const done = () => { render(); const c = listEl.querySelector('.item.playing'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center' }); };
   if (document.fullscreenElement) document.exitFullscreen().then(done, done); else done();
-}
-function toggleMini() {
-  document.body.classList.toggle('mini'); refresh();
 }
 function sleep() {
   clearTimeout(timer);
@@ -545,7 +546,7 @@ function sleep() {
   automat = false; shuffle = null; powered = false;
   player.stop();
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  document.body.classList.remove('mini', 'fakefs');
+  document.body.classList.remove('fakefs');
   if (MOBILE) setScreen('play');
   say('Vypnuto. Stiskněte Zapnout.');
   refresh();
@@ -569,9 +570,6 @@ function playSelected() {
   if (!it) { say(m('Nejdřív stiskněte Novinky.'), true); return; }
   if (it.kind === 'folder') openFolder(selected); else playHere(selected);
 }
-function toggleRandom(scope) {
-  if (shuffle === scope) { shuffle = null; refresh(); } else playRandom(scope);
-}
 
 const actions = {
   news: async () => {
@@ -585,7 +583,6 @@ const actions = {
   offer: offerSomething,
   subs: toggleSubs,
   shuf: toggleShuffle,
-  play: playSelected,
   pp: () => { if (player.state === 'playing') player.pause(); else playSelected(); },
   homeplay: () => { expanded.clear(); openOrder = []; showList(); render(); listEl.scrollTop = 0; },
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
@@ -593,11 +590,8 @@ const actions = {
   full: toggleFullscreen,
   tune,
   channels: showChannels,
-  mini: toggleMini,
   close: () => { if (!powered) wake(); else sleep(); },
   auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
-  'rand-here': () => toggleRandom('here'),
-  'rand-all': () => toggleRandom('all'),
   home: goHome,
   back: goBack,
   up: () => select(selected - 1),
@@ -630,6 +624,7 @@ document.addEventListener('click', (ev) => {
 });
 
 document.addEventListener('keydown', (ev) => {
+  if (!powered) return; // vypnuto: klávesy nic nedělají, jen tlačítko Zapnout
   if (ev.target.closest && ev.target.closest('button')) return;
   if (ev.key === 'ArrowDown') { ev.preventDefault(); select(selected + 1); }
   else if (ev.key === 'ArrowUp') { ev.preventDefault(); select(selected - 1); }
