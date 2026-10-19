@@ -7,7 +7,7 @@ body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou v�
 body.m #app { display: block; height: 100dvh; padding: 6px; }
 body.m #cabinet, body.m #listbox { height: 100%; padding: 10px 9px; gap: 8px; border-width: 4px; border-radius: 24px; }
 body.m .copy { display: none; }
-body.m #controls, body.m #extras, body.m .arrowrow, body.m .bulbs { display: none; }
+body.m .arrowrow, body.m .bulbs { display: none; }
 
 /* které obrazovky jsou vidět */
 body.m[data-screen="list"] #cabinet { display: none; }

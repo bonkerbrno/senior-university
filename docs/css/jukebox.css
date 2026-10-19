@@ -40,7 +40,6 @@ html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at top
 @keyframes bob { 50% { transform: translateY(-14px) scale(1.06); } }
 
 /* tlačítka */
-.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .btn { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: clamp(72px, 11.5vh, 104px);
   padding: 20px 8px 8px; font: inherit; font-size: clamp(20px, 2.2vw, 30px); font-weight: 700; color: #2a1608; cursor: pointer;
   background: linear-gradient(#f4d98a, #c79a3a); border: 0; border-radius: 20px;
@@ -58,10 +57,7 @@ html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at top
 .btn[data-lit="red"] .lamp { background: var(--red); box-shadow: 0 0 16px 4px var(--red); }
 .btn[data-lit="blue"] .lamp { background: var(--blue); box-shadow: 0 0 16px 4px var(--blue); }
 .btn[data-lit] { color: #000; background: linear-gradient(#fff3b0, #ffd34d); }
-.btn.red { background: linear-gradient(#ff9c90, #d4493c); color: #2a0804; box-shadow: 0 8px 0 #7a1f17, 0 12px 14px #000a, inset 0 2px 0 #fff9; }
-.btn.red:active { box-shadow: 0 1px 0 #7a1f17, 0 3px 6px #000a; }
 .btn:disabled { filter: grayscale(.8) brightness(.7); cursor: default; }
-.btn.big { min-height: 160px; min-width: 320px; font-size: 40px; }
 .btn.small { min-height: 84px; padding-top: 18px; font-size: 22px; }
 .btn.arrow { flex-direction: row; gap: 14px; min-height: 80px; padding: 16px 8px 8px; }
 
@@ -87,15 +83,6 @@ html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at top
 #screen-wrap:fullscreen .fs-bar { display: flex; }
 #screen-wrap:fullscreen .fs-bar .btn { min-width: 190px; }
 
-/* mini lišta */
-body.mini #app { display: block; padding: 0; }
-body.mini #listbox, body.mini .marquee { display: none; }
-body.mini #cabinet { position: fixed; left: 0; right: 0; bottom: 0; flex-direction: row; align-items: center; gap: 14px;
-  border-radius: 22px 22px 0 0; padding: 12px; }
-body.mini #screen-wrap { flex: 0 0 240px; height: 135px; order: 1; border-width: 5px; }
-body.mini .controls { order: 3; display: flex; gap: 10px; }
-body.mini .controls .btn { min-height: 84px; min-width: 100px; padding: 16px 6px 6px; font-size: 18px; }
-body.mini .controls .btn[data-act="news"], body.mini .controls .btn[data-act="play"], body.mini .controls .btn[data-act="full"] { display: none; }
 
 /* spí */
 .asleep { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px;
@@ -107,14 +94,10 @@ body.mini .controls .btn[data-act="news"], body.mini .controls .btn[data-act="pl
   #app { grid-template-columns: 1fr; height: auto; }
   #screen-wrap { min-height: 220px; aspect-ratio: 16 / 9; flex: none; }
   .list { max-height: 60vh; }
-  .controls { grid-template-columns: repeat(2, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .note-screen span { animation: none; } .btn { transition: none; } }
-body.mini .idle p { display: none; }
-body.mini .idle span { font-size: 64px; }
 
 /* automat, náhodně, navigace */
-.extras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .btn.small { min-height: clamp(50px, 8vh, 64px); padding: 16px 6px 6px; font-size: clamp(16px, 1.7vw, 22px); flex-direction: row; gap: 10px; }
 .btn.small .ico { width: 26px; height: 26px; }
 .navrow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -129,12 +112,6 @@ body.mini .idle span { font-size: 64px; }
 .item.folder h3 { color: #cfd0ff; }
 .item.folder .btn { background: linear-gradient(#cfd0ff, #7d7bd6); color: #12113a; box-shadow: 0 8px 0 #3a3880, 0 12px 14px #000a, inset 0 2px 0 #fff9; }
 .item .count { font-weight: 400; font-size: .8em; color: #b9baf0; }
-.controls { grid-template-columns: repeat(4, 1fr); }
-body.mini .extras, body.mini .infobar .substatus { display: none; }
-body.mini .infobar { order: 2; flex: 1 1 auto; min-width: 0; }
-body.mini .status { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.mini .sign { display: none; }
-body.mini .controls .btn[data-act="auto"] { display: none; }
 
 /* skrytý zámek správce */
 .pinwrap { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(0,0,0,.8); }
@@ -154,17 +131,13 @@ body.mini .controls .btn[data-act="auto"] { display: none; }
 .btn[data-lit="orange"] { --glow: var(--orange); } .btn[data-lit="red"] { --glow: var(--red); } .btn[data-lit="blue"] { --glow: var(--blue); }
 .btn[data-lit]:active { box-shadow: 0 1px 0 #5a3d0e, 0 2px 4px #000c, inset 0 6px 12px #0009, 0 0 26px 6px var(--glow); }
 .btn[data-lit] .lamp { box-shadow: 0 0 22px 8px var(--glow); }
-.btn.red { box-shadow: 0 12px 0 #5c150f, 0 18px 18px #000b, inset 0 3px 0 #fff9; }
-.btn.red:active { box-shadow: 0 1px 0 #5c150f, 0 2px 4px #000c, inset 0 6px 12px #0009; }
 
 .copy { position: fixed; left: 0; right: 0; bottom: 1px; text-align: center; font-size: 10px; line-height: 12px; color: #ffe9a8; opacity: .55; pointer-events: none; z-index: 1; }
-body.mini .copy { display: none; }
 
 /* počítač: vlevo okno, popisy, panel jako na mobilu a řada tlačítek; vpravo seznam se svislými šipkami */
 .m-panel, .d-row { display: none; }
 body:not(.m) .m-panel { display: block; }
 body:not(.m) .d-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-body:not(.m) #controls, body:not(.m) #extras { display: none; }
 body:not(.m) .m-panel { --mh: clamp(92px, 13vh, 116px); padding: 12px 12px 18px; border-radius: 24px; background: linear-gradient(#120804, #2a1408); border: 4px solid var(--brass);
   box-shadow: inset 0 0 18px #000c, 0 0 0 3px #0008, 0 0 18px 2px #ffb52e44; }
 body:not(.m) .m-panel .m-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
