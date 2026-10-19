@@ -194,7 +194,8 @@ function refreshDesktop() {
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
   lit('pp', pl ? 'green' : player.state === 'paused' ? 'orange' : null);
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
-  lit('subs', subs ? 'green' : null);
+  document.querySelectorAll('#d-row [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; });
+  document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { b.dataset.lit = 'blue'; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
   lit('shuf', shuffle ? 'blue' : null);
   lit('full', 'blue');
   document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
