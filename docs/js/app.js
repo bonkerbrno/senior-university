@@ -13,8 +13,16 @@ const BURST_MS = 600; // rychlé vícenásobné kliknutí na totéž tlačítko 
 
 // Mobilní verze: stejná data a stejný přehrávač, jen tři obrazovky (start, program = seznam, play = přehrávání).
 const qs = new URLSearchParams(location.search);
-const MOBILE = qs.get('mobil') === '1' || (qs.get('pc') !== '1' && matchMedia('(hover: none) and (pointer: coarse) and (max-width: 1000px)').matches);
+// Tablet (asi 10 palců) používá vždy mobilní rozložení, jen větší; ?tablet=1 ho vynutí i na počítači.
+const COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const SHORT_SIDE = Math.min(window.screen.width || 0, window.screen.height || 0);
+const TABLET = qs.get('tablet') === '1' || (qs.get('mobil') !== '1' && qs.get('pc') !== '1' && COARSE && SHORT_SIDE > 560 && SHORT_SIDE <= 1100);
+const MOBILE = TABLET || qs.get('mobil') === '1' || (qs.get('pc') !== '1' && COARSE && SHORT_SIDE <= 1100);
 if (MOBILE) document.body.classList.add('m');
+if (TABLET) document.body.classList.add('tab');
+// Tablet na šířku: přehrávání vlevo a seznam programů vpravo, obě části jsou vidět současně.
+const landscapeMQ = matchMedia('(orientation: landscape)');
+const splitView = () => TABLET && landscapeMQ.matches;
 // V celé aplikaci se místo „složka“ a „pořad“ říká „program“. Vyrábí se jen z textů aplikace, nikdy z názvů od Stanleyho.
 const WORDS = [[/pořadů/g, 'programů'], [/pořady/g, 'programy'], [/Pořady/g, 'Programy'], [/pořad/g, 'program'], [/Pořad/g, 'Program'],
   [/Otevřít složku/g, 'Otevřít program'], [/Všechny složky/g, 'Všechny programy'], [/Složka: /g, 'Program: '], [/ve složce/g, 'v programu'],
@@ -180,7 +188,7 @@ function refresh() {
   if (now) parts.push(m('Složka: ') + now.where);
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
   if (shuffle) parts.push(m('Náhodně ve složce'));
-  subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
+  subEl.textContent = MOBILE ? (now ? now.where : (splitView() ? 'Vyberte program vpravo' : 'Stiskněte Programy')) : parts.join('  ·  ');
   if (MOBILE) refreshMobile(); else refreshDesktop();
   applyHints();
 }
@@ -207,10 +215,12 @@ function refreshDesktop() {
 
 /* ---------- mobil ---------- */
 function setScreen(name) {
+  if (splitView()) name = 'play';
   screen = name;
   document.body.dataset.screen = name;
 }
 function showList() { setScreen('list'); }
+if (TABLET) landscapeMQ.addEventListener('change', () => { setScreen(screen); refresh(); });
 
 /* Strom programů: složky se rozbalují na místě, programy jsou odsazené pod nimi. Klíč řádku je cesta z id od kořene. */
 const expanded = new Set();
@@ -476,7 +486,7 @@ async function loadFeed(userAsked) {
 function maybeSync() { if (!PREVIEW && !syncing && Date.now() - lastSync > 2000) { loadFeed(false); checkCode(); } }
 
 // Aktuální program: soubory aplikace se při startu zapamatují; když se na serveru změní a nic nehraje, stránka se sama načte znovu.
-const CODE_FILES = ['./', 'js/app.js', 'js/player.js', 'js/validate.js', 'css/jukebox.css', 'css/mobile.css'];
+const CODE_FILES = ['./', 'js/app.js', 'js/player.js', 'js/validate.js', 'css/jukebox.css', 'css/mobile.css', 'css/tablet.css'];
 const codeSnap = new Map();
 let checking = false;
 async function checkCode() {

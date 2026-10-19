@@ -1,0 +1,53 @@
+/* Tablet (asi 10 palců): mobilní rozložení, jen větší tlačítka a písmo (body.m.tab).
+   Na šířku je přehrávání vlevo a seznam programů vpravo. Telefon a počítač se nemění. */
+body.m.tab { --mh: 84px; }
+body.m.tab #app { padding: 10px; }
+body.m.tab #cabinet, body.m.tab #listbox { padding: 16px 18px; gap: 12px; border-width: 5px; border-radius: 30px; }
+body.m.tab .sign h1 { font-size: clamp(22px, 3.6vw, 34px); }
+body.m.tab .idle span { font-size: 84px; } body.m.tab .idle p { font-size: 24px; }
+body.m.tab .note-screen span { font-size: 84px; } body.m.tab .note-screen p { font-size: 22px; }
+body.m.tab .infobar { padding: 8px 12px; }
+body.m.tab .status { font-size: 24px; } body.m.tab .substatus { font-size: 17px; }
+body.m.tab .btn { font-size: 17px; border-radius: 18px; }
+body.m.tab .btn { height: var(--mh); padding-top: 16px; }
+body.m.tab .btn .ico { width: 28px; height: 28px; }
+body.m.tab .btn .lbl { font-size: 17px; }
+body.m.tab .btn.nav .lbl { font-size: 21px; }
+body.m.tab .m-browse .btn .lbl { font-size: 23px; }
+body.m.tab .m-row { gap: 12px; }
+body.m.tab .m-panel { --mh: 112px; padding: 14px 14px 20px; }
+body.m.tab .m-panel .m-row { gap: 14px; }
+body.m.tab .flag { min-height: 42px; font-size: 14px; border-radius: 18px; }
+body.m.tab .m-flags { gap: 10px; }
+body.m.tab[data-screen="play"] #cabinet { gap: 16px; }
+body.m.tab #listbox .marquee { font-size: 32px; }
+body.m.tab .trow { min-height: 72px; font-size: 25px; padding: 10px 16px; border-radius: 18px; }
+body.m.tab .trow .mark { width: 30px; font-size: 26px; }
+body.m.tab .trow .badge { font-size: 15px; }
+body.m.tab .trow.d1 { margin-left: 22px; width: calc(100% - 22px); } body.m.tab .trow.d2 { margin-left: 44px; width: calc(100% - 44px); }
+body.m.tab .trow.d3 { margin-left: 66px; width: calc(100% - 66px); } body.m.tab .trow.d4 { margin-left: 88px; width: calc(100% - 88px); } body.m.tab .trow.d5 { margin-left: 110px; width: calc(100% - 110px); }
+body.m.tab .list { gap: 10px; }
+body.m.tab .navrow { gap: 12px; }
+
+/* na šířku: dva sloupce, seznam je stále vidět, proto Programy a Celá obrazovka v seznamu odpadají */
+@media (orientation: landscape) {
+  body.m.tab { --mh: 70px; }
+  body.m.tab #app { display: flex; gap: 10px; }
+  body.m.tab #cabinet { display: flex; flex: 1 1 0; min-width: 0; padding: 10px 14px; gap: 10px; }
+  body.m.tab #listbox { display: flex; flex: 0 0 41%; min-width: 0; padding: 12px 14px; }
+  body.m.tab[data-screen] #cabinet, body.m.tab[data-screen] #listbox { display: flex; }
+  body.m.tab .sign h1 { font-size: clamp(18px, 2.6vw, 28px); }
+  body.m.tab #screen-wrap { flex: 1 1 0; min-height: 0; align-self: center; max-width: 100%; }
+  body.m.tab .m-panel { --mh: 84px; padding: 9px 10px 13px; }
+  body.m.tab .m-browse, body.m.tab[data-screen="play"] .m-browse { display: none; }
+  body.m.tab #listbox .navrow .m-only { display: none; }
+  body.m.tab .status { font-size: 21px; } body.m.tab .substatus { font-size: 15px; }
+  body.m.tab .btn, body.m.tab .btn .lbl { font-size: 16px; }
+  body.m.tab .btn { padding-top: 14px; }
+  body.m.tab .btn .ico { width: 24px; height: 24px; }
+  body.m.tab .btn.nav .lbl { font-size: 19px; }
+  body.m.tab #listbox .marquee { font-size: 26px; }
+  body.m.tab .trow { min-height: 62px; font-size: 22px; }
+  body.m.tab[data-screen="play"] #cabinet { gap: 10px; }
+  body.m.tab .m-flags { display: none; }
+}
