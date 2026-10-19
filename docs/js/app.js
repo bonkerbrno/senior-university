@@ -196,7 +196,7 @@ function refreshDesktop() {
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
   document.querySelectorAll('#d-row [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; });
   document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { b.dataset.lit = 'blue'; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
-  lit('shuf', shuffle ? 'blue' : null);
+  lit('shuf', shuffle ? 'green' : null);
   lit('full', 'blue');
   document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   document.querySelectorAll('#d-row [data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
@@ -295,9 +295,10 @@ function refreshMobile() {
   set('subs', subs, 'Titulky zapnuty', 'Titulky vypnuty');
   set('shuf', !!shuffle, 'Náhodné pořadí', 'Hraje za sebou');
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
-  lit('shuf', shuffle ? 'blue' : null);
+  lit('shuf', shuffle ? 'green' : null);
   lit('full', 'blue');
   document.querySelectorAll('[data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
+  document.querySelectorAll('[data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
   lit('subs', subs ? 'green' : null);
   lit('pp', player.state === 'playing' ? 'green' : player.state === 'paused' ? 'orange' : null);
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { const pl = player.state === 'playing'; b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
@@ -423,8 +424,9 @@ function pickRandom(pool, avoid) {
 }
 function playRandom(scope) {
   const { nodes, trail } = cwd();
-  const pool = noWeb(scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true));
-  if (!pool.length) { say('Tady není co pustit.', true); return; }
+  // Náhodně se drží jen programu, ve kterém jsme (nikdy celého seznamu).
+  const pool = noWeb(scope === 'all' ? playableIn(tree, true) : playableIn(nodes));
+  if (!pool.length) { say(m('Nejdřív otevřete program a pusťte z něj pořad.'), true); return; }
   shuffle = scope;
   const it = pickRandom(pool, now && now.item);
   startItem(it, scope === 'all' ? m('Všechny složky') : pathTitle(trail), pool, pool.indexOf(it));
@@ -630,6 +632,7 @@ document.addEventListener('click', (ev) => {
 });
 
 document.addEventListener('keydown', (ev) => {
+  if (!powered) return; // vypnuto: klávesy nic nedělají, jen tlačítko Zapnout
   if (ev.target.closest && ev.target.closest('button')) return;
   if (ev.key === 'ArrowDown') { ev.preventDefault(); select(selected + 1); }
   else if (ev.key === 'ArrowUp') { ev.preventDefault(); select(selected - 1); }

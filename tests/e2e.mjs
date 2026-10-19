@@ -200,7 +200,7 @@ await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 ->
 });
 await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
   await act('shuf').click();
-  assert.equal(await lit('shuf'), 'blue');
+  assert.equal(await lit('shuf'), 'green');
   assert.match(await text('#substatus'), /Náhodně v programu/);
   assert.match(await status(), /Hraje:/);
   await wait(); await act('shuf').click();
