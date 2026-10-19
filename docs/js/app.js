@@ -41,7 +41,7 @@ let now = null;           // { item, where }
 let errCount = 0;
 let timer = 0;
 let screen = 'play';      // jen mobil: play (domovská) | list
-let powered = true;       // jen mobil: false = jukebox spí (vše zešedlo)
+let powered = true;       // false = jukebox spí (vše zešedlo, zůstane jen lišta se Zapnout)
 let favs = new Set();
 let subs = lsGet(LS_SUBS) === '1';
 
@@ -150,6 +150,8 @@ function render() {
 function isCurrent(it) { return !!now && now.item.id === it.id; }
 
 function refresh() {
+  document.body.dataset.power = powered ? 'on' : 'off';
+  document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
   const st = player.state;
   const active = st === 'playing' || st === 'paused';
   const { nodes, trail } = cwd();
@@ -537,33 +539,24 @@ function showChannels() {
 function toggleMini() {
   document.body.classList.toggle('mini'); refresh();
 }
-function sleepMobile() {
+function sleep() {
   clearTimeout(timer);
   closeExternal();
   automat = false; shuffle = null; powered = false;
   player.stop();
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   document.body.classList.remove('mini', 'fakefs');
-  setScreen('play');
+  if (MOBILE) setScreen('play');
   say('Vypnuto. Stiskněte Zapnout.');
   refresh();
-}
-function sleep() {
-  if (MOBILE) { sleepMobile(); return; }
-  clearTimeout(timer);
-  closeExternal();
-  automat = false; shuffle = null;
-  player.stop();
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  document.body.classList.remove('mini');
-  $('#asleep').hidden = false;
-  $('#app').hidden = true;
-  $('#asleep .btn').focus();
-  try { window.close(); } catch { /* prohlížeč nedovolí zavřít okno; zůstane obrazovka „odpočívá“ */ }
+  const on = document.querySelector('#m-panel [data-act="close"]');
+  if (!MOBILE && on) on.focus();
 }
 function wake() {
-  if (MOBILE) { powered = true; setScreen('play'); say(m('Vítejte. Vyberte pořad.')); refresh(); return; }
-  $('#asleep').hidden = true; $('#app').hidden = false; refresh();
+  powered = true;
+  if (MOBILE) setScreen('play');
+  say(m('Vítejte. Vyberte program.'));
+  refresh();
 }
 function playSelected() {
   if (player.state === 'paused') { player.resume(); return; }
@@ -601,8 +594,7 @@ const actions = {
   tune,
   channels: showChannels,
   mini: toggleMini,
-  close: () => { if (MOBILE && !powered) wake(); else sleep(); },
-  wake,
+  close: () => { if (!powered) wake(); else sleep(); },
   auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
   'rand-here': () => toggleRandom('here'),
   'rand-all': () => toggleRandom('all'),
@@ -618,7 +610,7 @@ document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');
   if (btn) {
     const act = btn.dataset.act;
-    if (MOBILE && !powered && act !== 'close') return;
+    if (!powered && act !== 'close') return;
     const key = act + (btn.dataset.index || '') + (btn.dataset.key || '');
     const t = Date.now();
     const burst = t - (lastClick.get(key) || 0) < BURST_MS;
