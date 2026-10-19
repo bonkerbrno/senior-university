@@ -118,8 +118,8 @@ await step('nadpis, 8 hlavních tlačítek a Domů/Zpět', async () => {
 await step('v kořeni je složka a položka, zlá položka je zahozena', async () => {
   assert.equal(await page.locator('.item').count(), 2);
   assert.equal(await page.locator('.item.folder').count(), 1);
-  assert.match(await text('.item.folder h3'), /Hudba/);
-  assert.match(await text('.item.folder h3'), /3 pořadů|\(\d+ pořad/);
+  assert.match(await text('.item.folder .ttl'), /Hudba/);
+  assert.match(await text('.item.folder .ttl'), /3 programů|\(\d+ program/);
 });
 await page.screenshot({ path: path.join(shots, '1-uvod.png') });
 
@@ -136,7 +136,7 @@ await step('rychlé trojklikání na Pustit dělá totéž co jedno kliknutí', 
   assert.equal(await page.locator('#stage iframe').count(), 1);
   assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts allow-same-origin/);
   assert.equal(await lit('pp'), 'green');
-  assert.match(await text('#substatus'), /Složka: Domů › Hudba/);
+  assert.match(await text('#substatus'), /Program: Domů › Hudba/);
   assert.match(await text('#substatus'), /Automat: vypnut/);
 });
 await page.screenshot({ path: path.join(shots, '2-hraje-ve-slozce.png') });
@@ -201,7 +201,7 @@ await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 ->
 await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
   await act('shuf').click();
   assert.equal(await lit('shuf'), 'blue');
-  assert.match(await text('#substatus'), /Náhodně ve složce/);
+  assert.match(await text('#substatus'), /Náhodně v programu/);
   assert.match(await status(), /Hraje:/);
   await wait(); await act('shuf').click();
   assert.equal(await lit('shuf'), null);
@@ -300,8 +300,8 @@ await step('HTML v názvu zůstane textem', async () => {
   feedBody = JSON.stringify(feed);
   await wait(); await act('news').click();
   await page.waitForSelector('.item.folder'); await wait(); await act('open', 0).click();
-  assert.equal(await page.locator('.item h3 b').count(), 0);
-  assert.match(await text('.item:nth-child(2) h3'), /<b>rádia<\/b>/);
+  assert.equal(await page.locator('.item .ttl b').count(), 0);
+  assert.match(await text('.item:nth-child(2) .ttl'), /<b>rádia<\/b>/);
 });
 await step('CSP blokuje vložený skript a stránka nemá chyby', async () => {
   const ran = await page.evaluate(() => { const s = document.createElement('script'); s.textContent = 'window.__pwned = 1'; document.head.append(s); return !!window.__pwned; });

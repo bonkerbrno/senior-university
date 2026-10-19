@@ -30,7 +30,7 @@
   <h2>Přidat odkaz</h2>
   <label>Odkaz (https://… YouTube, přímý soubor mp4/webm/mp3/m4a/aac/ogg/wav, rozhlas.stream, stránka z embed.windy.com / www.yr.no, nebo ČT24 z ct24.ceskatelevize.cz)<input id="n-url" autocomplete="off"></label>
   <label>Název<input id="n-title" maxlength="120" autocomplete="off"></label>
-  <label>Složka<select id="n-parent"></select></label>
+  <label>Program<select id="n-parent"></select></label>
   <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
   <div class="row"><button id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
   <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
@@ -38,8 +38,8 @@
 
 <section class="add">
   <h2>Vložit více odkazů textem (název ; popis ; odkaz)</h2>
-  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor). Popis může být prázdný. Všechny řádky půjdou do vybrané složky.</p>
-  <label>Složka<select id="t-parent"></select></label>
+  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor). Popis může být prázdný. Všechny řádky půjdou do vybraného programu.</p>
+  <label>Program<select id="t-parent"></select></label>
   <textarea id="t-text" rows="5" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
   <div class="row"><button id="t-add" type="button">Vložit řádky</button><span id="t-info"></span></div>
   <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
@@ -47,17 +47,17 @@
 
 <section class="add">
   <h2>Vložit více odkazů najednou</h2>
-  <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název složky; neexistuje-li, vytvoří se. Podsložku zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
+  <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název programu; neexistuje-li, vytvoří se. Podprogram zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
   <div class="tablewrap"><table id="b-table"><thead><tr><th>Kategorie</th><th>Název</th><th>Odkaz</th><th>Popis (nepovinný)</th></tr></thead><tbody id="b-body"></tbody></table></div>
   <div class="row"><button id="b-add" type="button">Vložit do seznamu</button><button id="b-more" type="button">Přidat řádky</button><button id="b-clear" type="button">Vyčistit tabulku</button><span id="b-info"></span></div>
   <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
 </section>
 
 <section class="add">
-  <h2>Přidat složku</h2>
-  <label>Název složky<input id="f-title" maxlength="120" autocomplete="off"></label>
-  <label>Nadřazená složka<select id="f-parent"></select></label>
-  <div class="row"><button id="add-folder" type="button">Přidat složku</button></div>
+  <h2>Přidat program</h2>
+  <label>Název programu<input id="f-title" maxlength="120" autocomplete="off"></label>
+  <label>Nadřazený program<select id="f-parent"></select></label>
+  <div class="row"><button id="add-folder" type="button">Přidat program</button></div>
   <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
 </section>
 

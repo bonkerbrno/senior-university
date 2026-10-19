@@ -129,7 +129,7 @@ function renderList() {
     const n = document.createElement('textarea'); n.value = it.note; n.rows = 2; n.maxLength = 400;
     n.addEventListener('input', () => { it.note = n.value; setDirty(true); sendPreview(); });
     const m = document.createElement('div'); m.className = 'meta'; m.textContent = folder ? (it.parent ? 'PODSLOŽKA' : 'HLAVNÍ TLAČÍTKO (první řádek)') : it.url;
-    const pick = document.createElement('label'); pick.className = 'pick'; pick.append(document.createTextNode('Složka: '));
+    const pick = document.createElement('label'); pick.className = 'pick'; pick.append(document.createTextNode('Program: '));
     const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent);
     sel.addEventListener('change', () => { it.parent = sel.value; setDirty(true); render(); });
     pick.append(sel);
@@ -162,9 +162,9 @@ $('#add').addEventListener('click', () => {
 
 $('#add-folder').addEventListener('click', () => {
   const f = validateFolder({ id: newId(), title: $('#f-title').value, note: '', added: new Date().toISOString().slice(0, 10) });
-  if (!f) { say('Vyplňte název složky.', 'err'); return; }
+  if (!f) { say('Vyplňte název programu.', 'err'); return; }
   lib.unshift({ id: f.id, title: f.title, note: '', kind: 'folder', show: true, added: f.added, parent: $('#f-parent').value });
-  $('#f-title').value = ''; setDirty(true); render(); say('Složka přidána. Nezapomeňte uložit.', 'ok');
+  $('#f-title').value = ''; setDirty(true); render(); say('Program přidán. Nezapomeňte uložit.', 'ok');
 });
 
 /* ---------- hromadné vložení: tabulka Kategorie | Název | Odkaz | Popis ---------- */
