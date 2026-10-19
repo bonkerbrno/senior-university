@@ -1,6 +1,7 @@
 /* Mobilní verze: stejný přehrávač a stejná data, jen tři obrazovky pod sebou (body.m, data-screen = start | list | play).
    Na počítači se z toho nic nezobrazí. */
-.m-flags, .m-panel, .m-browse, .m-start, .m-play, .m-bottom { display: none; }
+.m-flags, .m-panel, .m-browse, .m-play, .m-bottom, .m-land, .m-only { display: none; }
+body.m .m-only { display: flex; }
 
 body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou výšku */
 body.m #app { display: block; height: 100dvh; padding: 6px; }
@@ -10,7 +11,7 @@ body.m #controls, body.m #extras, body.m .arrowrow, body.m .bulbs { display: non
 
 /* které obrazovky jsou vidět */
 body.m[data-screen="list"] #cabinet { display: none; }
-body.m[data-screen="start"] #listbox, body.m[data-screen="play"] #listbox { display: none; }
+body.m[data-screen="play"] #listbox { display: none; }
 
 /* nápis a okno */
 body.m .sign h1 { margin: 0; font-size: clamp(15px, 5.2vw, 22px); letter-spacing: .03em; }
@@ -35,7 +36,6 @@ body.m .btn.grey { background: linear-gradient(#cfc8bb, #9b9385); box-shadow: 0 
 body.m .btn.grey[data-lit] { background: linear-gradient(#fff3b0, #ffd34d); box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--glow); }
 body.m .btn.go { background: linear-gradient(#cfe9c9, #7fb878); }
 body.m .btn.go[data-lit] { background: linear-gradient(#fff3b0, #ffd34d); }
-body.m .btn.big { font-size: 20px; }
 
 /* oválné přepínače se dvěma stavy */
 body.m .m-flags { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -45,9 +45,6 @@ body.m .m-flags { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px
 .flag.on { color: #9dff9d; background: #1d3a1f; border-color: var(--green); box-shadow: 0 3px 0 #0e2410, 0 0 10px var(--green); }
 
 /* obrazovka 1 */
-body.m[data-screen="start"] .m-start { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: flex-start; gap: 10px; margin-top: 4px; }
-/* Oblíbené a Nové vedle sebe pod Listováním */
-.m-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* obrazovka 3 */
 body.m[data-screen="play"] .m-flags { display: grid; }
@@ -60,7 +57,6 @@ body.m .m-browse .btn .ico { width: 24px; height: 24px; }
 body.m[data-screen="play"] .m-play { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 body.m[data-screen="play"] .m-bottom { display: grid; }
 body.m[data-screen="play"] .infobar { padding-bottom: 8px; }
-body.m[data-screen="start"] .m-bottom { display: none; }
 body.m .btn.pwr { background: linear-gradient(#fff3b0, #ffd34d); color: #d6291d; --glow: var(--green); }
 body.m .btn.pwr .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
 body.m .btn.pwr { box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green), 0 0 30px 6px #35d35f66; }
@@ -76,22 +72,12 @@ body.m .item p { font-size: 14px; margin-bottom: 8px; }
 body.m .item .badge { font-size: 12px; padding: 1px 7px; }
 body.m .item .btn { font-size: 15px; padding-top: 14px; flex-direction: row; }
 body.m .navrow { display: flex; justify-content: center; gap: 14px; }
-body.m .btn.nav { width: 128px; font-size: 17px; flex-direction: row; padding-top: 14px; flex: none; }
+body.m .btn.nav { flex: 1 1 0; min-width: 0; font-size: 17px; flex-direction: row; padding-top: 14px; flex: none; }
 body.m .btn.nav .ico { width: 22px; height: 22px; }
 body.m .btn.nav { background: linear-gradient(#fff3b0, #ffd34d); color: #000; box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green); }
 body.m .btn.nav .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
 body.m .btn.nav:disabled { background: linear-gradient(#8f897d, #6b665c); box-shadow: 0 6px 0 #403c34, 0 9px 9px #000b; filter: none; color: #3b372f; }
 body.m .btn.nav:disabled .lamp { background: #3b372f; box-shadow: none; }
-
-/* celá obrazovka tam, kde ji prohlížeč (iPhone) neumí */
-body.m.fakefs #screen-wrap { position: fixed; inset: 0; z-index: 30; border: 0; border-radius: 0; aspect-ratio: auto; }
-body.m.fakefs .fs-bar { display: flex; flex-wrap: wrap; position: absolute; left: 0; right: 0; bottom: 0; }
-body.m.fakefs .fs-bar .btn { min-width: 0; flex: 1 1 28%; font-size: 13px; }
-body.m #screen-wrap:fullscreen .fs-bar { flex-wrap: wrap; }
-body.m #screen-wrap:fullscreen .fs-bar .btn { min-width: 0; flex: 1 1 28%; font-size: 13px; }
-body.m .fs-bar [data-act="tune"] { display: none; }
-body.m .fs-bar [data-act="channels"] { flex: 1 1 100%; }
-body.m .fs-bar { padding: 8px 8px 14px; gap: 10px; }
 
 /* vypnuto: vše zhasne a zešedne, svítí jen jemně červený Zapnout */
 body.m[data-power="off"] #cabinet { background: linear-gradient(145deg, #4a3a2c, #33261b); border-color: #7a6a45; }
@@ -114,8 +100,7 @@ body.m .list { max-height: none; }
 body.m .btn { height: var(--mh); padding-top: 13px; }
 body.m .btn .ico { width: 20px; height: 20px; }
 body.m .btn .lbl { font-size: 12.5px; }
-body.m .btn.big .lbl { font-size: 20px; }
-body.m .m-pair .btn .lbl, body.m .btn.nav .lbl { font-size: 16px; }
+body.m .btn.nav .lbl { font-size: 16px; }
 
 /* zvýrazněný panel: Vypnout, Pustit, Pozastavit, Ukončit */
 .m-panel { padding: 10px 10px 16px; border-radius: 22px; background: linear-gradient(#120804, #2a1408); border: 3px solid var(--brass);
@@ -139,3 +124,35 @@ body.m .list { gap: 6px; padding: 6px; }
 .trow.d3 { margin-left: 48px; width: calc(100% - 48px); } .trow.d4 { margin-left: 64px; width: calc(100% - 64px); } .trow.d5 { margin-left: 80px; width: calc(100% - 80px); }
 body.m #crumbs { display: none; }
 body.m[data-power="off"] .trow { pointer-events: none; }
+
+/* tlačítko Celá obrazovka / Zmenšit svítí vždy modře */
+body.m .btn[data-act="full"] { --glow: var(--blue); }
+body.m .btn.nav[data-act="full"] { background: linear-gradient(#fff3b0, #ffd34d); }
+body.m .btn.nav[data-act="full"] .lamp { background: var(--blue); box-shadow: 0 0 10px 3px var(--blue); }
+body.m .btn.nav { font-size: 14px; flex-direction: column; padding-top: 13px; gap: 2px; }
+body.m .navrow { gap: 8px; }
+
+/* dva řádky pod videem */
+body.m .infobar { padding: 5px 8px; }
+body.m .status, body.m .substatus { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.m .status { font-size: 17px; }
+
+/* na šířku: video, dva řádky a jedna řada tlačítek: Vypnout, Pustit, Pozastavit, Ukončit, Celá obrazovka, Titulky, Listuj programy */
+@media (orientation: landscape) and (max-height: 560px) {
+  body.m { --mh: 62px; }
+  body.m #cabinet { padding: 6px 10px; gap: 6px; }
+  body.m[data-screen="play"] .sign, body.m[data-screen="play"] .m-flags, body.m[data-screen="play"] .m-panel,
+  body.m[data-screen="play"] .m-browse, body.m[data-screen="play"] .m-play, body.m[data-screen="play"] .m-bottom { display: none; }
+  body.m[data-screen="play"] .m-land { display: flex; gap: 8px; margin-top: auto; }
+  .m-land .btn { flex: 1 1 0; min-width: 0; }
+  .m-land .btn.wide { flex: 2.2 1 0; flex-direction: row; gap: 8px; }
+  body.m #screen-wrap { flex: 1 1 0; min-height: 0; aspect-ratio: 16 / 9; align-self: center; max-width: 100%; border-width: 5px; }
+  body.m .infobar { padding: 3px 8px; }
+  body.m .status { font-size: 15px; } body.m .substatus { font-size: 12px; min-height: 0; }
+  body.m #listbox { padding: 6px 10px; gap: 6px; }
+  body.m #listbox .marquee { font-size: 18px; }
+  body.m .trow { min-height: 44px; font-size: 16px; padding: 4px 10px; }
+  body.m .btn.nav { flex-direction: row; padding-top: 12px; }
+}
+body.m[data-power="off"] .m-land .btn { pointer-events: none; }
+body.m[data-power="off"] .m-land .btn.pwr { pointer-events: auto; }

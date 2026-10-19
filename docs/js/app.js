@@ -19,6 +19,7 @@ if (MOBILE) document.body.classList.add('m');
 const WORDS = [[/pořadů/g, 'programů'], [/pořady/g, 'programy'], [/Pořady/g, 'Programy'], [/pořad/g, 'program'], [/Pořad/g, 'Program'],
   [/Otevřít složku/g, 'Otevřít program'], [/Všechny složky/g, 'Všechny programy'], [/Složka: /g, 'Program: '], [/ve složce/g, 'v programu'],
   [/Stiskněte Novinky/g, 'Stiskněte Nové'], [/stiskněte Novinky/g, 'stiskněte Nové']];
+const PREVIEW_MODE = qs.get('preview') === '1';
 const m = (t) => (MOBILE ? WORDS.reduce((x, [re, to]) => x.replace(re, to), t) : t);
 
 const statusEl = $('#status');
@@ -39,7 +40,7 @@ let qi = 0;
 let now = null;           // { item, where }
 let errCount = 0;
 let timer = 0;
-let screen = 'start';     // jen mobil: start | list | play
+let screen = 'play';      // jen mobil: play (domovská) | list
 let powered = true;       // jen mobil: false = jukebox spí (vše zešedlo)
 let favs = new Set();
 let subs = lsGet(LS_SUBS) === '1';
@@ -89,7 +90,7 @@ const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pu
   const it = now && now.item;
   if (state === 'playing') { errCount = 0; say('▶ Hraje: ' + it.title); }
   else if (state === 'paused') say('⏸ Pozastaveno: ' + it.title);
-  else if (state === 'idle') { say(m('Nic nehraje. Vyberte pořad.')); now = null; if (MOBILE && powered && screen === 'play') setScreen('list'); }
+  else if (state === 'idle') { say(m('Nic nehraje. Vyberte pořad.')); now = null; }
   else if (state === 'ended') { say('Hotovo: ' + (it ? it.title : '')); if (automat) schedule(1200); }
   else if (state === 'error') {
     say(m(detail === 'embed' ? 'Tento pořad nejde přehrát.' : 'Pořad se nepodařilo spustit.'), true);
@@ -180,7 +181,7 @@ function refresh() {
   if (now) parts.push(m('Složka: ') + now.where);
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
   if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
-  subEl.textContent = parts.join('  ·  ');
+  subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Listuj programy') : parts.join('  ·  ');
   if (MOBILE) refreshMobile();
 }
 
@@ -278,6 +279,8 @@ function refreshMobile() {
   set('shuf', !!shuffle, 'Náhodné pořadí', 'Hraje za sebou');
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
   lit('shuf', shuffle ? 'blue' : null);
+  lit('full', 'blue');
+  document.querySelectorAll('[data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   lit('subs', subs ? 'green' : null);
   const target = now ? now.item : null;
   lit('fav', screen === 'play' && target && favs.has(target.id) ? 'red' : null);
@@ -338,7 +341,7 @@ function openFolder(i) {
   if (!f || f.kind !== 'folder') return;
   path = [...path, f.id]; selected = 0; render(); listEl.scrollTop = 0;
 }
-function leaveList() { setScreen(now && player.state !== 'idle' ? 'play' : 'start'); refresh(); }
+function leaveList() { setScreen('play'); refresh(); }
 function goBack() { if (MOBILE) { const k = openOrder[openOrder.length - 1]; if (k) { collapse(k); render(); } else leaveList(); return; } if (path.length) { path = path.slice(0, -1); selected = 0; render(); listEl.scrollTop = 0; } }
 function goHome() { if (MOBILE) { if (expanded.size) { expanded.clear(); openOrder = []; render(); listEl.scrollTop = 0; } else leaveList(); return; } if (path.length) { path = []; selected = 0; render(); listEl.scrollTop = 0; } }
 
@@ -470,11 +473,20 @@ async function checkCode() {
 
 /* ---------- akce ---------- */
 async function toggleFullscreen() {
+  if (MOBILE) {
+    // Celá aplikace (ne jen video), aby zmizel i panel prohlížeče. Bez dotyku to prohlížeč nepovolí.
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      else say('Tento prohlížeč celou obrazovku neumí. Přidejte stránku na plochu.', true);
+    } catch { say('Celou obrazovku se nepodařilo zapnout.', true); }
+    refresh();
+    return;
+  }
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
-    else if (MOBILE && (document.body.classList.contains('fakefs') || !screenWrap.requestFullscreen)) document.body.classList.toggle('fakefs');
     else await screenWrap.requestFullscreen();
-  } catch { if (MOBILE) document.body.classList.toggle('fakefs'); else say('Celou obrazovku se nepodařilo zapnout.', true); }
+  } catch { say('Celou obrazovku se nepodařilo zapnout.', true); }
   refresh();
 }
 // Přeladit: další pořad v seznamu, kde se hraje (dokola); bez hrajícího pořadu další ve složce.
@@ -533,7 +545,7 @@ function sleep() {
   try { window.close(); } catch { /* prohlížeč nedovolí zavřít okno; zůstane obrazovka „odpočívá“ */ }
 }
 function wake() {
-  if (MOBILE) { powered = true; setScreen('start'); say(m('Vítejte. Vyberte pořad.')); refresh(); return; }
+  if (MOBILE) { powered = true; setScreen('play'); say(m('Vítejte. Vyberte pořad.')); refresh(); return; }
   $('#asleep').hidden = true; $('#app').hidden = false; refresh();
 }
 function playSelected() {
@@ -558,7 +570,6 @@ const actions = {
     if (!MOBILE) return;
     if (newCount(tree)) { expand('/__news'); showList(); render(); const el = [...listEl.querySelectorAll('.trow')].find((x) => x.dataset.key === '/__news'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); } else say(m('Žádné nové pořady.'));
   },
-  'm-choose': () => { showList(); render(); },
   browse: showListAtPlaying,
   fav: toggleFav,
   offer: offerSomething,
@@ -616,6 +627,14 @@ document.addEventListener('keydown', (ev) => {
   else if (ev.key === ' ') { ev.preventDefault(); actions.pause(); }
 });
 document.addEventListener('fullscreenchange', refresh);
+// Prohlížeč nepovolí celou obrazovku bez dotyku, proto se zapne při prvním klepnutí. Nainstalovaná aplikace (manifest) startuje na celou obrazovku sama.
+if (MOBILE && !PREVIEW_MODE) {
+  const first = () => {
+    document.removeEventListener('pointerup', first, true);
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+  };
+  document.addEventListener('pointerup', first, true);
+}
 
 /* ---------- skrytý vstup správce ---------- */
 // Pět rychlých kliknutí na první hvězdičku v nápisu, nebo Ctrl+Alt+Shift+A.
@@ -675,7 +694,7 @@ if (PREVIEW) {
 }
 
 /* ---------- start ---------- */
-if (MOBILE) { setScreen('start'); say(m('Vítejte. Vyberte pořad.')); }
+if (MOBILE) { setScreen('play'); say(m('Vítejte. Vyberte pořad.')); }
 render();
 if (!PREVIEW) {
   loadFeed(false);
