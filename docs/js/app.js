@@ -181,7 +181,7 @@ function refresh() {
   if (now) parts.push(m('Složka: ') + now.where);
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
   if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
-  subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Listuj programy') : parts.join('  ·  ');
+  subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
   if (MOBILE) refreshMobile();
 }
 

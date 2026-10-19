@@ -76,7 +76,7 @@ await step('telefon se pozná sám a domovská obrazovka je přehrávání se dv
   assert.equal(await vis('#controls'), false);
   assert.equal(await vis('#m-start'), false);
   assert.match(await status(), /Vítejte/);
-  assert.match(await page.locator('#substatus').innerText(), /Listuj programy/);
+  assert.match(await page.locator('#substatus').innerText(), /Programy/);
   const lines = await page.locator('#infobar').evaluate((e) => [...e.children].map((c) => c.getBoundingClientRect().height));
   assert.equal(lines.length, 2);
   assert.equal(await page.locator('#infobar .flag').count(), 0);
@@ -104,7 +104,7 @@ await step('Zmenšit vypne celou obrazovku a nápis se vrátí na Celá obrazovk
 });
 await page.screenshot({ path: path.join(shots, 'm1-domov.png') });
 
-await step('Listuj programy otevře strom: složky sbalené, dole Domů, Zpět a Celá obrazovka s modrou', async () => {
+await step('Programy otevře strom: složky sbalené, dole Domů, Zpět a Celá obrazovka s modrou', async () => {
   await wait();
   await act('browse').tap();
   assert.equal(await screenName(), 'list');
@@ -165,7 +165,7 @@ await step('panel Vypnout, Pustit, Pozastavit, Ukončit je pod přepínači a p�
   const f = await page.locator('#m-flags').boundingBox(), p = await page.locator('#m-panel').boundingBox(), r2 = await page.locator('#m-play').boundingBox();
   assert.ok(p.y >= f.y + f.height - 1 && p.y < f.y + f.height + 40, 'panel je pod přepínači');
   const br = await page.locator('#m-browse').boundingBox();
-  assert.ok(br.y >= p.y + p.height - 1 && br.y < p.y + p.height + 24, 'Listuj programy je hned pod panelem');
+  assert.ok(br.y >= p.y + p.height - 1 && br.y < p.y + p.height + 24, 'Programy je hned pod panelem');
   assert.ok(r2.y > br.y + br.height, 'ostatní tlačítka jsou pod ním');
   const hs = await page.locator('#m-panel .btn, #m-browse .btn, #m-play .btn, #m-bottom .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
   assert.equal(new Set(hs).size, 1, 'stejná výška tlačítek: ' + hs);
@@ -200,7 +200,7 @@ await step('srdce přidá hrající program do oblíbených', async () => {
   assert.match(await status(), /Přidáno do oblíbených/);
   assert.equal(await act('fav').getAttribute('data-lit'), 'red');
 });
-await step('Listuj programy ukáže seznam rozbalený u hrajícího programu; hudba hraje dál', async () => {
+await step('Programy ukáže seznam rozbalený u hrajícího programu; hudba hraje dál', async () => {
   await wait();
   await act('browse').tap();
   assert.equal(await screenName(), 'list');
@@ -277,7 +277,7 @@ await step('Vypnout: vše zešedne, jen Zapnout je aktivní; Zapnout vrátí na 
   assert.equal(await page.evaluate(() => document.body.dataset.power), 'on');
   assert.equal(await screenName(), 'play');
 });
-await step('na šířku: video, dva řádky a jedna řada tlačítek Vypnout, Pustit, Pozastavit, Ukončit, Celá obrazovka, Titulky, Listuj programy', async () => {
+await step('na šířku: video, dva řádky a jedna řada tlačítek Vypnout, Pustit, Pozastavit, Ukončit, Celá obrazovka, Titulky, Programy', async () => {
   const l = await browser.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const pg = await l.newPage();
   await l.route('https://media.test/**', (route) => route.fulfill({ status: 200, body: fs.readFileSync(wav), headers: { 'content-type': 'audio/wav', 'accept-ranges': 'none' } }));
@@ -285,13 +285,13 @@ await step('na šířku: video, dva řádky a jedna řada tlačítek Vypnout, Pu
   await pg.waitForSelector('#m-land .btn');
   assert.equal(await pg.locator('#m-land').isVisible(), true);
   assert.equal(await pg.locator('#m-panel').isVisible(), false);
-  assert.deepEqual(await pg.locator('#m-land .lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit', 'Celá obrazovka', 'Titulky', 'Listuj programy']);
+  assert.deepEqual(await pg.locator('#m-land .lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Pozastavit', 'Ukončit', 'Celá obrazovka', 'Titulky', 'Programy']);
   const ys = await pg.locator('#m-land .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
   assert.equal(new Set(ys).size, 1, 'jedna řada: ' + ys);
   const xs = await pg.locator('#m-land .btn').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().left));
   assert.deepEqual([...xs].sort((a, b) => a - b), xs, 'zleva doprava ve správném pořadí');
   const wide = await pg.locator('#m-land .btn.wide').boundingBox(), narrow = await pg.locator('#m-land .btn').first().boundingBox();
-  assert.ok(wide.width > narrow.width * 1.8, 'Listuj programy je široké');
+  assert.ok(wide.width > narrow.width * 1.8, 'Programy je široké');
   assert.equal(await pg.locator('#m-land [data-act="full"]').getAttribute('data-lit'), 'blue');
   const sw = await pg.locator('#screen-wrap').boundingBox();
   assert.ok(sw.height > 150, 'video má místo: ' + sw.height);
