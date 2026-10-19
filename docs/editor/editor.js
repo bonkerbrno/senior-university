@@ -9,7 +9,7 @@ let lib = [];       // { id, title, note, url, show, added }
 let shas = {};      // sha souborů pro GitHub API
 let dirty = false;
 
-function say(t, cls = '') { msg.textContent = t; msg.className = cls; }
+function say(t, cls = '') { msg.textContent = t; msg.className = cls; const d = document.querySelector('#dmsg'); if (d) { d.textContent = t; d.className = 'dmsg ' + cls; } }
 // výsledek ukládání ukážeme u každého tlačítka, aby nebyl jen nahoře mimo obrazovku
 function saySave(t, cls = '') { say(t, cls); document.querySelectorAll('.save-msg').forEach((e) => { e.textContent = t; e.className = 'save-msg ' + cls; }); }
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
@@ -20,7 +20,7 @@ $('#branch').value = lsGet('ed.branch') || $('#branch').value;
 $('#token').value = lsGet('ed.token') || '';
 $('#remember').checked = !!lsGet('ed.token');
 
-function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neuložené změny' : ''; }
+function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neodesláno: táta zatím vidí starý seznam' : ''; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 
 /* ---------- GitHub API ---------- */
@@ -65,7 +65,7 @@ async function load() {
     } else {
       const r = await fetch('../library.json', { cache: 'no-store' });
       lib = parseLibrary(await r.text());
-      say('Bez tokenu je seznam jen ke čtení. Vložte token v nastavení.', '');
+      say('Bez tokenu je seznam jen ke čtení. Vložte token v Nastavení.', '');
     }
     setDirty(false); render();
     if ($('#token').value.trim()) say('Seznam načten.', 'ok');
@@ -112,40 +112,123 @@ function move(x, dir) {
   setDirty(true); render();
 }
 
+let cur = '';            // vybraný program ('' = Domů, hlavní seznam)
+let query = '';
+const closed = new Set(); // sbalené větve stromu
+function parentOf(x) { return x.parent && folders().some((f) => f.id === x.parent) ? x.parent : ''; }
+function countIn(id) { return lib.filter((x) => parentOf(x) === id).reduce((n, x) => n + (x.kind === 'folder' ? countIn(x.id) : 1), 0); }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
 function render() { renderList(); sendPreview(); }
+function renderTree() {
+  const ul = $('#tree'); ul.replaceChildren();
+  const node = (id, title, sub) => {
+    const li = document.createElement('li');
+    const subs = lib.filter((x) => x.kind === 'folder' && parentOf(x) === id);
+    const n = countIn(id);
+    const d = el('div', 'node' + (id === cur ? ' sel' : '') + (n ? '' : ' empty')); d.tabIndex = 0; d.dataset.p = id;
+    const tw = el('span', 'tw', subs.length ? (closed.has(id) ? '▸' : '▾') : '');
+    tw.addEventListener('click', (ev) => { if (!subs.length) return; ev.stopPropagation(); closed.has(id) ? closed.delete(id) : closed.add(id); renderTree(); });
+    d.append(tw, el('span', 'nm', title), el('span', 'cnt', n ? String(n) : ''));
+    d.dataset.tip = n ? 'Otevře program ' + title + '.' : 'Prázdný program. Přidejte do něj odkazy.'; d.dataset.tipRight = '';
+    const open = () => { cur = id; query = ''; $('#q').value = ''; render(); };
+    d.addEventListener('click', open);
+    d.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } });
+    li.append(d);
+    if (subs.length && !closed.has(id)) { const u = document.createElement('ul'); subs.forEach((f) => u.append(node(f.id, f.title))); li.append(u); }
+    return li;
+  };
+  ul.append(node('', 'Domů'));
+}
+function crumbs() {
+  const path = []; let id = cur;
+  for (let i = 0; i < 12; i++) { const f = lib.find((x) => x.id === id && x.kind === 'folder'); if (!f) break; path.unshift(f); id = parentOf(f); }
+  const box = $('#crumbs'); box.replaceChildren();
+  [{ id: '', title: 'Domů' }, ...path].forEach((p, i) => {
+    if (i) box.append(el('i', '', '›'));
+    const b = el('button', '', p.title); b.type = 'button'; b.dataset.tip = 'Přejde do programu ' + p.title + '.';
+    b.addEventListener('click', () => { cur = p.id; query = ''; $('#q').value = ''; render(); });
+    box.append(b);
+  });
+}
 function renderList() {
-  const ul = $('#items');
-  ul.replaceChildren();
+  if (cur && !lib.some((x) => x.id === cur && x.kind === 'folder')) cur = '';
+  renderTree(); crumbs();
   fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#t-parent'), '', $('#t-parent').value);
-  orderedTree().forEach(({ x: it, depth }) => {
+  const here = lib.find((x) => x.id === cur);
+  $('#list-h').textContent = here ? here.title : 'Domů';
+  const ul = $('#items'); ul.replaceChildren();
+  const q = query.trim().toLowerCase();
+  const rows = lib.filter((x) => parentOf(x) === cur && (!q || x.title.toLowerCase().includes(q)));
+  if (!rows.length) {
+    const li = el('li', 'empty-note', q ? 'Nic neodpovídá hledání.' : 'Tento program je prázdný. Přidejte odkaz tlačítkem „+ Odkaz“ nahoře.'); ul.append(li);
+  }
+  rows.forEach((it) => {
     const folder = it.kind === 'folder';
-    const li = document.createElement('li'); if (folder) li.className = 'folder';
-    li.style.setProperty('margin-left', (depth * 22) + 'px');
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = it.show; cb.title = 'Ukázat tátovi';
-    cb.addEventListener('change', () => { it.show = cb.checked; setDirty(true); });
+    const li = document.createElement('li'); li.className = 'item' + (folder ? ' prog' : '') + (it.show ? '' : ' off');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'sw'; cb.checked = it.show;
+    cb.setAttribute('role', 'switch'); cb.setAttribute('aria-label', 'Ukázat tátovi');
+    cb.dataset.tip = 'Zapnuto = táta to vidí. Vypnuto = skryté.'; cb.dataset.tipRight = '';
+    cb.addEventListener('change', () => { it.show = cb.checked; li.classList.toggle('off', !cb.checked); setDirty(true); sendPreview(); });
     const mid = document.createElement('div');
-    const t = document.createElement('input'); t.value = it.title; t.maxLength = 120;
+    const t = document.createElement('input'); t.className = 't'; t.value = it.title; t.maxLength = 120; t.setAttribute('aria-label', 'Název');
     t.addEventListener('input', () => { it.title = t.value; setDirty(true); sendPreview(); });
-    const n = document.createElement('textarea'); n.value = it.note; n.rows = 2; n.maxLength = 400;
+    t.addEventListener('change', renderTree);
+    const n = document.createElement('input'); n.className = 'n'; n.value = it.note; n.maxLength = 400; n.placeholder = 'Krátká anotace'; n.setAttribute('aria-label', 'Anotace');
     n.addEventListener('input', () => { it.note = n.value; setDirty(true); sendPreview(); });
-    const m = document.createElement('div'); m.className = 'meta'; m.textContent = folder ? (it.parent ? 'PODSLOŽKA' : 'HLAVNÍ TLAČÍTKO (první řádek)') : it.url;
-    const pick = document.createElement('label'); pick.className = 'pick'; pick.append(document.createTextNode('Program: '));
-    const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent);
+    const m = el('div', 'meta', folder ? (it.parent ? 'Podprogram' : 'Hlavní tlačítko (program)') + ' · položek: ' + countIn(it.id) : it.url);
+    mid.append(t, n, m);
+    const tools = el('div', 'tools');
+    const mk = (label, tip, fn) => { const b = el('button', 'btn mini', label); b.type = 'button'; b.dataset.tip = tip; b.dataset.tipLeft = ''; b.setAttribute('aria-label', tip); b.addEventListener('click', fn); return b; };
+    if (folder) tools.append(mk('Otevřít', 'Otevře program a ukáže jeho obsah.', () => { cur = it.id; query = ''; $('#q').value = ''; render(); }));
+    const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent); sel.setAttribute('aria-label', 'Přesunout do programu');
+    sel.dataset.tip = 'Přesune položku do jiného programu.'; sel.dataset.tipLeft = '';
     sel.addEventListener('change', () => { it.parent = sel.value; setDirty(true); render(); });
-    pick.append(sel);
-    mid.append(t, n, m, pick);
-    const tools = document.createElement('div'); tools.className = 'tools';
-    const mk = (label, title, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.addEventListener('click', fn); return b; };
-    tools.append(mk('↑', 'Výš', () => move(it, -1)), mk('↓', 'Níž', () => move(it, 1)),
-      mk('✕', 'Smazat', () => {
+    tools.append(sel, mk('↑', 'Posune výš.', () => move(it, -1)), mk('↓', 'Posune níž.', () => move(it, 1)),
+      mk('Smazat', 'Smaže ze seznamu.', () => {
         const kids = lib.filter((y) => y.parent === it.id);
-        kids.forEach((y) => { y.parent = it.parent; }); // obsah smazané složky zůstane, jen se přesune výš
+        kids.forEach((y) => { y.parent = it.parent; }); // obsah smazaného programu zůstane, jen se přesune výš
         lib.splice(lib.indexOf(it), 1); setDirty(true); render();
       }));
     li.append(cb, mid, tools);
     ul.append(li);
   });
+  const mine = lib.filter((x) => parentOf(x) === cur), links = mine.filter((x) => x.kind !== 'folder');
+  $('#list-foot').textContent = 'Odkazů: ' + links.length + ' · viditelných pro tátu: ' + links.filter((x) => x.show).length + ' · podprogramů: ' + (mine.length - links.length);
+  $('#tree-foot').textContent = 'Celkem odkazů: ' + lib.filter((x) => x.kind !== 'folder').length;
 }
+$('#q').addEventListener('input', () => { query = $('#q').value; renderList(); });
+
+/* ---------- okna (přidat / nastavení) a úvodní strana ---------- */
+function openDlg(tab) {
+  $('#shade').hidden = false;
+  document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  ['link', 'text', 'xls', 'prog', 'gear'].forEach((t) => { $('#d-' + t).hidden = t !== tab; });
+  const gear = tab === 'gear';
+  $('#tabs').hidden = gear; $('#d-save').hidden = gear; $('#dtitle').textContent = gear ? 'Nastavení' : 'Přidat do seznamu';
+  $('#dmsg').textContent = '';
+  ['#n-parent', '#t-parent', '#f-parent'].forEach((s) => fillSelect($(s), '', cur));
+  const first = $('#d-' + tab).querySelector('input,textarea'); if (first) first.focus();
+}
+function closeDlg() { $('#shade').hidden = true; }
+document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDlg(b.dataset.open)));
+document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => openDlg(b.dataset.tab)));
+$('#gear').addEventListener('click', () => openDlg('gear'));
+$('#x').addEventListener('click', closeDlg);
+$('#shade').addEventListener('mousedown', (ev) => { if (ev.target.id === 'shade') closeDlg(); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeDlg(); });
+function fitPreview() {
+  const box = $('.prevbody'), f = $('#preview'); if (!box || !box.clientWidth) return;
+  const k = Math.min(box.clientWidth / 1200, box.clientHeight / 760); f.style.transform = 'scale(' + k + ')';
+}
+if (window.ResizeObserver) new ResizeObserver(fitPreview).observe($('.prevbody')); window.addEventListener('resize', fitPreview);
+$('#btn-prev').addEventListener('click', () => $('#main').classList.toggle('showprev'));
+
+const CONSENTS = ['#c-terms', '#c-gdpr', '#c-liab'];
+function consentOk() { return CONSENTS.every((c) => $(c).checked); }
+CONSENTS.forEach((c) => $(c).addEventListener('change', () => { $('#enter').disabled = !consentOk(); }));
+$('#gform').addEventListener('submit', (ev) => { ev.preventDefault(); if (!consentOk()) return; lsSet('ed.consent', '1'); $('#gate').hidden = true; });
+if (lsGet('ed.consent') === '1') $('#gate').hidden = true;
 
 /* ---------- přidání ---------- */
 $('#n-url').addEventListener('input', () => {
@@ -258,7 +341,7 @@ $('#t-add').addEventListener('click', () => {
 
 /* ---------- uložení ---------- */
 async function saveAll() {
-  if (!$('#token').value.trim()) { saySave('Chybí token (nastavení nahoře).', 'err'); return; }
+  if (!$('#token').value.trim()) { saySave('Chybí token (Nastavení).', 'err'); return; }
   try {
     document.querySelectorAll('.save-btn').forEach((x) => { x.disabled = true; }); saySave('Ukládám…');
     const libText = libraryToText(lib);
@@ -279,7 +362,7 @@ function sendPreview() {
 }
 window.addEventListener('message', (ev) => { if (ev.origin === location.origin && ev.data && ev.data.type === 'ready') sendPreview(); });
 async function savePin(pin) {
-  if (!$('#token').value.trim()) { say('Chybí token (nastavení nahoře).', 'err'); return; }
+  if (!$('#token').value.trim()) { say('Chybí token (Nastavení).', 'err'); return; }
   try {
     say('Ukládám PIN…');
     const cur = await readFile('admin.json');
