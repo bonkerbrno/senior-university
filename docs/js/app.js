@@ -182,7 +182,18 @@ function refresh() {
   parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
   if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
   subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
-  if (MOBILE) refreshMobile();
+  if (MOBILE) refreshMobile(); else refreshDesktop();
+}
+function refreshDesktop() {
+  const pl = player.state === 'playing';
+  const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
+  lit('pp', pl ? 'green' : player.state === 'paused' ? 'orange' : null);
+  document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
+  lit('subs', subs ? 'green' : null);
+  lit('shuf', shuffle ? 'blue' : null);
+  lit('full', 'blue');
+  document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
+  document.querySelectorAll('#d-row [data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
 }
 
 /* ---------- mobil ---------- */

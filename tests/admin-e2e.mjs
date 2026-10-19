@@ -38,12 +38,12 @@ const secret = async () => { for (let i = 0; i < 5; i++) await page.click('#secr
 await page.goto(base);
 await page.waitForSelector('.item');
 await page.locator('.item').first().click();
-await page.click('#controls [data-act="play"]');
+await page.click('#m-panel [data-act="pp"]');
 assert.equal(await page.locator('#stage iframe').getAttribute('src'), feed.items[0].url);
 assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts/);
 assert.equal(await page.locator('[data-act="pause"]').first().isDisabled() || true, true);
 await ctx.route('https://ct24.ceskatelevize.cz/**', (r) => r.fulfill({ contentType: 'text/html', body: '<p>ct24</p>' }));
-await page.click('#controls [data-act="stop"]');
+await page.click('#m-panel [data-act="stop"]');
 const [popup] = await Promise.all([ctx.waitForEvent('page'), page.locator('.item').nth(1).locator('button').click()]);
 assert.match(popup.url(), /^https:\/\/ct24\.ceskatelevize\.cz\//);
 assert.match(await page.innerText('#status'), /Otevírám/);
@@ -52,7 +52,7 @@ await page.locator('.item').nth(2).locator('button').click();
 await popup.waitForEvent('close', { timeout: 3000 }).catch(() => {});
 assert.equal(popup.isClosed(), true, 'okno ČT24 se při spuštění rádia zavře');
 // po obnovení stránky Superbox okno najde podle jména a také zavře
-await page.click('#controls [data-act="stop"]').catch(() => {});
+await page.click('#m-panel [data-act="stop"]').catch(() => {});
 const [popup2] = await Promise.all([ctx.waitForEvent('page'), page.locator('.item').nth(1).locator('button').click()]);
 await popup2.waitForLoadState();
 await page.reload(); await page.waitForSelector('.item');

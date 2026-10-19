@@ -159,3 +159,31 @@ body.mini .controls .btn[data-act="auto"] { display: none; }
 
 .copy { position: fixed; left: 0; right: 0; bottom: 1px; text-align: center; font-size: 10px; line-height: 12px; color: #ffe9a8; opacity: .55; pointer-events: none; z-index: 1; }
 body.mini .copy { display: none; }
+
+/* počítač: vlevo okno, popisy, panel jako na mobilu a řada tlačítek; vpravo seznam se svislými šipkami */
+.m-panel, .d-row { display: none; }
+body:not(.m) .m-panel { display: block; }
+body:not(.m) .d-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+body:not(.m) #controls, body:not(.m) #extras { display: none; }
+body:not(.m) .m-panel { --mh: clamp(92px, 13vh, 116px); padding: 12px 12px 18px; border-radius: 24px; background: linear-gradient(#120804, #2a1408); border: 4px solid var(--brass);
+  box-shadow: inset 0 0 18px #000c, 0 0 0 3px #0008, 0 0 18px 2px #ffb52e44; }
+body:not(.m) .m-panel .m-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+body:not(.m) .m-panel .btn { height: var(--mh); min-height: 0; font-size: clamp(20px, 2.2vw, 30px); }
+.d-row .btn { min-height: clamp(60px, 9vh, 90px); padding: 18px 4px 6px; font-size: clamp(15px, 1.55vw, 22px); }
+.d-row .btn .ico { width: 28px; height: 28px; }
+.btn.go { background: linear-gradient(#cfe9c9, #7fb878); box-shadow: 0 12px 0 #3e6a39, 0 18px 18px #000b, inset 0 3px 0 #fffb; }
+.btn.grey { background: linear-gradient(#cfc8bb, #9b9385); box-shadow: 0 12px 0 #5f594e, 0 18px 18px #000b, inset 0 3px 0 #fffa; }
+.btn.pwr { background: linear-gradient(#fff3b0, #ffd34d); color: #d6291d; --glow: var(--green); }
+.btn.pwr .lamp { background: var(--green); box-shadow: 0 0 22px 8px var(--green); }
+.btn.pwr { box-shadow: 0 12px 0 #5a3d0e, 0 18px 18px #000b, inset 0 3px 0 #fffb, 0 0 26px 6px var(--green), 0 0 60px 10px #35d35f66; }
+.btn.go[data-lit], .btn.grey[data-lit] { background: linear-gradient(#fff3b0, #ffd34d); box-shadow: 0 12px 0 #5a3d0e, 0 18px 18px #000b, inset 0 3px 0 #fffb, 0 0 26px 6px var(--glow), 0 0 60px 10px color-mix(in srgb, var(--glow) 45%, transparent); }
+.btn.pwr:active, .btn.go:active, .btn.grey:active { transform: translateY(11px); box-shadow: 0 1px 0 #5a3d0e, 0 2px 4px #000c, inset 0 6px 12px #0009; }
+.listwrap { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; }
+.listwrap .list { flex: 1 1 auto; min-width: 0; }
+.listwrap .arrowrow { display: flex; flex-direction: column; gap: 14px; flex: 0 0 clamp(84px, 8vw, 110px); }
+.listwrap .arrowrow .btn.arrow { flex: 1 1 0; min-height: 0; padding: 18px 0 8px; }
+.listwrap .arrowrow .btn .ico { width: 56px; height: 56px; }
+.listwrap .arrowrow .btn .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 900px) { .listwrap .arrowrow { flex-basis: 80px; } }
+body:not(.m) .m-bottom, body:not(.m) .m-flags, body:not(.m) .m-browse, body:not(.m) .m-play, body:not(.m) .m-land { display: none; }
+body:not(.m) .m-panel .btn { padding-top: 24px; } body:not(.m) .m-panel .btn .ico { width: 30px; height: 30px; }
