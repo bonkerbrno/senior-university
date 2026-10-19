@@ -245,6 +245,16 @@ await step('Celá obrazovka zapne a vypne režim fullscreen', async () => {
   if (await page.evaluate(() => !!document.fullscreenElement)) { await wait(); await page.locator('#fs-bar [data-act="full"]').click(); await page.waitForFunction(() => !document.fullscreenElement); }
   else console.log('  (headless: fullscreen API nepotvrzeno, přeskočeno)');
 });
+await step('v celé obrazovce je tlačítko Zapnout/Vypnout titulky a svítí modře', async () => {
+  const b = page.locator('#fs-bar [data-act="subs"]');
+  assert.equal(await b.getAttribute('data-lit'), 'blue');
+  assert.equal(await b.locator('.lbl').innerText(), 'Zapnout titulky');
+  await b.dispatchEvent('click'); await wait();
+  assert.equal(await b.locator('.lbl').innerText(), 'Vypnout titulky');
+  assert.equal(await b.getAttribute('data-lit'), 'blue');
+  await b.dispatchEvent('click'); await wait();
+  assert.equal(await b.locator('.lbl').innerText(), 'Zapnout titulky');
+});
 await step('v celé obrazovce: Přeladit přepne dál, Seznam kanálů vrátí výchozí vzhled; stisk tlačítka cvakne', async () => {
   await page.evaluate(() => { window.__clicks = 0; const o = AudioContext.prototype.createBufferSource; AudioContext.prototype.createBufferSource = function () { window.__clicks++; return o.call(this); }; });
   await wait(); if (await act('home').isEnabled()) { await act('home').click(); await wait(); } await act('open', 0).click(); await wait(); await act('item', 0).click(); await wait();
@@ -267,13 +277,24 @@ await step('chyba přehrávání ukáže srozumitelnou hlášku', async () => {
   await page.waitForFunction(() => /nejde přehrát/.test(document.querySelector('#status').textContent), null, { timeout: 5000 });
   await wait(); await act('home').click();
 });
-await step('Zavřít uspí skříň, Zapnout ji vrátí', async () => {
+await step('Vypnout zešedne aplikaci do lišty s tlačítkem Zapnout (svítí červeně), Zapnout ji vrátí', async () => {
   await wait(); await act('close').click();
-  assert.equal(await page.locator('#asleep').isVisible(), true);
-  assert.equal(await page.locator('#app').isVisible(), false);
+  assert.equal(await page.evaluate(() => document.body.dataset.power), 'off');
+  assert.equal(await page.locator('#listbox').isVisible(), false);
+  assert.equal(await page.locator('#screen-wrap').isVisible(), false);
+  const on = page.locator('#m-panel [data-act="close"]');
+  assert.equal(await on.innerText(), 'Zapnout');
+  assert.equal(await on.isVisible(), true);
+  await wait(400);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#m-panel [data-act="close"] .lamp')).backgroundColor), 'rgb(255, 74, 61)');
+  const bar = await page.locator('#cabinet').boundingBox();
+  assert.ok(bar.height < 220 && bar.y + bar.height >= page.viewportSize().height - 2, 'lišta dole: ' + JSON.stringify(bar));
+  await page.locator('#list').evaluate((e) => e.querySelector('button') && e.querySelector('button').click()).catch(() => {});
+  assert.equal(await page.locator('.item.playing').count(), 0);
   await page.screenshot({ path: path.join(shots, '7-spi.png') });
-  await act('wake').click();
-  assert.equal(await page.locator('#app').isVisible(), true);
+  await wait(); await on.click();
+  assert.equal(await page.evaluate(() => document.body.dataset.power), 'on');
+  assert.equal(await page.locator('#listbox').isVisible(), true);
 });
 await step('Novinky načtou nový seznam a pozdrží se ve složce', async () => {
   feed.items.push(med('new1', 'Nový pořad', 'tone.wav'));

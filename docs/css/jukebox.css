@@ -198,3 +198,23 @@ body:not(.m) .m-panel .btn { padding-top: 24px; } body:not(.m) .m-panel .btn .ic
 .item.folder > .btn { color: #12113a; }
 .item > .btn .badge { color: #000; }
 .item > .btn .count { color: inherit; opacity: .7; }
+
+/* šipky užší */
+.listwrap .arrowrow { flex-basis: clamp(54px, 4.6vw, 66px); }
+.listwrap .arrowrow .btn .ico { width: 36px; height: 36px; }
+
+/* vypnuto: aplikace zešedne a zmenší se na lištu dole, Zapnout svítí červeně */
+body:not(.m)[data-power="off"] { background: #1c1a18; }
+body:not(.m)[data-power="off"] #app { display: block; padding: 0; }
+body:not(.m)[data-power="off"] #listbox, body:not(.m)[data-power="off"] #screen-wrap, body:not(.m)[data-power="off"] .sign,
+body:not(.m)[data-power="off"] .d-row, body:not(.m)[data-power="off"] .m-panel .btn:not(.pwr), body:not(.m)[data-power="off"] .infobar .substatus { display: none; }
+body:not(.m)[data-power="off"] #cabinet { position: fixed; left: 0; right: 0; bottom: 0; flex-direction: row; align-items: center; gap: 18px; padding: 12px 16px;
+  border-radius: 22px 22px 0 0; border: 5px solid #6b655c; border-bottom: 0; background: linear-gradient(#4a4540, #2e2a26); box-shadow: 0 -6px 24px #000a; }
+body:not(.m)[data-power="off"] .infobar { flex: 1 1 auto; order: 1; background: #181614; border-color: #5a554d; }
+body:not(.m)[data-power="off"] .status { font-size: clamp(18px, 1.8vw, 26px); color: #a9a49b; text-shadow: none; }
+body:not(.m)[data-power="off"] .m-panel { order: 2; flex: 0 0 min(360px, 40vw); padding: 0; border: 0; background: none; box-shadow: none; }
+body:not(.m)[data-power="off"] .m-panel .m-row { grid-template-columns: 1fr; }
+body:not(.m)[data-power="off"] .m-panel .btn { --mh: 84px; }
+body:not(.m)[data-power="off"] .btn.pwr { --glow: var(--red); background: linear-gradient(#ffd0c8, #ff6a5c); color: #5c0c06; }
+body:not(.m)[data-power="off"] .btn.pwr .lamp { background: var(--red); box-shadow: 0 0 22px 8px var(--red); }
+body:not(.m)[data-power="off"] .btn.pwr { box-shadow: 0 12px 0 #7a1f17, 0 18px 18px #000b, inset 0 3px 0 #fffb, 0 0 26px 6px var(--red), 0 0 60px 10px #ff4a3d66; }

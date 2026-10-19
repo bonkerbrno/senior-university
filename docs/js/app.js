@@ -41,7 +41,7 @@ let now = null;           // { item, where }
 let errCount = 0;
 let timer = 0;
 let screen = 'play';      // jen mobil: play (domovská) | list
-let powered = true;       // jen mobil: false = jukebox spí (vše zešedlo)
+let powered = true;       // false = jukebox spí (vše zešedlo, zůstane jen lišta se Zapnout)
 let favs = new Set();
 let subs = lsGet(LS_SUBS) === '1';
 
@@ -140,7 +140,6 @@ function render() {
     if (folder) { const c = document.createElement('span'); c.className = 'count'; c.textContent = '  (' + playableIn(it.children, true).length + ' programů)'; h.append(c); }
     btn.append(lamp, h);
     if (it.note) { const p = document.createElement('span'); p.className = 'note'; p.textContent = it.note; btn.append(p); }
-    const hint = document.createElement('span'); hint.className = 'lbl'; btn.append(hint);
     card.append(btn);
     listEl.append(card);
   });
@@ -150,6 +149,8 @@ function render() {
 function isCurrent(it) { return !!now && now.item.id === it.id; }
 
 function refresh() {
+  document.body.dataset.power = powered ? 'on' : 'off';
+  document.querySelectorAll('[data-act="close"] .lbl').forEach((l) => { l.textContent = powered ? 'Vypnout' : 'Zapnout'; });
   const st = player.state;
   const active = st === 'playing' || st === 'paused';
   const { nodes, trail } = cwd();
@@ -162,7 +163,7 @@ function refresh() {
     card.classList.toggle('selected', i === selected);
     card.classList.toggle('playing', cur);
     const btn = card.querySelector('button');
-    btn.querySelector('.lbl').textContent = m(folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad');
+    btn.setAttribute('aria-label', it.title + '. ' + m(folder ? 'Otevřít složku' : it.kind === 'ext' ? 'Otevřít oficiální přehrávač' : cur ? (st === 'paused' ? 'Pozastaveno – vypnout' : 'Právě hraje – vypnout') : 'Pustit tento pořad'));
     if (cur) btn.dataset.lit = st === 'paused' ? 'orange' : 'green'; else delete btn.dataset.lit;
   });
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => {
@@ -193,7 +194,8 @@ function refreshDesktop() {
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
   lit('pp', pl ? 'green' : player.state === 'paused' ? 'orange' : null);
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
-  lit('subs', subs ? 'green' : null);
+  document.querySelectorAll('#d-row [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; });
+  document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { b.dataset.lit = 'blue'; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
   lit('shuf', shuffle ? 'blue' : null);
   lit('full', 'blue');
   document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
@@ -537,33 +539,24 @@ function showChannels() {
 function toggleMini() {
   document.body.classList.toggle('mini'); refresh();
 }
-function sleepMobile() {
+function sleep() {
   clearTimeout(timer);
   closeExternal();
   automat = false; shuffle = null; powered = false;
   player.stop();
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   document.body.classList.remove('mini', 'fakefs');
-  setScreen('play');
+  if (MOBILE) setScreen('play');
   say('Vypnuto. Stiskněte Zapnout.');
   refresh();
-}
-function sleep() {
-  if (MOBILE) { sleepMobile(); return; }
-  clearTimeout(timer);
-  closeExternal();
-  automat = false; shuffle = null;
-  player.stop();
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  document.body.classList.remove('mini');
-  $('#asleep').hidden = false;
-  $('#app').hidden = true;
-  $('#asleep .btn').focus();
-  try { window.close(); } catch { /* prohlížeč nedovolí zavřít okno; zůstane obrazovka „odpočívá“ */ }
+  const on = document.querySelector('#m-panel [data-act="close"]');
+  if (!MOBILE && on) on.focus();
 }
 function wake() {
-  if (MOBILE) { powered = true; setScreen('play'); say(m('Vítejte. Vyberte pořad.')); refresh(); return; }
-  $('#asleep').hidden = true; $('#app').hidden = false; refresh();
+  powered = true;
+  if (MOBILE) setScreen('play');
+  say(m('Vítejte. Vyberte program.'));
+  refresh();
 }
 function playSelected() {
   if (player.state === 'paused') { player.resume(); return; }
@@ -601,8 +594,7 @@ const actions = {
   tune,
   channels: showChannels,
   mini: toggleMini,
-  close: () => { if (MOBILE && !powered) wake(); else sleep(); },
-  wake,
+  close: () => { if (!powered) wake(); else sleep(); },
   auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
   'rand-here': () => toggleRandom('here'),
   'rand-all': () => toggleRandom('all'),
@@ -618,7 +610,7 @@ document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-act]');
   if (btn) {
     const act = btn.dataset.act;
-    if (MOBILE && !powered && act !== 'close') return;
+    if (!powered && act !== 'close') return;
     const key = act + (btn.dataset.index || '') + (btn.dataset.key || '');
     const t = Date.now();
     const burst = t - (lastClick.get(key) || 0) < BURST_MS;
