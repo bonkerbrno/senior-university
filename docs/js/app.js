@@ -34,7 +34,7 @@ let path = [];            // id složek od kořene k aktuální
 let selected = 0;
 let seen = new Set();
 let automat = false;
-let shuffle = null;       // null | 'here' | 'all'
+let shuffle = null;       // null | 'here' (jen v rámci programu)
 let queue = [];           // seznam, ze kterého se hraje dál (složka, kde se začalo)
 let qi = 0;
 let now = null;           // { item, where }
@@ -88,7 +88,7 @@ function pathTitle(trail) { return ['Domů', ...trail.map((f) => f.title)].join(
 
 const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pustit') }, (state, detail) => {
   const it = now && now.item;
-  if (state === 'playing') { errCount = 0; say('▶ Hraje: ' + it.title); }
+  if (state === 'playing') { errCount = 0; say(MOBILE ? '▶ Hraje: ' + it.title : it.title); }
   else if (state === 'paused') say('⏸ Pozastaveno: ' + it.title);
   else if (state === 'idle') { say(m('Nic nehraje. Vyberte pořad.')); now = null; }
   else if (state === 'ended') { say('Hotovo: ' + (it ? it.title : '')); if (automat) schedule(1200); }
@@ -102,7 +102,7 @@ const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pu
 });
 
 function schedule(ms) { clearTimeout(timer); timer = setTimeout(playNext, ms); }
-function poolSize() { return shuffle === 'all' ? playableIn(tree, true).length : queue.length; }
+function poolSize() { return queue.length; }
 
 /* ---------- vykreslení (jen textContent) ---------- */
 function mkBtn(act, label, iconId, index) {
@@ -176,16 +176,12 @@ function refresh() {
   lit('auto', automat ? 'green' : null);
   lit('news', newCount(tree) ? 'green' : null);
   lit('rand-here', shuffle === 'here' ? 'blue' : null);
-  lit('rand-all', shuffle === 'all' ? 'blue' : null);
   document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !MOBILE && !path.length; });
   document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : (MOBILE ? 'Pozastavit' : 'Pauza'); });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !active; });
   document.querySelectorAll('[data-act="mini"] .lbl').forEach((l) => { l.textContent = document.body.classList.contains('mini') ? 'Zvětšit' : 'Zmenšit'; });
   document.querySelectorAll('#controls [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zpět' : 'Celá obrazovka'; });
-  const parts = [];
-  if (now) parts.push(m('Složka: ') + now.where);
-  parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
-  if (shuffle) parts.push(m(shuffle === 'all' ? 'Náhodně ze všeho' : 'Náhodně ve složce'));
+  const parts = [automat ? 'Automat: zapnut' : 'Automat: vypnut', shuffle ? 'Náhodné pořadí' : 'Za sebou', subs ? 'Titulky: zapnuty' : 'Titulky: vypnuty'];
   subEl.textContent = MOBILE ? (now ? now.where : 'Stiskněte Programy') : parts.join('  ·  ');
   if (MOBILE) refreshMobile(); else refreshDesktop();
 }
@@ -423,15 +419,15 @@ function pickRandom(pool, avoid) {
 }
 function playRandom(scope) {
   const { nodes, trail } = cwd();
-  const pool = noWeb(scope === 'all' ? playableIn(tree, true) : playableIn(nodes, true));
+  const pool = noWeb(playableIn(nodes, true));
   if (!pool.length) { say('Tady není co pustit.', true); return; }
   shuffle = scope;
   const it = pickRandom(pool, now && now.item);
-  startItem(it, scope === 'all' ? m('Všechny složky') : pathTitle(trail), pool, pool.indexOf(it));
+  startItem(it, pathTitle(trail), pool, pool.indexOf(it));
 }
 function playNext() {
   if (!automat || !queue.length) return;
-  const pool = shuffle === 'all' ? noWeb(playableIn(tree, true)) : queue;
+  const pool = queue;
   if (!noWeb(pool).length) return;
   let it, idx, q = pool;
   if (shuffle) { it = pickRandom(noWeb(pool), now && now.item); idx = pool.indexOf(it); }
@@ -597,7 +593,6 @@ const actions = {
   close: () => { if (!powered) wake(); else sleep(); },
   auto: () => { automat = !automat; if (!automat) clearTimeout(timer); refresh(); },
   'rand-here': () => toggleRandom('here'),
-  'rand-all': () => toggleRandom('all'),
   home: goHome,
   back: goBack,
   up: () => select(selected - 1),

@@ -132,11 +132,12 @@ await step('otevření složky: drobečky, Zpět a Domů se rozsvítí/povolí',
 });
 await step('rychlé trojklikání na Pustit dělá totéž co jedno kliknutí', async () => {
   await act('item', 0).click({ clickCount: 3, delay: 40 });
-  assert.match(await status(), /Hraje: Pražské zvony/);
+  assert.match(await status(), /Pražské zvony/);
   assert.equal(await page.locator('#stage iframe').count(), 1);
   assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts allow-same-origin/);
   assert.equal(await lit('pp'), 'green');
-  assert.match(await text('#substatus'), /Program: Domů › Hudba/);
+  assert.equal(await text("#status"), "Pražské zvony");
+  assert.match(await text("#substatus"), /Titulky: vypnuty/);
   assert.match(await text('#substatus'), /Automat: vypnut/);
 });
 await page.screenshot({ path: path.join(shots, '2-hraje-ve-slozce.png') });
@@ -148,7 +149,7 @@ await step('procházení složek video nezastaví', async () => {
   await act('home').click();
   assert.equal(await text('#crumbs'), 'Domů');
   assert.equal(await page.locator('#stage iframe').count(), 1);
-  assert.match(await status(), /Hraje: Pražské zvony/);
+  assert.match(await status(), /Pražské zvony/);
   assert.equal(await page.locator('.item.playing').count(), 0); // hrající položka je v jiné složce
   await wait(); await act('open', 0).click();
   assert.equal(await page.locator('.item.playing').count(), 1);
@@ -158,7 +159,7 @@ await step('rychlé dvojkliknutí na Pauzu = jedna pauza, pak Pokračovat', asyn
   assert.match(await status(), /Pozastaveno/);
   assert.equal(await lit('pp'), 'orange');
   await wait(); await act('pp').click();
-  assert.match(await status(), /Hraje/);
+  assert.equal(await lit("pp"), "green");
 });
 await step('další kliknutí na hrající položku ji vypne', async () => {
   await wait(); await act('item', 0).click();
@@ -186,7 +187,7 @@ await step('Automat: po skončení tónu naváže další pořad ze složky', as
   assert.equal(await lit('auto'), 'green');
   assert.match(await text('#substatus'), /Automat: zapnut/);
   await wait(); await act('item', 1).click();            // au1 (3 s) -> další v pořadí je yt1
-  await page.waitForFunction(() => /Hraje: Pražské zvony/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  await page.waitForFunction(() => /Pražské zvony/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
   await page.screenshot({ path: path.join(shots, '4-automat.png') });
 });
 await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 -> au1)', async () => {
@@ -195,25 +196,16 @@ await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 ->
   await act('open', 0).click(); await wait();
   await act('auto').click(); await wait();
   await act('item', 0).click();                                  // yt1 skončí po 1,5 s
-  await page.waitForFunction(() => /Hraje: Hudba z/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  await page.waitForFunction(() => /Hudba z/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
   ytMode = 'ok'; await act('auto').click(); await wait(); await act('stop').click();
 });
 await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
   await act('shuf').click();
   assert.equal(await lit('shuf'), 'blue');
-  assert.match(await text('#substatus'), /Náhodně v programu/);
-  assert.match(await status(), /Hraje:/);
+  assert.match(await text('#substatus'), /Náhodné pořadí/);
+  assert.doesNotMatch(await status(), /Nic nehraje/);
   await wait(); await act('shuf').click();
   assert.equal(await lit('shuf'), null);
-});
-await step('Náhodně ze všeho: pustí pořad z celé knihovny', async () => {
-  await page.locator('[data-act="rand-all"]').dispatchEvent('click');
-  assert.equal(await page.locator('[data-act="rand-all"]').getAttribute('data-lit'), 'blue');
-  assert.match(await status(), /Hraje:/);
-  assert.match(await text('#substatus'), /Náhodně ze všeho/);
-  await wait(); await page.locator('[data-act="rand-all"]').dispatchEvent('click');
-  assert.equal(await page.locator('[data-act="rand-all"]').getAttribute('data-lit'), null);
-  assert.equal(await lit('auto'), null);
 });
 await step('podsložka: Zpět vrací o úroveň, Domů do kořene', async () => {
   await act('stop').click(); await wait();

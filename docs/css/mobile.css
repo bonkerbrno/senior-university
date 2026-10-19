@@ -3,7 +3,7 @@
 .m-flags, .m-panel, .m-browse, .m-play, .m-bottom, .m-land, .m-only { display: none; }
 body.m .m-only { display: flex; }
 
-body.m { overflow: hidden; --mh: 68px; } /* všechna tlačítka mají stejnou výšku */
+body.m { overflow: hidden; --mh: 58px; } /* všechna tlačítka mají stejnou výšku */
 body.m #app { display: block; height: 100dvh; padding: 6px; }
 body.m #cabinet, body.m #listbox { height: 100%; padding: 10px 9px; gap: 8px; border-width: 4px; border-radius: 24px; }
 body.m .copy { display: none; }
@@ -105,7 +105,7 @@ body.m .btn.nav .lbl { font-size: 16px; }
 /* zvýrazněný panel: Vypnout, Pustit, Pozastavit, Ukončit */
 .m-panel { padding: 10px 10px 16px; border-radius: 22px; background: linear-gradient(#120804, #2a1408); border: 3px solid var(--brass);
   box-shadow: inset 0 0 18px #000c, 0 0 0 3px #0008, 0 0 18px 2px #ffb52e44; }
-.m-panel { --mh: 88px; } /* panel hlavního ovládání je o 30 % vyšší */
+.m-panel { --mh: 76px; } /* panel hlavního ovládání je o 30 % vyšší */
 .m-panel .m-row { gap: 10px; grid-template-columns: repeat(3, 1fr); }
 body.m[data-screen="play"] #cabinet { gap: 14px; } /* větší mezery mezi řadami */
 body.m[data-power="off"] .m-panel { border-color: #7a6a45; box-shadow: inset 0 0 18px #000c; }
@@ -141,7 +141,7 @@ body.m .status { font-size: 17px; }
 
 /* na šířku: video, dva řádky a jedna řada tlačítek: Vypnout, Pustit, Pozastavit, Ukončit, Celá obrazovka, Titulky, Programy */
 @media (orientation: landscape) and (max-height: 560px) {
-  body.m { --mh: 80px; }
+  body.m { --mh: 64px; }
   body.m #cabinet { padding: 6px 10px; gap: 6px; }
   body.m[data-screen="play"] .sign, body.m[data-screen="play"] .m-flags, body.m[data-screen="play"] .m-panel,
   body.m[data-screen="play"] .m-browse, body.m[data-screen="play"] .m-play, body.m[data-screen="play"] .m-bottom { display: none; }
