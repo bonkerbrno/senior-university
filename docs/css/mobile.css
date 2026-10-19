@@ -72,7 +72,7 @@ body.m .item p { font-size: 14px; margin-bottom: 8px; }
 body.m .item .badge { font-size: 12px; padding: 1px 7px; }
 body.m .item .btn { font-size: 15px; padding-top: 14px; flex-direction: row; }
 body.m .navrow { display: flex; justify-content: center; gap: 14px; }
-body.m .btn.nav { flex: 1 1 0; min-width: 0; font-size: 17px; flex-direction: row; padding-top: 14px; flex: none; }
+body.m .btn.nav { flex: 1 1 0; min-width: 0; font-size: 17px; flex-direction: row; padding-top: 14px; }
 body.m .btn.nav .ico { width: 22px; height: 22px; }
 body.m .btn.nav { background: linear-gradient(#fff3b0, #ffd34d); color: #000; box-shadow: 0 6px 0 #5a3d0e, 0 9px 9px #000b, inset 0 2px 0 #fffb, 0 0 14px 3px var(--green); }
 body.m .btn.nav .lamp { background: var(--green); box-shadow: 0 0 10px 3px var(--green); }
@@ -105,7 +105,9 @@ body.m .btn.nav .lbl { font-size: 16px; }
 /* zvýrazněný panel: Vypnout, Pustit, Pozastavit, Ukončit */
 .m-panel { padding: 10px 10px 16px; border-radius: 22px; background: linear-gradient(#120804, #2a1408); border: 3px solid var(--brass);
   box-shadow: inset 0 0 18px #000c, 0 0 0 3px #0008, 0 0 18px 2px #ffb52e44; }
-.m-panel .m-row { gap: 8px; }
+.m-panel { --mh: 88px; } /* panel hlavního ovládání je o 30 % vyšší */
+.m-panel .m-row { gap: 10px; grid-template-columns: repeat(3, 1fr); }
+body.m[data-screen="play"] #cabinet { gap: 14px; } /* větší mezery mezi řadami */
 body.m[data-power="off"] .m-panel { border-color: #7a6a45; box-shadow: inset 0 0 18px #000c; }
 
 /* strom programů */
@@ -139,20 +141,21 @@ body.m .status { font-size: 17px; }
 
 /* na šířku: video, dva řádky a jedna řada tlačítek: Vypnout, Pustit, Pozastavit, Ukončit, Celá obrazovka, Titulky, Programy */
 @media (orientation: landscape) and (max-height: 560px) {
-  body.m { --mh: 62px; }
+  body.m { --mh: 80px; }
   body.m #cabinet { padding: 6px 10px; gap: 6px; }
   body.m[data-screen="play"] .sign, body.m[data-screen="play"] .m-flags, body.m[data-screen="play"] .m-panel,
   body.m[data-screen="play"] .m-browse, body.m[data-screen="play"] .m-play, body.m[data-screen="play"] .m-bottom { display: none; }
   body.m[data-screen="play"] .m-land { display: flex; gap: 8px; margin-top: auto; }
   .m-land .btn { flex: 1 1 0; min-width: 0; }
-  .m-land .btn.wide { flex: 2.2 1 0; flex-direction: row; gap: 8px; }
+  body.m[data-screen="play"] .infobar { display: none; }
+  .m-land .btn.wide { flex: 2 1 0; flex-direction: row; gap: 8px; }
   body.m #screen-wrap { flex: 1 1 0; min-height: 0; aspect-ratio: 16 / 9; align-self: center; max-width: 100%; border-width: 5px; }
   body.m .infobar { padding: 3px 8px; }
   body.m .status { font-size: 15px; } body.m .substatus { font-size: 12px; min-height: 0; }
   body.m #listbox { padding: 6px 10px; gap: 6px; }
   body.m #listbox .marquee { font-size: 18px; }
   body.m .trow { min-height: 44px; font-size: 16px; padding: 4px 10px; }
-  body.m .btn.nav { flex-direction: row; padding-top: 12px; }
+  body.m .btn.nav { flex-direction: row; padding-top: 12px; flex: 0 0 150px; }
 }
 body.m[data-power="off"] .m-land .btn { pointer-events: none; }
 body.m[data-power="off"] .m-land .btn.pwr { pointer-events: auto; }

@@ -282,6 +282,8 @@ function refreshMobile() {
   lit('full', 'blue');
   document.querySelectorAll('[data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   lit('subs', subs ? 'green' : null);
+  lit('pp', player.state === 'playing' ? 'green' : player.state === 'paused' ? 'orange' : null);
+  document.querySelectorAll('[data-act="pp"]').forEach((b) => { const pl = player.state === 'playing'; b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
   const target = now ? now.item : null;
   lit('fav', screen === 'play' && target && favs.has(target.id) ? 'red' : null);
   document.querySelectorAll('.fs-bar [data-act="channels"] .lbl').forEach((l) => { l.textContent = 'Seznam programů'; });
@@ -576,6 +578,8 @@ const actions = {
   subs: toggleSubs,
   shuf: toggleShuffle,
   play: playSelected,
+  pp: () => { if (player.state === 'playing') player.pause(); else playSelected(); },
+  homeplay: () => { expanded.clear(); openOrder = []; showList(); render(); listEl.scrollTop = 0; },
   pause: () => { if (player.state === 'paused') player.resume(); else player.pause(); },
   stop: () => { clearTimeout(timer); player.stop(); closeExternal(); },
   full: toggleFullscreen,
