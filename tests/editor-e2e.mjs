@@ -28,7 +28,7 @@ await page.route('https://api.github.com/**', async (route) => {
     return route.fulfill({ json: { sha: 'sha-' + name, content: Buffer.from(body).toString('base64') } });
   }
   puts[name] = JSON.parse(Buffer.from(JSON.parse(req.postData()).content, 'base64').toString());
-  assert.equal(JSON.parse(req.postData()).sha, 'sha-' + name);
+  assert.match(JSON.parse(req.postData()).sha, /^(sha|new)-/);
   route.fulfill({ json: { content: { sha: 'new-' + name } } });
 });
 await page.goto(base);
@@ -64,16 +64,38 @@ await page.locator('.node', { hasText: 'Hudba' }).first().click();
 const idx = await page.evaluate(() => [...document.querySelectorAll('#items li')].findIndex((l) => l.querySelector('input.t') && l.querySelector('input.t').value === 'Skryté'));
 const row = page.locator('#items li').nth(idx);
 await row.locator('.sw').uncheck();
-assert.ok(await page.locator('.save-btn').count() >= 2, 'tlačítko Uložit je nahoře i v okně přidání');
+assert.ok(await page.locator('.save-btn').count() >= 2, 'tlačítko Odeslat je nahoře i v okně přidání');
 await page.click('#save');
-await page.waitForFunction(() => /Uloženo/.test(document.querySelector('#msg').textContent));
-assert.ok(await page.evaluate(() => [...document.querySelectorAll('.save-msg')].every((e) => /Uloženo/.test(e.textContent))), 'výsledek je vidět u každého tlačítka');
+await page.waitForFunction(() => /Odesláno/.test(document.querySelector('#msg').textContent));
+assert.ok(await page.evaluate(() => [...document.querySelectorAll('.save-msg')].every((e) => /Odesláno/.test(e.textContent))), 'výsledek je vidět u každého tlačítka');
 assert.equal(puts['library.json'].items.length, 5);
 const f = puts['feed.json'].items;
 assert.deepEqual(f.map((i) => i.title), ['Volné', 'Hudba']);
 assert.equal(f[1].kind, 'folder');
 assert.deepEqual(f[1].items.map((i) => i.title), ['Rock']);          // „Skryté“ chybí, Rock je podsložka
 assert.equal(f[1].items[0].items[0].url, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+// tužka: přejmenování programu ve stromu, názvu a popisu odkazu; pole je napřed jen ke čtení
+const rockNode = page.locator('.node', { hasText: 'Rock' }).first();
+await rockNode.hover(); await rockNode.locator('.pen').click();
+await page.keyboard.type('Metal'); await page.keyboard.press('Enter');
+assert.ok((await page.locator('.node .nm').allTextContents()).includes('Metal'), 'program se ve stromu přejmenoval');
+await page.locator('.node', { hasText: 'Domů' }).first().click();
+const rowOf = async (title) => page.locator('#items li').nth(await page.evaluate((t) => [...document.querySelectorAll('#items li')].findIndex((l) => l.querySelector('input.t') && l.querySelector('input.t').value === t), title));
+const volne = await rowOf('Volné');
+assert.equal(await volne.locator('input.t').getAttribute('readonly'), '', 'název je napřed jen ke čtení');
+await volne.locator('.pen').first().click();
+await page.keyboard.type('Volné nové'); await page.keyboard.press('Enter');
+await (await rowOf('Volné nové')).locator('.pen').nth(1).click();
+await page.keyboard.type('Nový popis'); await page.keyboard.press('Enter');
+await page.click('#save');
+await page.waitForFunction(() => /Odesláno/.test(document.querySelector('#msg').textContent));
+const feed2 = puts['feed.json'].items;
+assert.ok(feed2.some((i) => i.title === 'Volné nové' && i.note === 'Nový popis'), 'upravený název a popis jdou do přehrávače');
+assert.ok(JSON.stringify(feed2).includes('"Metal"') && !JSON.stringify(feed2).includes('"Rock"'), 'přejmenovaný program jde do přehrávače');
+// Esc změnu vrátí
+const hudba = await rowOf('Hudba');
+await hudba.locator('.pen').first().click(); await page.keyboard.type('Zrušeno'); await page.keyboard.press('Escape');
+assert.equal(await hudba.locator('input.t').inputValue(), 'Hudba', 'Esc vrátí původní název');
 await page.click('[data-open=link]');
 await page.fill('#n-url', 'javascript:alert(1)'); await page.fill('#n-title', 'x'); await page.click('#add');
 assert.match(await page.innerText('#msg'), /platný/);
