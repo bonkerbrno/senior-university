@@ -1,11 +1,11 @@
 /* Editor: moderní vzhled s přepínatelnými barevnými kombinacemi (Nastavení → Vzhled editoru).
    Rozvržení jako Průzkumník: programy | obsah | náhled. Na 1366×768 se stránka neposouvá, posouvají se jen panely.
    Barvy tlačítek: modrá = změní se něco, zelená = zapnuto, oranžová = pozor, červená = vypnuto. */
-:root, :root[data-theme="noc"] {
+:root[data-theme="noc"] {
   --bg:#0b1220; --surface:#131c2e; --surface-2:#1a2539; --line:#2a3750; --text:#e6edf7; --muted:#93a4bf; --accent:#7cc4ff; --field:#0f1828;
   --blue:#4c9aff; --blue-2:#2f7de1; --on-blue:#fff; --green:#22c55e; --orange:#fb9a1e; --red:#ef4444;
   --sel-bg:#1f3a63; --sel-fg:#fff; --tip-bg:#e6edf7; --tip-fg:#0b1220; --hdr:#101a2c; --sw-off:#4b5870; --shadow:#0008; color-scheme: dark; }
-:root[data-theme="svetla"] {
+:root, :root[data-theme="svetla"] {
   --bg:#eef1f7; --surface:#ffffff; --surface-2:#f6f8fc; --line:#d6dce8; --text:#1b2438; --muted:#66728a; --accent:#4f46e5; --field:#ffffff;
   --blue:#2f6df6; --blue-2:#1f56d8; --on-blue:#fff; --green:#16a34a; --orange:#d97706; --red:#dc2626;
   --sel-bg:#e3e8ff; --sel-fg:#2a2f9e; --tip-bg:#1b2438; --tip-fg:#f6f8fc; --hdr:#ffffff; --sw-off:#c3cada; --shadow:#1b24382e; color-scheme: light; }

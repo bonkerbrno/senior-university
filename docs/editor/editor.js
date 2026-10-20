@@ -15,8 +15,8 @@ function saySave(t, cls = '') { say(t, cls); document.querySelectorAll('.save-ms
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* nic */ } }
 
-const THEMES = ['noc', 'svetla', 'tyrkys'];
-function setTheme(t) { const v = THEMES.includes(t) ? t : 'noc'; document.documentElement.dataset.theme = v; $('#theme').value = v; }
+const THEMES = ['svetla', 'noc', 'tyrkys'];
+function setTheme(t) { const v = THEMES.includes(t) ? t : 'svetla'; document.documentElement.dataset.theme = v; $('#theme').value = v; }
 setTheme(lsGet('ed.theme'));
 $('#theme').addEventListener('change', () => { setTheme($('#theme').value); lsSet('ed.theme', $('#theme').value); });
 $('#repo').value = lsGet('ed.repo') || $('#repo').value;
