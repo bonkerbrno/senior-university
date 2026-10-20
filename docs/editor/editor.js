@@ -127,6 +127,24 @@ function pencil() {
   const s = document.createElementNS(NS, 'svg'), p = document.createElementNS(NS, 'path');
   s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true'); p.setAttribute('d', PENCIL); s.append(p); return s;
 }
+const TRASH = 'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z';
+function binBtn(tip) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'pen bin'; b.dataset.tip = tip; b.dataset.tipLeft = ''; b.setAttribute('aria-label', tip);
+  const s = document.createElementNS(NS, 'svg'), p = document.createElementNS(NS, 'path');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true'); p.setAttribute('d', TRASH); s.append(p); b.append(s);
+  b.addEventListener('mousedown', (ev) => ev.preventDefault()); return b;
+}
+// smaže program i se vším, co je v něm (podprogramy i odkazy); nejdřív se zeptá
+function deleteProgram(f) {
+  const gone = new Set([f.id]);
+  for (let grew = true; grew;) { grew = false; lib.forEach((x) => { if (!gone.has(x.id) && gone.has(x.parent)) { gone.add(x.id); grew = true; } }); }
+  const links = lib.filter((x) => gone.has(x.id) && x.kind !== 'folder').length, subs = gone.size - 1 - links;
+  const what = links || subs ? ' i s obsahem (odkazů: ' + links + ', podprogramů: ' + subs + ')' : '';
+  if (!confirm('Smazat program „' + f.title + '“' + what + '?\nDo přehrávače se změna dostane až tlačítkem „Odeslat do přehrávače“.')) return;
+  for (let i = lib.length - 1; i >= 0; i--) if (gone.has(lib[i].id)) lib.splice(i, 1);
+  if (gone.has(cur)) cur = parentOf(f);
+  setDirty(true); render();
+}
 function penBtn(tip) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pen'; b.dataset.tip = tip; b.dataset.tipLeft = ''; b.setAttribute('aria-label', tip); b.append(pencil()); b.addEventListener('mousedown', (ev) => ev.preventDefault()); return b; }
 
 // Pole je napřed jen ke čtení; tužka ho odemkne. Enter nebo opuštění pole změnu přijme, Esc ji vrátí.
@@ -189,7 +207,9 @@ function renderTree() {
         inp.addEventListener('blur', () => end(true));
         nm.replaceWith(inp); inp.focus(); inp.select();
       });
-      d.append(pen);
+      const bin = binBtn('Smaže program i s obsahem.');
+      bin.addEventListener('click', (ev) => { ev.stopPropagation(); deleteProgram(f); });
+      d.append(pen, bin);
     }
     d.dataset.tip = n ? 'Otevře program ' + title + '.' : 'Prázdný program. Přidejte do něj odkazy.'; d.dataset.tipRight = '';
     const open = () => { cur = id; query = ''; $('#q').value = ''; render(); };
