@@ -178,7 +178,7 @@ function refresh() {
     if (color) b.dataset.lit = color; else delete b.dataset.lit;
   });
   lit('pause', st === 'paused' ? 'orange' : null);
-  lit('full', document.fullscreenElement ? 'blue' : null);
+  lit('full', null);
   lit('auto', automat ? 'green' : null);
   lit('news', newCount(tree) ? 'green' : null);
   document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !MOBILE && !path.length; });
@@ -189,12 +189,18 @@ function refresh() {
   if (MOBILE) refreshMobile(); else refreshDesktop();
   applyHints();
 }
-// Modrá = návod, co lze teď stisknout: svítí každé použitelné tlačítko, které nesvítí zeleně (zapnuto) ani oranžově (pozastaveno).
-const HINT_SEL = '.btn[data-act]:not([data-act="close"]):not([data-act="item"]):not([data-act="open"])';
+// Modrá = návod jen mimo domovskou obrazovku: svítí Zpět a Domů, když vedou o krok zpátky, a Zmenšit na celé obrazovce.
+const HINT_SEL = '.btn[data-act="back"],.btn[data-act="home"],.btn[data-act="homeplay"],.btn[data-act="full"]';
+function hintable(b) {
+  const act = b.dataset.act;
+  const fs = !!document.fullscreenElement;
+  if (act === 'full' || act === 'homeplay') return fs;
+  return path.length > 0 || (MOBILE && screen === 'list' && !splitView());
+}
 function applyHints() {
+  document.querySelectorAll('.btn[data-hint]').forEach((b) => { delete b.dataset.hint; if (b.dataset.lit === 'blue') delete b.dataset.lit; });
   document.querySelectorAll(HINT_SEL).forEach((b) => {
-    if (b.dataset.hint) { delete b.dataset.hint; if (b.dataset.lit === 'blue') delete b.dataset.lit; }
-    if (powered && !b.disabled && !b.dataset.lit) { b.dataset.lit = 'blue'; b.dataset.hint = '1'; }
+    if (powered && !b.disabled && !b.dataset.lit && hintable(b)) { b.dataset.lit = 'blue'; b.dataset.hint = '1'; }
   });
 }
 function refreshDesktop() {
@@ -203,9 +209,8 @@ function refreshDesktop() {
   lit('pp', pl ? 'green' : player.state === 'paused' ? 'orange' : null);
   document.querySelectorAll('[data-act="pp"]').forEach((b) => { b.querySelector('.lbl').textContent = pl ? 'Pozastavit' : 'Pustit'; b.querySelector('use').setAttribute('href', pl ? '#i-pause' : '#i-play'); });
   document.querySelectorAll('#d-row [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; });
-  document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { b.dataset.lit = 'blue'; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
+  document.querySelectorAll('#fs-bar [data-act="subs"]').forEach((b) => { if (subs) b.dataset.lit = 'green'; else delete b.dataset.lit; b.querySelector('.lbl').textContent = subs ? 'Vypnout titulky' : 'Zapnout titulky'; });
   lit('shuf', shuffle ? 'green' : null);
-  lit('full', 'blue');
   document.querySelectorAll('#d-row [data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   document.querySelectorAll('#d-row [data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
 }
@@ -305,7 +310,6 @@ function refreshMobile() {
   set('shuf', !!shuffle, 'Náhodné pořadí', 'Hraje za sebou');
   const lit = (act, color) => document.querySelectorAll('[data-act="' + act + '"]').forEach((b) => { if (color) b.dataset.lit = color; else delete b.dataset.lit; });
   lit('shuf', shuffle ? 'green' : null);
-  lit('full', 'blue');
   document.querySelectorAll('[data-act="full"] .lbl').forEach((l) => { l.textContent = document.fullscreenElement ? 'Zmenšit' : 'Celá obrazovka'; });
   document.querySelectorAll('[data-act="full"] use').forEach((u) => u.setAttribute('href', document.fullscreenElement ? '#i-mini' : '#i-full'));
   lit('subs', subs ? 'green' : null);
