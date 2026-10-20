@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; frame-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
-<title>Superbox 85 – editor</title>
+<title>Editor knihovny odkazů SUPERBOX 85</title>
 <link rel="stylesheet" href="editor.css">
 </head>
 <body class="locked">
@@ -15,7 +15,7 @@
 <div class="gate" id="gate">
   <div class="gcard">
     <div class="ginfo">
-      <h1><span class="star">★</span> Superbox 85</h1>
+      <h1><span class="star">★</span> Editor knihovny odkazů SUPERBOX 85</h1>
       <p class="lead">Přehrávač s velkými tlačítky pro televizi, rádio, počasí a hudbu. V editoru spravujete, co se v něm zobrazí.</p>
       <h2>Základní informace</h2>
       <ul class="pts">
@@ -44,10 +44,10 @@
 </div>
 
 <header class="top">
-  <h1><span class="star" id="star">★</span> Stanleyho Superbox 85 – editor</h1>
+  <h1><span class="star" id="star">★</span> Editor knihovny odkazů SUPERBOX 85</h1>
   <div class="mode" role="group" aria-label="Přepínač zobrazení">
     <button type="button" aria-pressed="true" data-tip="Úpravy seznamu programů a odkazů.">Editor</button>
-    <a class="modebtn" href="../" id="to-player" data-tip="Otevře skutečný přehrávač, tak jak ho vidí táta.">Přehrávač</a>
+    <a class="modebtn" href="../" id="to-player" data-tip="Otevře skutečný přehrávač.">Přehrávač</a>
   </div>
   <div class="auth">
     <button type="button" disabled data-tip="Přihlášení přijde ve verzi pro více uživatelů." data-tip-left>Přihlášení</button>
@@ -60,12 +60,15 @@
   <button class="btn" type="button" data-open="prog" data-tip="Vytvoří nový program. Uvnitř vybraného programu bude podprogram.">+ Program</button>
   <button class="btn" type="button" data-open="text" data-tip="Vložíte víc odkazů najednou, jeden řádek: název ; popis ; odkaz.">Vložit textem</button>
   <button class="btn" type="button" data-open="xls" data-tip="Tabulka, do které vložíte data z Excelu (Ctrl+V).">Vložit z Excelu</button>
-  <button class="btn" type="button" id="btn-prev" data-tip="Ukáže nebo schová náhled, jak to vidí táta.">Náhled</button>
+  <button class="btn" type="button" id="btn-prev" data-tip="Ukáže nebo schová náhled přehrávače.">Náhled</button>
   <div class="crumbs" id="crumbs" aria-label="Kde jste"></div>
-  <input class="search" id="q" type="search" placeholder="Hledat v programu…" aria-label="Hledat v programu" data-tip="Zúží seznam podle názvu." data-tip-left>
+  <div class="searchbox" data-tip="Zúží seznam podle názvu." data-tip-left>
+    <input class="search" id="q" type="search" placeholder="Hledat v programu…" aria-label="Hledat v programu">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+  </div>
   <span id="dirty" class="state"></span>
-  <button class="btn go save-btn" type="button" id="save" disabled data-tip="Pošle změny tátovi. Rozsvítí se modře, když je co odeslat." data-tip-left>Uložit a odeslat tátovi</button>
-  <button class="btn" type="button" id="gear" data-tip="Přístup k GitHubu a PIN skrytého vstupu." data-tip-left>Nastavení</button>
+  <button class="btn go save-btn" type="button" id="save" disabled data-tip="Pošle změny do přehrávače. Rozsvítí se modře, když je co odeslat." data-tip-left>Odeslat do přehrávače</button>
+  <button class="btn" type="button" id="gear" data-tip="Přístup k GitHubu, PIN skrytého vstupu a vzhled editoru." data-tip-left>Nastavení<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
 </div>
 <div id="msg" role="status" aria-live="polite"></div>
 
@@ -77,15 +80,15 @@
   </section>
 
   <section class="pane" aria-label="Obsah programu">
-    <h2><span id="list-h">Domů</span><span class="legend">Zelený přepínač = táta to vidí</span></h2>
+    <h2><span id="list-h">Domů</span><span class="legend">Zelený přepínač = zobrazí se v přehrávači</span></h2>
     <div class="body"><ul id="items"></ul></div>
     <div class="foot" id="list-foot"></div>
   </section>
 
-  <section class="pane" id="pane-prev" aria-label="Náhled jako táta">
-    <h2>Náhled: tak to vidí táta</h2>
+  <section class="pane" id="pane-prev" aria-label="Náhled přehrávače">
+    <h2>Náhled: Přehrávač</h2>
     <div class="body prevbody"><iframe id="preview" src="../?preview=1" title="Náhled Superboxu" sandbox="allow-scripts allow-same-origin"></iframe></div>
-    <div class="foot">Živě podle přepínačů, ještě před uložením.</div>
+    <div class="foot">Živě podle přepínačů, ještě před odesláním.</div>
   </section>
 </main>
 
@@ -132,14 +135,16 @@
         <label>Přístupový token (fine-grained, jen tento repozitář, Contents: read/write)<input id="token" type="password" autocomplete="off"></label></div>
       <label class="inline"><input id="remember" type="checkbox"> Zapamatovat token v tomto prohlížeči</label>
       <div class="row"><button class="btn" id="load" type="button">Načíst seznam</button></div>
+      <h3>Vzhled editoru</h3>
+      <label>Barevná kombinace<select id="theme"><option value="svetla">Světlá (bílá, fialovomodrá)</option><option value="noc">Půlnoc (tmavá, modrá)</option><option value="tyrkys">Tyrkys (tmavě zelenomodrá)</option></select></label>
       <h3>Zámek skrytého vstupu (PIN)</h3>
-      <p class="hint">Do Superboxu se z tátovy stránky dostanete 5 rychlými kliknutími na první hvězdičku v nápisu, nebo klávesami Ctrl+Alt+Shift+A. PIN je jen pojistka proti nechtěnému otevření. Skutečně chrání až přístupový token k GitHubu, bez kterého nikdo nic neuloží.</p>
+      <p class="hint">Do Superboxu se z přehrávače dostanete 5 rychlými kliknutími na první hvězdičku v nápisu, nebo klávesami Ctrl+Alt+Shift+A. PIN je jen pojistka proti nechtěnému otevření. Skutečně chrání až přístupový token k GitHubu, bez kterého nikdo nic neuloží.</p>
       <div class="grid2"><label>Nový PIN (4 až 8 číslic)<input id="pin-new" inputmode="numeric" maxlength="8" autocomplete="off"></label>
         <div class="row end"><button class="btn" id="pin-set" type="button">Nastavit PIN</button><button class="btn" id="pin-off" type="button">Zrušit PIN</button></div></div>
     </div>
 
     <div class="dsave" id="d-save">
-      <button class="btn go save-btn" type="button" disabled data-tip="Pošle všechny změny tátovi." data-tip-up>Uložit a odeslat tátovi</button>
+      <button class="btn go save-btn" type="button" disabled data-tip="Pošle všechny změny do přehrávače." data-tip-up>Odeslat do přehrávače</button>
       <span class="save-msg"></span>
     </div>
     <div id="dmsg" class="dmsg" role="status"></div>

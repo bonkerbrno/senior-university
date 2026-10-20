@@ -704,7 +704,7 @@ document.addEventListener('keydown', (ev) => {
 if (PREVIEW) {
   window.addEventListener('message', (ev) => {
     if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.type !== 'draft' || typeof ev.data.feed !== 'string') return;
-    try { tree = validateFeed(ev.data.feed).items; if (!folderAt(path)) path = []; render(); say('Náhled: tak to uvidí táta.'); } catch { say('Náhled: seznam je neplatný.', true); }
+    try { tree = validateFeed(ev.data.feed).items; if (!folderAt(path)) path = []; render(); say('Náhled přehrávače.'); } catch { say('Náhled: seznam je neplatný.', true); }
   });
   window.parent.postMessage({ type: 'ready' }, location.origin);
   document.title += ' – náhled';

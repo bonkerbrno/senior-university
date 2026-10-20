@@ -15,12 +15,16 @@ function saySave(t, cls = '') { say(t, cls); document.querySelectorAll('.save-ms
 function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* nic */ } }
 
+const THEMES = ['svetla', 'noc', 'tyrkys'];
+function setTheme(t) { const v = THEMES.includes(t) ? t : 'svetla'; document.documentElement.dataset.theme = v; $('#theme').value = v; }
+setTheme(lsGet('ed.theme'));
+$('#theme').addEventListener('change', () => { setTheme($('#theme').value); lsSet('ed.theme', $('#theme').value); });
 $('#repo').value = lsGet('ed.repo') || $('#repo').value;
 $('#branch').value = lsGet('ed.branch') || $('#branch').value;
 $('#token').value = lsGet('ed.token') || '';
 $('#remember').checked = !!lsGet('ed.token');
 
-function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neodesláno: táta zatím vidí starý seznam' : ''; }
+function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neodesláno' : ''; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 
 /* ---------- GitHub API ---------- */
@@ -49,7 +53,7 @@ async function writeFile(name, text, message) {
   const body = { message, content: b64encode(text), branch: $('#branch').value.trim() };
   if (shas[name]) body.sha = shas[name];
   const r = await api('docs/' + name, { method: 'PUT', body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? 'Seznam se mezitím změnil jinde. Načtěte jej znovu.' : 'Uložení selhalo (kód ' + r.status + ').');
+  if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? 'Seznam se mezitím změnil jinde. Načtěte jej znovu.' : 'Odeslání selhalo (kód ' + r.status + ').');
   shas[name] = (await r.json()).content.sha;
 }
 
@@ -117,6 +121,43 @@ let query = '';
 const closed = new Set(); // sbalené větve stromu
 function parentOf(x) { return x.parent && folders().some((f) => f.id === x.parent) ? x.parent : ''; }
 function countIn(id) { return lib.filter((x) => parentOf(x) === id).reduce((n, x) => n + (x.kind === 'folder' ? countIn(x.id) : 1), 0); }
+const NS = 'http://www.w3.org/2000/svg';
+const PENCIL = 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z';
+function pencil() {
+  const s = document.createElementNS(NS, 'svg'), p = document.createElementNS(NS, 'path');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true'); p.setAttribute('d', PENCIL); s.append(p); return s;
+}
+function penBtn(tip) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pen'; b.dataset.tip = tip; b.dataset.tipLeft = ''; b.setAttribute('aria-label', tip); b.append(pencil()); b.addEventListener('mousedown', (ev) => ev.preventDefault()); return b; }
+
+// Pole je napřed jen ke čtení; tužka ho odemkne. Enter nebo opuštění pole změnu přijme, Esc ji vrátí.
+// Změna se do přehrávače dostane až tlačítkem „Odeslat do přehrávače“.
+function lockedField(inp, pen, { apply, required, done }) {
+  let before = inp.value;
+  inp.readOnly = true;
+  const open = () => { before = inp.value; inp.readOnly = false; inp.classList.add('editing'); pen.classList.add('on'); inp.focus(); inp.select(); };
+  const close = (keep) => {
+    if (inp.readOnly) return;
+    inp.value = inp.value.trim();
+    if (!keep || (required && !inp.value)) { inp.value = before; apply(before, false); }
+    inp.readOnly = true; inp.classList.remove('editing'); pen.classList.remove('on');
+    if (inp.value !== before) done();
+  };
+  pen.addEventListener('click', () => (inp.readOnly ? open() : close(true)));
+  inp.addEventListener('input', () => apply(inp.value, true));
+  inp.addEventListener('keydown', (ev) => {
+    ev.stopPropagation();
+    if (ev.key === 'Enter') { ev.preventDefault(); close(true); } else if (ev.key === 'Escape') { close(false); }
+  });
+  inp.addEventListener('blur', () => close(true));
+}
+// po přejmenování programu se názvy jinde přepíšou na místě (bez překreslení, aby se neztratilo klepnutí)
+function syncTitle(it) {
+  document.querySelectorAll('.node').forEach((d) => { if (d.dataset.p === it.id) { const nm = d.querySelector('.nm'); if (nm) nm.textContent = it.title; d.dataset.tip = countIn(it.id) ? 'Otevře program ' + it.title + '.' : 'Prázdný program. Přidejte do něj odkazy.'; } });
+  document.querySelectorAll('#crumbs button').forEach((b) => { if (b.dataset.p === it.id) b.textContent = it.title; });
+  if (cur === it.id) $('#list-h').textContent = it.title;
+  document.querySelectorAll('#items select').forEach((sel) => fillSelect(sel, sel.dataset.ex || '', sel.value));
+  ['#n-parent', '#t-parent', '#f-parent'].forEach((q) => fillSelect($(q), '', $(q).value));
+}
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
 function render() { renderList(); sendPreview(); }
@@ -129,7 +170,27 @@ function renderTree() {
     const d = el('div', 'node' + (id === cur ? ' sel' : '') + (n ? '' : ' empty')); d.tabIndex = 0; d.dataset.p = id;
     const tw = el('span', 'tw', subs.length ? (closed.has(id) ? '▸' : '▾') : '');
     tw.addEventListener('click', (ev) => { if (!subs.length) return; ev.stopPropagation(); closed.has(id) ? closed.delete(id) : closed.add(id); renderTree(); });
-    d.append(tw, el('span', 'nm', title), el('span', 'cnt', n ? String(n) : ''));
+    const nm = el('span', 'nm', title), f = id ? lib.find((x) => x.id === id) : null;
+    d.append(tw, nm, el('span', 'cnt', n ? String(n) : ''));
+    if (f) {
+      const pen = penBtn('Přejmenuje program.');
+      pen.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const inp = el('input', 'nodeedit'); inp.value = f.title; inp.maxLength = 120; inp.setAttribute('aria-label', 'Název programu');
+        let finished = false;
+        const end = (keep) => {
+          if (finished) return; finished = true;
+          const v = inp.value.trim();
+          if (keep && v && v !== f.title) { f.title = v; setDirty(true); sendPreview(); }
+          nm.textContent = f.title; inp.replaceWith(nm); syncTitle(f);
+        };
+        inp.addEventListener('click', (e) => e.stopPropagation());
+        inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); end(true); } else if (e.key === 'Escape') end(false); });
+        inp.addEventListener('blur', () => end(true));
+        nm.replaceWith(inp); inp.focus(); inp.select();
+      });
+      d.append(pen);
+    }
     d.dataset.tip = n ? 'Otevře program ' + title + '.' : 'Prázdný program. Přidejte do něj odkazy.'; d.dataset.tipRight = '';
     const open = () => { cur = id; query = ''; $('#q').value = ''; render(); };
     d.addEventListener('click', open);
@@ -146,7 +207,7 @@ function crumbs() {
   const box = $('#crumbs'); box.replaceChildren();
   [{ id: '', title: 'Domů' }, ...path].forEach((p, i) => {
     if (i) box.append(el('i', '', '›'));
-    const b = el('button', '', p.title); b.type = 'button'; b.dataset.tip = 'Přejde do programu ' + p.title + '.';
+    const b = el('button', '', p.title); b.type = 'button'; b.dataset.tip = 'Přejde do programu ' + p.title + '.'; b.dataset.p = p.id;
     b.addEventListener('click', () => { cur = p.id; query = ''; $('#q').value = ''; render(); });
     box.append(b);
   });
@@ -167,21 +228,24 @@ function renderList() {
     const folder = it.kind === 'folder';
     const li = document.createElement('li'); li.className = 'item' + (folder ? ' prog' : '') + (it.show ? '' : ' off');
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'sw'; cb.checked = it.show;
-    cb.setAttribute('role', 'switch'); cb.setAttribute('aria-label', 'Ukázat tátovi');
-    cb.dataset.tip = 'Zapnuto = táta to vidí. Vypnuto = skryté.'; cb.dataset.tipRight = '';
+    cb.setAttribute('role', 'switch'); cb.setAttribute('aria-label', 'Zobrazit v přehrávači');
+    cb.dataset.tip = 'Zapnuto = zobrazí se v přehrávači. Vypnuto = skryté.'; cb.dataset.tipRight = '';
     cb.addEventListener('change', () => { it.show = cb.checked; li.classList.toggle('off', !cb.checked); setDirty(true); sendPreview(); });
     const mid = document.createElement('div');
     const t = document.createElement('input'); t.className = 't'; t.value = it.title; t.maxLength = 120; t.setAttribute('aria-label', 'Název');
-    t.addEventListener('input', () => { it.title = t.value; setDirty(true); sendPreview(); });
-    t.addEventListener('change', renderTree);
-    const n = document.createElement('input'); n.className = 'n'; n.value = it.note; n.maxLength = 400; n.placeholder = 'Krátká anotace'; n.setAttribute('aria-label', 'Anotace');
-    n.addEventListener('input', () => { it.note = n.value; setDirty(true); sendPreview(); });
+    const tp = penBtn(folder ? 'Upraví název programu.' : 'Upraví název odkazu.');
+    lockedField(t, tp, { required: true, apply: (v, mark) => { it.title = v; if (mark) setDirty(true); sendPreview(); }, done: () => syncTitle(it) });
+    const n = document.createElement('input'); n.className = 'n'; n.value = it.note; n.maxLength = 400; n.placeholder = 'Bez popisu'; n.setAttribute('aria-label', 'Popis');
+    const np = penBtn('Upraví popis.');
+    lockedField(n, np, { required: false, apply: (v, mark) => { it.note = v; if (mark) setDirty(true); sendPreview(); }, done: () => {} });
+    n.addEventListener('focus', () => { n.placeholder = 'Krátký popis'; }); n.addEventListener('blur', () => { n.placeholder = 'Bez popisu'; });
     const m = el('div', 'meta', folder ? (it.parent ? 'Podprogram' : 'Hlavní tlačítko (program)') + ' · položek: ' + countIn(it.id) : it.url);
-    mid.append(t, n, m);
+    const f1 = el('div', 'fld'), f2 = el('div', 'fld'); f1.append(t, tp); f2.append(n, np);
+    mid.append(f1, f2, m);
     const tools = el('div', 'tools');
     const mk = (label, tip, fn) => { const b = el('button', 'btn mini', label); b.type = 'button'; b.dataset.tip = tip; b.dataset.tipLeft = ''; b.setAttribute('aria-label', tip); b.addEventListener('click', fn); return b; };
     if (folder) tools.append(mk('Otevřít', 'Otevře program a ukáže jeho obsah.', () => { cur = it.id; query = ''; $('#q').value = ''; render(); }));
-    const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent); sel.setAttribute('aria-label', 'Přesunout do programu');
+    const sel = document.createElement('select'); fillSelect(sel, folder ? it.id : '', it.parent); sel.dataset.ex = folder ? it.id : ''; sel.setAttribute('aria-label', 'Přesunout do programu');
     sel.dataset.tip = 'Přesune položku do jiného programu.'; sel.dataset.tipLeft = '';
     sel.addEventListener('change', () => { it.parent = sel.value; setDirty(true); render(); });
     tools.append(sel, mk('↑', 'Posune výš.', () => move(it, -1)), mk('↓', 'Posune níž.', () => move(it, 1)),
@@ -194,7 +258,7 @@ function renderList() {
     ul.append(li);
   });
   const mine = lib.filter((x) => parentOf(x) === cur), links = mine.filter((x) => x.kind !== 'folder');
-  $('#list-foot').textContent = 'Odkazů: ' + links.length + ' · viditelných pro tátu: ' + links.filter((x) => x.show).length + ' · podprogramů: ' + (mine.length - links.length);
+  $('#list-foot').textContent = 'Odkazů: ' + links.length + ' · viditelných v přehrávači: ' + links.filter((x) => x.show).length + ' · podprogramů: ' + (mine.length - links.length);
   $('#tree-foot').textContent = 'Celkem odkazů: ' + lib.filter((x) => x.kind !== 'folder').length;
 }
 $('#q').addEventListener('input', () => { query = $('#q').value; renderList(); });
@@ -233,21 +297,21 @@ if (lsGet('ed.consent') === '1') $('#gate').hidden = true;
 /* ---------- přidání ---------- */
 $('#n-url').addEventListener('input', () => {
   const m = parseMediaUrl($('#n-url').value);
-  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio nebo živé rádio', web: 'webová stránka (počasí)', ext: 'oficiální přehrávač (otevře se v novém okně)' })[m.kind] : 'Tento odkaz tátův přehrávač nepřehraje.';
+  $('#n-info').textContent = !$('#n-url').value ? '' : m ? 'Rozpoznáno: ' + ({ youtube: 'YouTube', video: 'video', audio: 'audio nebo živé rádio', web: 'webová stránka (počasí)', ext: 'oficiální přehrávač (otevře se v novém okně)' })[m.kind] : 'Přehrávač tento odkaz nepřehraje.';
 });
 $('#add').addEventListener('click', () => {
   const it = validateItem({ id: newId(), title: $('#n-title').value, note: $('#n-note').value, url: $('#n-url').value, added: new Date().toISOString().slice(0, 10) });
   if (!it) { say('Vyplňte platný https odkaz (YouTube nebo soubor) a název.', 'err'); return; }
   lib.unshift({ id: it.id, title: it.title, note: it.note, url: it.url, show: true, added: it.added, parent: $('#n-parent').value });
   $('#n-url').value = $('#n-title').value = $('#n-note').value = ''; $('#n-info').textContent = '';
-  setDirty(true); render(); say('Přidáno. Nezapomeňte uložit.', 'ok');
+  setDirty(true); render(); say('Přidáno. Nezapomeňte odeslat do přehrávače.', 'ok');
 });
 
 $('#add-folder').addEventListener('click', () => {
   const f = validateFolder({ id: newId(), title: $('#f-title').value, note: '', added: new Date().toISOString().slice(0, 10) });
   if (!f) { say('Vyplňte název programu.', 'err'); return; }
   lib.unshift({ id: f.id, title: f.title, note: '', kind: 'folder', show: true, added: f.added, parent: $('#f-parent').value });
-  $('#f-title').value = ''; setDirty(true); render(); say('Program přidán. Nezapomeňte uložit.', 'ok');
+  $('#f-title').value = ''; setDirty(true); render(); say('Program přidán. Nezapomeňte odeslat do přehrávače.', 'ok');
 });
 
 /* ---------- hromadné vložení: tabulka Kategorie | Název | Odkaz | Popis ---------- */
@@ -316,7 +380,7 @@ $('#b-add').addEventListener('click', () => {
   if (!bRows().length) bAddRows(6);
   if (ok) { setDirty(true); render(); }
   $('#b-info').textContent = '';
-  say(ok + ' vloženo' + (bad ? '; chybné řádky (červené, zůstaly v tabulce): ' + bad + '. Zkontrolujte název a https odkaz.' : '. Nezapomeňte uložit.'), bad ? 'err' : 'ok');
+  say(ok + ' vloženo' + (bad ? '; chybné řádky (červené, zůstaly v tabulce): ' + bad + '. Zkontrolujte název a https odkaz.' : '. Nezapomeňte odeslat do přehrávače.'), bad ? 'err' : 'ok');
 });
 
 /* ---------- hromadné vložení textem (název ; popis ; odkaz) ---------- */
@@ -336,22 +400,22 @@ $('#t-add').addEventListener('click', () => {
   if (ok) { setDirty(true); render(); }
   $('#t-info').textContent = '';
   if (ok) $('#t-text').value = bad.length ? rows.filter((_, i) => bad.includes(i + 1)).join('\n') : '';
-  say(ok + ' vloženo' + (bad.length ? '; neplatné řádky (zůstaly v poli): ' + bad.join(', ') : '. Nezapomeňte uložit.'), bad.length ? 'err' : 'ok');
+  say(ok + ' vloženo' + (bad.length ? '; neplatné řádky (zůstaly v poli): ' + bad.join(', ') : '. Nezapomeňte odeslat do přehrávače.'), bad.length ? 'err' : 'ok');
 });
 
 /* ---------- uložení ---------- */
 async function saveAll() {
   if (!$('#token').value.trim()) { saySave('Chybí token (Nastavení).', 'err'); return; }
   try {
-    document.querySelectorAll('.save-btn').forEach((x) => { x.disabled = true; }); saySave('Ukládám…');
+    document.querySelectorAll('.save-btn').forEach((x) => { x.disabled = true; }); saySave('Odesílám…');
     const libText = libraryToText(lib);
     const feedText = JSON.stringify(buildFeed(lib), null, 2) + '\n';
-    if (validateFeed(feedText).dropped) throw new Error('Seznam pro tátu obsahuje neplatnou položku.'); // pojistka: do tátova seznamu půjde jen to, co projde jeho kontrolou
+    if (validateFeed(feedText).dropped) throw new Error('Seznam pro přehrávač obsahuje neplatnou položku.'); // pojistka: do přehrávače půjde jen to, co projde jeho kontrolou
     await writeFile('library.json', libText, 'Editor: úprava knihovny');
-    await writeFile('feed.json', feedText, 'Editor: nový seznam pro tátu');
+    await writeFile('feed.json', feedText, 'Editor: nový seznam pro přehrávač');
     setDirty(false);
-    saySave('Uloženo. Táta to uvidí po stisku Novinky (do několika minut).', 'ok');
-  } catch (e) { setDirty(true); saySave(e.message || 'Uložení selhalo.', 'err'); }
+    saySave('Odesláno do přehrávače. Zobrazí se po stisku Novinky (do několika minut).', 'ok');
+  } catch (e) { setDirty(true); saySave(e.message || 'Odeslání selhalo.', 'err'); }
 }
 document.querySelectorAll('.save-btn').forEach((b) => b.addEventListener('click', saveAll));
 
