@@ -90,6 +90,7 @@ main { display: grid; grid-template-columns: minmax(200px, 18%) minmax(0, 1fr) m
 .node .cnt { font-size: 12px; opacity: .75; }
 .node.empty .nm { font-style: italic; opacity: .75; }
 .node .nodeedit { flex: 1; padding: 2px 6px; font: inherit; font-weight: 600; border-color: var(--blue); color: var(--text); }
+.node .pen + .bin { margin-left: -4px; }
 .node .pen { opacity: 0; width: 24px; height: 24px; } .node:hover .pen, .node.sel .pen, .node:focus-within .pen { opacity: 1; }
 
 /* tužka */
