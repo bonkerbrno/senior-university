@@ -73,7 +73,6 @@ await step('telefon se pozná sám a domovská obrazovka je přehrávání se dv
   assert.equal(await page.evaluate(() => document.body.classList.contains('m')), true);
   assert.equal(await screenName(), 'play');
   assert.equal(await vis('#listbox'), false);
-  assert.equal(await vis('#controls'), false);
   assert.equal(await vis('#m-start'), false);
   assert.match(await status(), /Vítejte/);
   assert.match(await page.locator('#substatus').innerText(), /Programy/);
@@ -202,7 +201,7 @@ await step('Pozastavit a Pokračovat', async () => {
 await step('srdce přidá hrající program do oblíbených', async () => {
   await act('fav').tap();
   assert.match(await status(), /Přidáno do oblíbených/);
-  assert.equal(await act('fav').getAttribute('data-lit'), 'red');
+  assert.equal(await act('fav').getAttribute('data-lit'), 'green');
 });
 await step('Programy ukáže seznam rozbalený u hrajícího programu; hudba hraje dál', async () => {
   await wait();

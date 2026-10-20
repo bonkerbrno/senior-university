@@ -9,78 +9,142 @@
 <title>Superbox 85 – editor</title>
 <link rel="stylesheet" href="editor.css">
 </head>
-<body>
-<header>
-  <h1>Stanleyho Superbox 85 – editor</h1>
-  <a href="../" class="back">← Zpět na Superbox</a>
-  <div id="msg" role="status" aria-live="polite"></div>
+<body class="locked">
+
+<!-- úvodní strana: informace a souhlasy, pak teprve editor -->
+<div class="gate" id="gate">
+  <div class="gcard">
+    <div class="ginfo">
+      <h1><span class="star">★</span> Superbox 85</h1>
+      <p class="lead">Přehrávač s velkými tlačítky pro televizi, rádio, počasí a hudbu. V editoru spravujete, co se v něm zobrazí.</p>
+      <h2>Základní informace</h2>
+      <ul class="pts">
+        <li>Přehrávač pouští jen odkazy, které sami přidáte v editoru. Žádný obsah nenabízíme ani neukládáme.</li>
+        <li>Do přehrávače se na cílovém zařízení nikdy nestahuje nový program, jen textový seznam.</li>
+        <li>Úpravy seznamu chrání přístupový token k GitHubu (Nastavení v editoru).</li>
+        <li>Provozovatel: SRG68.</li>
+      </ul>
+    </div>
+    <form class="gform" id="gform" autocomplete="off">
+      <h2>Vstup do editoru</h2>
+      <div class="auth-off">
+        <button type="button" disabled data-tip="Přihlášení přijde ve verzi pro více uživatelů.">Přihlášení</button>
+        <button type="button" disabled data-tip="Registrace přijde ve verzi pro více uživatelů.">Registrace</button>
+      </div>
+      <label class="consent"><input type="checkbox" id="c-terms"><span>Souhlasím s obchodními a provozními podmínkami.
+        <details><summary>Zobrazit podmínky</summary>KONCEPT, ne konečné znění. Služba je přehrávač: odkazy si do něj vkládáte sami a nepřikládáme žádný vybraný obsah. Zakazuje se vkládat nezákonný obsah, například neoprávněné nahrávky. Závadný odkaz lze nahlásit na kontaktním místě a bude odstraněn. Konečné znění musí posoudit právník.</details></span></label>
+      <label class="consent"><input type="checkbox" id="c-gdpr"><span>Souhlasím se zpracováním osobních údajů (GDPR).
+        <details><summary>Co se zpracovává</summary>KONCEPT, ne konečné znění. Správce: SRG68. Zpracovává se jen to, co je nutné pro provoz služby. Vložené služby třetích stran (například YouTube, Windy, ČT) vidí IP adresu a mohou nastavit cookies. Konečné znění zásad musí posoudit právník.</details></span></label>
+      <label class="consent"><input type="checkbox" id="c-liab"><span>Beru na vědomí vzdání se odpovědnosti: za výběr a zákonnost odkazů odpovídám já.
+        <details><summary>Zobrazit znění</summary>KONCEPT, ne konečné znění. Služba nezaručuje, že cizí video nebo rádio bude dostupné, správné nebo vhodné. Konečné znění musí posoudit právník.</details></span></label>
+      <button class="btn go" id="enter" type="submit" disabled data-tip="Rozsvítí se, až zaškrtnete všechny tři souhlasy.">Vstoupit do editoru</button>
+      <p class="hint center">Souhlasy si editor pamatuje jen v tomto prohlížeči. Texty jsou koncepty k posouzení právníkem.<br>© 2026 SRG68</p>
+    </form>
+  </div>
+</div>
+
+<header class="top">
+  <h1><span class="star" id="star">★</span> Stanleyho Superbox 85 – editor</h1>
+  <div class="mode" role="group" aria-label="Přepínač zobrazení">
+    <button type="button" aria-pressed="true" data-tip="Úpravy seznamu programů a odkazů.">Editor</button>
+    <a class="modebtn" href="../" id="to-player" data-tip="Otevře skutečný přehrávač, tak jak ho vidí táta.">Přehrávač</a>
+  </div>
+  <div class="auth">
+    <button type="button" disabled data-tip="Přihlášení přijde ve verzi pro více uživatelů." data-tip-left>Přihlášení</button>
+    <button type="button" disabled data-tip="Registrace přijde ve verzi pro více uživatelů." data-tip-left>Registrace</button>
+  </div>
 </header>
 
-<details id="settings">
-  <summary>Nastavení přístupu k GitHubu</summary>
-  <label>Repozitář <input id="repo" value="bonkerbrno/senior-university" autocomplete="off"></label>
-  <label>Větev <input id="branch" value="main" autocomplete="off"></label>
-  <label>Přístupový token (fine-grained, jen tento repozitář, Contents: read/write)
-    <input id="token" type="password" autocomplete="off"></label>
-  <label class="inline"><input id="remember" type="checkbox"> Zapamatovat token v tomto prohlížeči</label>
-  <button id="load" type="button">Načíst seznam</button>
-</details>
+<div class="cmdbar">
+  <button class="btn" type="button" data-open="link" data-tip="Přidá jeden odkaz (YouTube, rádio, počasí, soubor) do vybraného programu.">+ Odkaz</button>
+  <button class="btn" type="button" data-open="prog" data-tip="Vytvoří nový program. Uvnitř vybraného programu bude podprogram.">+ Program</button>
+  <button class="btn" type="button" data-open="text" data-tip="Vložíte víc odkazů najednou, jeden řádek: název ; popis ; odkaz.">Vložit textem</button>
+  <button class="btn" type="button" data-open="xls" data-tip="Tabulka, do které vložíte data z Excelu (Ctrl+V).">Vložit z Excelu</button>
+  <button class="btn" type="button" id="btn-prev" data-tip="Ukáže nebo schová náhled, jak to vidí táta.">Náhled</button>
+  <div class="crumbs" id="crumbs" aria-label="Kde jste"></div>
+  <input class="search" id="q" type="search" placeholder="Hledat v programu…" aria-label="Hledat v programu" data-tip="Zúží seznam podle názvu." data-tip-left>
+  <span id="dirty" class="state"></span>
+  <button class="btn go save-btn" type="button" id="save" disabled data-tip="Pošle změny tátovi. Rozsvítí se modře, když je co odeslat." data-tip-left>Uložit a odeslat tátovi</button>
+  <button class="btn" type="button" id="gear" data-tip="Přístup k GitHubu a PIN skrytého vstupu." data-tip-left>Nastavení</button>
+</div>
+<div id="msg" role="status" aria-live="polite"></div>
 
-<section class="add">
-  <h2>Přidat odkaz</h2>
-  <label>Odkaz (https://… YouTube, přímý soubor mp4/webm/mp3/m4a/aac/ogg/wav, rozhlas.stream, stránka z embed.windy.com / www.yr.no, nebo ČT24 z ct24.ceskatelevize.cz)<input id="n-url" autocomplete="off"></label>
-  <label>Název<input id="n-title" maxlength="120" autocomplete="off"></label>
-  <label>Program<select id="n-parent"></select></label>
-  <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
-  <div class="row"><button id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
-  <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
-</section>
+<main id="main">
+  <section class="pane" aria-label="Programy">
+    <h2>Programy</h2>
+    <div class="body"><ul class="tree" id="tree"></ul></div>
+    <div class="foot" id="tree-foot"></div>
+  </section>
 
-<section class="add">
-  <h2>Vložit více odkazů textem (název ; popis ; odkaz)</h2>
-  <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor). Popis může být prázdný. Všechny řádky půjdou do vybraného programu.</p>
-  <label>Program<select id="t-parent"></select></label>
-  <textarea id="t-text" rows="5" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
-  <div class="row"><button id="t-add" type="button">Vložit řádky</button><span id="t-info"></span></div>
-  <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
-</section>
+  <section class="pane" aria-label="Obsah programu">
+    <h2><span id="list-h">Domů</span><span class="legend">Zelený přepínač = táta to vidí</span></h2>
+    <div class="body"><ul id="items"></ul></div>
+    <div class="foot" id="list-foot"></div>
+  </section>
 
-<section class="add">
-  <h2>Vložit více odkazů najednou</h2>
-  <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název programu; neexistuje-li, vytvoří se. Podprogram zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
-  <div class="tablewrap"><table id="b-table"><thead><tr><th>Kategorie</th><th>Název</th><th>Odkaz</th><th>Popis (nepovinný)</th></tr></thead><tbody id="b-body"></tbody></table></div>
-  <div class="row"><button id="b-add" type="button">Vložit do seznamu</button><button id="b-more" type="button">Přidat řádky</button><button id="b-clear" type="button">Vyčistit tabulku</button><span id="b-info"></span></div>
-  <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
-</section>
+  <section class="pane" id="pane-prev" aria-label="Náhled jako táta">
+    <h2>Náhled: tak to vidí táta</h2>
+    <div class="body prevbody"><iframe id="preview" src="../?preview=1" title="Náhled Superboxu" sandbox="allow-scripts allow-same-origin"></iframe></div>
+    <div class="foot">Živě podle přepínačů, ještě před uložením.</div>
+  </section>
+</main>
 
-<section class="add">
-  <h2>Přidat program</h2>
-  <label>Název programu<input id="f-title" maxlength="120" autocomplete="off"></label>
-  <label>Nadřazený program<select id="f-parent"></select></label>
-  <div class="row"><button id="add-folder" type="button">Přidat program</button></div>
-  <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
-</section>
+<footer>© 2026 SRG68</footer>
 
-<section>
-  <h2>Seznam <small>(zaškrtnuté ukážou tátovi)</small></h2>
-  <ul id="items"></ul>
-  <div class="row">
-    <button id="save" type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span>
-    <span id="dirty"></span>
+<div class="shade" id="shade" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-label="Přidat do seznamu">
+    <div class="dhead"><h2 id="dtitle">Přidat do seznamu</h2><button class="btn mini" type="button" id="x" data-tip="Zavřít okno." data-tip-left>Zavřít</button></div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button type="button" role="tab" data-tab="link">Jeden odkaz</button>
+      <button type="button" role="tab" data-tab="text">Víc odkazů textem</button>
+      <button type="button" role="tab" data-tab="xls">Tabulka z Excelu</button>
+      <button type="button" role="tab" data-tab="prog">Nový program</button>
+    </div>
+
+    <div class="dbody" id="d-link" hidden>
+      <label>Odkaz (https://… YouTube, přímý soubor mp4/webm/mp3/m4a/aac/ogg/wav, rozhlas.stream, stránka z embed.windy.com / www.yr.no, nebo ČT24 z ct24.ceskatelevize.cz)<input id="n-url" autocomplete="off"></label>
+      <div class="grid2"><label>Název<input id="n-title" maxlength="120" autocomplete="off"></label><label>Program<select id="n-parent"></select></label></div>
+      <label>Krátká anotace<textarea id="n-note" maxlength="400" rows="2"></textarea></label>
+      <div class="row"><button class="btn" id="add" type="button">Přidat do seznamu</button><span id="n-info"></span></div>
+    </div>
+
+    <div class="dbody" id="d-text" hidden>
+      <p class="hint">Každý řádek jedna položka: <code>název ; popis ; odkaz</code> (oddělovač středník nebo tabulátor). Popis může být prázdný. Všechny řádky půjdou do vybraného programu.</p>
+      <label>Program<select id="t-parent"></select></label>
+      <textarea id="t-text" rows="6" placeholder="Pražský hrad ; Procházka v zimě ; https://www.youtube.com/watch?v=..."></textarea>
+      <div class="row"><button class="btn" id="t-add" type="button">Vložit řádky</button><span id="t-info"></span></div>
+    </div>
+
+    <div class="dbody" id="d-xls" hidden>
+      <p class="hint">Vložte do tabulky z Excelu (Ctrl+V do libovolné buňky, vloží se celý blok) nebo pište přímo do buněk. <b>Kategorie</b> je název programu; neexistuje-li, vytvoří se. Podprogram zapište jako <code>Televize / Zprávy</code>. Prázdná kategorie = hlavní seznam. Popis je volitelný.</p>
+      <div class="tablewrap"><table id="b-table"><thead><tr><th>Kategorie</th><th>Název</th><th>Odkaz</th><th>Popis (nepovinný)</th></tr></thead><tbody id="b-body"></tbody></table></div>
+      <div class="row"><button class="btn" id="b-add" type="button">Vložit do seznamu</button><button class="btn" id="b-more" type="button">Přidat řádky</button><button class="btn" id="b-clear" type="button">Vyčistit tabulku</button><span id="b-info"></span></div>
+    </div>
+
+    <div class="dbody" id="d-prog" hidden>
+      <div class="grid2"><label>Název programu<input id="f-title" maxlength="120" autocomplete="off"></label><label>Nadřazený program<select id="f-parent"></select></label></div>
+      <div class="row"><button class="btn" id="add-folder" type="button">Přidat program</button></div>
+    </div>
+
+    <div class="dbody" id="d-gear" hidden>
+      <label>Repozitář <input id="repo" value="bonkerbrno/senior-university" autocomplete="off"></label>
+      <div class="grid2"><label>Větev <input id="branch" value="main" autocomplete="off"></label>
+        <label>Přístupový token (fine-grained, jen tento repozitář, Contents: read/write)<input id="token" type="password" autocomplete="off"></label></div>
+      <label class="inline"><input id="remember" type="checkbox"> Zapamatovat token v tomto prohlížeči</label>
+      <div class="row"><button class="btn" id="load" type="button">Načíst seznam</button></div>
+      <h3>Zámek skrytého vstupu (PIN)</h3>
+      <p class="hint">Do Superboxu se z tátovy stránky dostanete 5 rychlými kliknutími na první hvězdičku v nápisu, nebo klávesami Ctrl+Alt+Shift+A. PIN je jen pojistka proti nechtěnému otevření. Skutečně chrání až přístupový token k GitHubu, bez kterého nikdo nic neuloží.</p>
+      <div class="grid2"><label>Nový PIN (4 až 8 číslic)<input id="pin-new" inputmode="numeric" maxlength="8" autocomplete="off"></label>
+        <div class="row end"><button class="btn" id="pin-set" type="button">Nastavit PIN</button><button class="btn" id="pin-off" type="button">Zrušit PIN</button></div></div>
+    </div>
+
+    <div class="dsave" id="d-save">
+      <button class="btn go save-btn" type="button" disabled data-tip="Pošle všechny změny tátovi." data-tip-up>Uložit a odeslat tátovi</button>
+      <span class="save-msg"></span>
+    </div>
+    <div id="dmsg" class="dmsg" role="status"></div>
   </div>
-</section>
-<section>
-  <h2>Náhled: tak to vidí táta <small>(živě podle zaškrtnutí, ještě před uložením)</small></h2>
-  <iframe id="preview" src="../?preview=1" title="Náhled Superboxu" sandbox="allow-scripts allow-same-origin"></iframe>
-  <div class="row"><button type="button" class="primary save-btn" disabled>Uložit a odeslat tátovi</button><span class="save-msg"></span></div>
-</section>
-
-<details>
-  <summary>Zámek skrytého vstupu (PIN)</summary>
-  <p class="hint">Do Superboxu se z tátovy stránky dostanete 5 rychlými kliknutími na první hvězdičku v nápisu, nebo klávesami Ctrl+Alt+Shift+A. PIN je jen pojistka proti nechtěnému otevření. Skutečně chrání až přístupový token k GitHubu, bez kterého nikdo nic neuloží.</p>
-  <label>Nový PIN (4 až 8 číslic)<input id="pin-new" inputmode="numeric" maxlength="8" autocomplete="off"></label>
-  <div class="row"><button id="pin-set" type="button">Nastavit PIN</button><button id="pin-off" type="button">Zrušit PIN</button></div>
-</details>
+</div>
 <script type="module" src="editor.js"></script>
 </body>
 </html>

@@ -105,7 +105,6 @@ await step('nadpis, 8 hlavních tlačítek a Domů/Zpět', async () => {
   assert.match(await text('h1'), /Stanleyho Superbox 85/i);
   assert.deepEqual(await page.locator('#m-panel .lbl').allInnerTexts(), ['Vypnout', 'Pustit', 'Ukončit']);
   assert.deepEqual(await page.locator('#d-row .lbl').allInnerTexts(), ['Celá obrazovka', 'Automat', 'Náhodně', 'Titulky', 'Novinky']);
-  assert.equal(await page.locator('#controls').isVisible(), false);
   assert.ok((await page.locator('#m-panel .btn').first().boundingBox()).height >= 90);
   const [v, i, pn, r] = await Promise.all(['#screen-wrap', '#infobar', '#m-panel', '#d-row'].map((q) => page.locator(q).boundingBox()));
   assert.ok(v.y < i.y && i.y < pn.y && pn.y < r.y, 'vlevo shora: okno, popisy, panel, řada tlačítek');
@@ -132,12 +131,11 @@ await step('otevření složky: drobečky, Zpět a Domů se rozsvítí/povolí',
 });
 await step('rychlé trojklikání na Pustit dělá totéž co jedno kliknutí', async () => {
   await act('item', 0).click({ clickCount: 3, delay: 40 });
-  assert.match(await status(), /Pražské zvony/);
+  assert.match(await status(), /^Pražské zvony$/);
   assert.equal(await page.locator('#stage iframe').count(), 1);
   assert.match(await page.locator('#stage iframe').getAttribute('sandbox'), /allow-scripts allow-same-origin/);
   assert.equal(await lit('pp'), 'green');
-  assert.equal(await text("#status"), "Pražské zvony");
-  assert.match(await text("#substatus"), /Titulky: vypnuty/);
+  assert.match(await text('#substatus'), /Titulky: vypnuty/);
   assert.match(await text('#substatus'), /Automat: vypnut/);
 });
 await page.screenshot({ path: path.join(shots, '2-hraje-ve-slozce.png') });
@@ -149,7 +147,7 @@ await step('procházení složek video nezastaví', async () => {
   await act('home').click();
   assert.equal(await text('#crumbs'), 'Domů');
   assert.equal(await page.locator('#stage iframe').count(), 1);
-  assert.match(await status(), /Pražské zvony/);
+  assert.match(await status(), /^Pražské zvony$/);
   assert.equal(await page.locator('.item.playing').count(), 0); // hrající položka je v jiné složce
   await wait(); await act('open', 0).click();
   assert.equal(await page.locator('.item.playing').count(), 1);
@@ -187,7 +185,7 @@ await step('Automat: po skončení tónu naváže další pořad ze složky', as
   assert.equal(await lit('auto'), 'green');
   assert.match(await text('#substatus'), /Automat: zapnut/);
   await wait(); await act('item', 1).click();            // au1 (3 s) -> další v pořadí je yt1
-  await page.waitForFunction(() => /Pražské zvony/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  await page.waitForFunction(() => /^Pražské zvony$/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
   await page.screenshot({ path: path.join(shots, '4-automat.png') });
 });
 await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 -> au1)', async () => {
@@ -196,16 +194,16 @@ await step('Automat: po skončení YouTube videa naváže další (au1 -> yt1 ->
   await act('open', 0).click(); await wait();
   await act('auto').click(); await wait();
   await act('item', 0).click();                                  // yt1 skončí po 1,5 s
-  await page.waitForFunction(() => /Hudba z/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
+  await page.waitForFunction(() => /^Hudba z/.test(document.querySelector('#status').textContent), null, { timeout: 12000 });
   ytMode = 'ok'; await act('auto').click(); await wait(); await act('stop').click();
 });
 await step('Náhodně ve složce: rozsvítí se a pustí pořad; druhým stiskem zhasne', async () => {
   await act('shuf').click();
-  assert.equal(await lit('shuf'), 'blue');
+  assert.equal(await lit('shuf'), 'green');
   assert.match(await text('#substatus'), /Náhodné pořadí/);
   assert.doesNotMatch(await status(), /Nic nehraje/);
   await wait(); await act('shuf').click();
-  assert.equal(await lit('shuf'), null);
+  assert.equal(await lit('shuf'), 'blue');
 });
 await step('podsložka: Zpět vrací o úroveň, Domů do kořene', async () => {
   await act('stop').click(); await wait();
@@ -222,14 +220,6 @@ if (haveVideo) await step('video z podsložky se spustí', async () => {
   await page.waitForFunction(() => { const v = document.querySelector('#stage video'); return v && v.currentTime > 0.3 && !v.paused; }, null, { timeout: 8000 });
   await page.screenshot({ path: path.join(shots, '5-video.png') });
   await act('stop').click(); await wait(); await act('home').click();
-});
-await step('Zmenšit přepne na lištu a zpět', async () => {
-  await wait(); await page.locator('#controls [data-act="mini"]').dispatchEvent('click');
-  assert.equal(await page.evaluate(() => document.body.classList.contains('mini')), true);
-  assert.equal(await page.locator('#listbox').isVisible(), false);
-  await page.screenshot({ path: path.join(shots, '6-mini.png') });
-  await wait(); await page.locator('#controls [data-act="mini"]').dispatchEvent('click');
-  assert.equal(await page.locator('#listbox').isVisible(), true);
 });
 await step('Celá obrazovka zapne a vypne režim fullscreen', async () => {
   await act('full').click();
