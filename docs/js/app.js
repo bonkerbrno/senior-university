@@ -96,7 +96,7 @@ function pathTitle(trail) { return ['Domů', ...trail.map((f) => f.title)].join(
 
 const player = createPlayer(stage, { idleText: m('Vyberte pořad a stiskněte Pustit') }, (state, detail) => {
   const it = now && now.item;
-  if (state === 'playing') { errCount = 0; say('▶ Hraje: ' + it.title); }
+  if (state === 'playing') { errCount = 0; say(MOBILE ? '▶ Hraje: ' + it.title : it.title); }
   else if (state === 'paused') say('⏸ Pozastaveno: ' + it.title);
   else if (state === 'idle') { say(m('Nic nehraje. Vyberte pořad.')); now = null; }
   else if (state === 'ended') { say('Hotovo: ' + (it ? it.title : '')); if (automat) schedule(1200); }
@@ -184,10 +184,7 @@ function refresh() {
   document.querySelectorAll('[data-act="back"],[data-act="home"]').forEach((b) => { b.disabled = !MOBILE && !path.length; });
   document.querySelectorAll('[data-act="pause"] .lbl').forEach((l) => { l.textContent = st === 'paused' ? 'Pokračovat' : (MOBILE ? 'Pozastavit' : 'Pauza'); });
   document.querySelectorAll('[data-act="pause"],[data-act="stop"]').forEach((b) => { b.disabled = !active; });
-  const parts = [];
-  if (now) parts.push(m('Složka: ') + now.where);
-  parts.push(automat ? 'Automat: zapnut' : 'Automat: vypnut');
-  if (shuffle) parts.push(m('Náhodně ve složce'));
+  const parts = [automat ? 'Automat: zapnut' : 'Automat: vypnut', shuffle ? 'Náhodné pořadí' : 'Za sebou', subs ? 'Titulky: zapnuty' : 'Titulky: vypnuty'];
   subEl.textContent = MOBILE ? (now ? now.where : (splitView() ? 'Vyberte program vpravo' : 'Stiskněte Programy')) : parts.join('  ·  ');
   if (MOBILE) refreshMobile(); else refreshDesktop();
   applyHints();
