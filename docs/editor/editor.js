@@ -1,7 +1,8 @@
-import { validateItem, validateFolder, parseMediaUrl, validateFeed } from '../js/validate.js';
+import { validateItem, validateFolder, parseMediaUrl, validateFeed, cleanText, LIMITS } from '../js/validate.js';
 import { parseTable, categoryPath, cleanUrl } from '../js/bulk.js';
 import { makeAdminFile, PIN_RE } from '../js/admin.js';
 import { parseLibrary, libraryToText, buildFeed, canParent } from '../js/library.js';
+import { libraryToCsv, decodeCsv, fileToRows, CSV_MAX_BYTES } from '../js/csv.js';
 
 const $ = (s) => document.querySelector(s);
 const msg = $('#msg');
@@ -25,7 +26,8 @@ $('#token').value = lsGet('ed.token') || '';
 $('#remember').checked = !!lsGet('ed.token');
 
 function setDirty(d) { dirty = d; document.querySelectorAll('.save-btn').forEach((b) => { b.disabled = !d; }); $('#dirty').textContent = d ? 'Neodesláno' : ''; }
-function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+let idSeq = 0; // počítadlo: hromadné vložení vytvoří desítky id ve stejné milisekundě
+function newId() { return 'p' + Date.now().toString(36) + (idSeq++ % 1296).toString(36) + Math.random().toString(36).slice(2, 5); }
 
 /* ---------- GitHub API ---------- */
 function api(path, opts = {}) {
@@ -174,7 +176,7 @@ function syncTitle(it) {
   document.querySelectorAll('#crumbs button').forEach((b) => { if (b.dataset.p === it.id) b.textContent = it.title; });
   if (cur === it.id) $('#list-h').textContent = it.title;
   document.querySelectorAll('#items select').forEach((sel) => fillSelect(sel, sel.dataset.ex || '', sel.value));
-  ['#n-parent', '#t-parent', '#f-parent'].forEach((q) => fillSelect($(q), '', $(q).value));
+  ['#n-parent', '#t-parent', '#f-parent', '#c-parent'].forEach((q) => fillSelect($(q), '', $(q).value));
 }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
@@ -235,7 +237,7 @@ function crumbs() {
 function renderList() {
   if (cur && !lib.some((x) => x.id === cur && x.kind === 'folder')) cur = '';
   renderTree(); crumbs();
-  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#t-parent'), '', $('#t-parent').value);
+  fillSelect($('#n-parent'), '', $('#n-parent').value); fillSelect($('#f-parent'), '', $('#f-parent').value); fillSelect($('#t-parent'), '', $('#t-parent').value); fillSelect($('#c-parent'), '', $('#c-parent').value);
   const here = lib.find((x) => x.id === cur);
   $('#list-h').textContent = here ? here.title : 'Domů';
   const ul = $('#items'); ul.replaceChildren();
@@ -287,11 +289,11 @@ $('#q').addEventListener('input', () => { query = $('#q').value; renderList(); }
 function openDlg(tab) {
   $('#shade').hidden = false;
   document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-  ['link', 'text', 'xls', 'prog', 'gear'].forEach((t) => { $('#d-' + t).hidden = t !== tab; });
+  ['link', 'text', 'xls', 'csv', 'prog', 'gear'].forEach((t) => { $('#d-' + t).hidden = t !== tab; });
   const gear = tab === 'gear';
   $('#tabs').hidden = gear; $('#d-save').hidden = gear; $('#dtitle').textContent = gear ? 'Nastavení' : 'Přidat do seznamu';
   $('#dmsg').textContent = '';
-  ['#n-parent', '#t-parent', '#f-parent'].forEach((s) => fillSelect($(s), '', cur));
+  ['#n-parent', '#t-parent', '#f-parent', '#c-parent'].forEach((s) => fillSelect($(s), '', cur));
   const first = $('#d-' + tab).querySelector('input,textarea'); if (first) first.focus();
 }
 function closeDlg() { $('#shade').hidden = true; }
@@ -369,9 +371,9 @@ bbody.addEventListener('paste', (ev) => {
 $('#b-more').addEventListener('click', () => bAddRows(5));
 $('#b-clear').addEventListener('click', () => { bbody.replaceChildren(); bAddRows(6); $('#b-info').textContent = ''; });
 
-// najde (nebo vytvoří) složku podle cesty názvů; vrátí id nebo '' pro hlavní seznam
-function folderForPath(names) {
-  let parent = '';
+// najde (nebo vytvoří) složku podle cesty názvů od programu `start`; vrátí id nebo '' pro hlavní seznam
+function folderForPath(names, start = '') {
+  let parent = start;
   for (const name of names) {
     let f = lib.find((x) => x.kind === 'folder' && x.parent === parent && x.title.trim().toLowerCase() === name.toLowerCase());
     if (!f) {
@@ -401,6 +403,61 @@ $('#b-add').addEventListener('click', () => {
   if (ok) { setDirty(true); render(); }
   $('#b-info').textContent = '';
   say(ok + ' vloženo' + (bad ? '; chybné řádky (červené, zůstaly v tabulce): ' + bad + '. Zkontrolujte název a https odkaz.' : '. Nezapomeňte odeslat do přehrávače.'), bad ? 'err' : 'ok');
+});
+
+/* ---------- soubor CSV: načtení z jiného Superboxu a stažení ---------- */
+let csvRows = null;
+$('#c-file').addEventListener('change', async () => {
+  csvRows = null; $('#c-add').disabled = true;
+  const file = $('#c-file').files[0];
+  if (!file) { $('#c-info').textContent = ''; return; }
+  try {
+    if (file.size > CSV_MAX_BYTES) throw new Error('Soubor je příliš velký (nejvýš 1 MB).');
+    const rows = fileToRows(decodeCsv(await file.arrayBuffer()));
+    const items = rows.filter((r) => r.title || r.url).length;
+    if (!rows.length) throw new Error('V souboru nejsou žádné řádky.');
+    const chans = new Set(rows.filter((r) => r.path.length).map((r) => r.path.join('\u0000'))).size;
+    csvRows = rows; $('#c-add').disabled = false;
+    $('#c-info').textContent = 'V souboru je programů: ' + chans + ', odkazů: ' + items + '. Stiskněte „Načíst do seznamu“.';
+  } catch (e) { $('#c-info').textContent = e instanceof SyntaxError ? 'Soubor JSON je poškozený.' : e.message; }
+});
+$('#c-add').addEventListener('click', () => {
+  if (!csvRows) return;
+  const replace = $('#c-replace').checked;
+  if (replace && !confirm('Nahradit celý současný seznam obsahem souboru?\nDo přehrávače se změna dostane až tlačítkem „Odeslat do přehrávače“.')) return;
+  if (replace) { lib = []; cur = ''; }
+  const start = replace ? '' : $('#c-parent').value, today = new Date().toISOString().slice(0, 10);
+  const folders0 = folders().length;
+  const had = new Set(lib.filter((x) => x.kind !== 'folder').map((x) => x.parent + '\n' + x.url)); // co v seznamu bylo před načtením
+  let ok = 0, same = 0; const bad = [];
+  csvRows.forEach((r, i) => {
+    const known = new Set(lib.map((x) => x.id));
+    const parent = folderForPath(r.path, start);
+    if (parent === null) { bad.push(r.line); return; }
+    if (!r.title && !r.url) {                         // řádek programu: popis a viditelnost jen u nově vytvořeného
+      const f = lib.find((x) => x.id === parent);
+      if (f && !known.has(f.id)) { f.note = cleanText(r.note.slice(0, LIMITS.note), LIMITS.note) || ''; f.show = r.show; }
+      return;
+    }
+    const n = validateItem({ id: newId() + 'c' + i, title: r.title, note: r.note.slice(0, LIMITS.note), url: r.url, added: today });
+    if (!n) { bad.push(r.line); return; }
+    if (had.has(parent + '\n' + n.url)) { same++; return; } // stejný odkaz už v programu byl
+    lib.push({ id: n.id, title: n.title, note: n.note, url: n.url, show: r.show, added: n.added, parent });
+    ok++;
+  });
+  const chans = folders().length - (replace ? 0 : folders0);
+  if (ok || chans || replace) { setDirty(true); render(); }
+  csvRows = null; $('#c-file').value = ''; $('#c-add').disabled = true; $('#c-info').textContent = ''; $('#c-replace').checked = false;
+  say('Načteno odkazů: ' + ok + ', nových programů: ' + chans + (same ? ', už v seznamu byly (přeskočeno): ' + same : '')
+    + (bad.length ? '. Neplatné řádky souboru: ' + bad.slice(0, 20).join(', ') + (bad.length > 20 ? '…' : '') + ' (chybí název nebo https odkaz, který přehrávač umí).' : ok || chans || replace ? '. Nezapomeňte odeslat do přehrávače.' : '. Nic nového k přidání.'), bad.length ? 'err' : 'ok');
+});
+$('#c-export').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([libraryToCsv(lib)], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'superbox85-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  say('Soubor CSV se stahuje. Načtete ho v jiném Superboxu tlačítkem „Načíst CSV“.', 'ok');
 });
 
 /* ---------- hromadné vložení textem (název ; popis ; odkaz) ---------- */

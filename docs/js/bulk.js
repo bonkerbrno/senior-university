@@ -1,7 +1,8 @@
 // Hromadné vkládání: čtení tabulky vložené z Excelu (oddělené tabulátory) a cest kategorií.
 
 // text ze schránky -> pole řádků (každý řádek pole buněk). Podporuje buňky v uvozovkách (Excel je používá při zalomení řádku).
-export function parseTable(text) {
+// Oddělovač je tabulátor (vložení z Excelu); CSV soubor předá středník nebo čárku.
+export function parseTable(text, delim = '\t') {
   const rows = [];
   let row = [], cell = '', q = false;
   const s = String(text).replace(/\r\n?/g, '\n');
@@ -11,7 +12,7 @@ export function parseTable(text) {
       if (c === '"') { if (s[i + 1] === '"') { cell += '"'; i++; } else q = false; }
       else cell += c;
     } else if (c === '"' && cell === '') q = true;
-    else if (c === '\t') { row.push(cell); cell = ''; }
+    else if (c === delim) { row.push(cell); cell = ''; }
     else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
     else cell += c;
   }

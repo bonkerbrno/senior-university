@@ -59,11 +59,11 @@ code { background: var(--field); padding: 1px 5px; border-radius: 4px; }
 .auth button, .auth-off button { border: 1.5px dashed var(--line); background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 8px; cursor: not-allowed; }
 
 /* příkazový pruh */
-.cmdbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.crumbs { display: flex; align-items: center; gap: 4px; flex: 1 1 120px; min-width: 0; padding: 5px 10px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; white-space: nowrap; }
+.cmdbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.crumbs { display: flex; align-items: center; gap: 4px; flex: 1 1 60px; min-width: 0; padding: 5px 10px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; white-space: nowrap; }
 .crumbs button { background: none; border: 0; color: var(--text); cursor: pointer; padding: 2px 5px; border-radius: 5px; font-weight: 600; }
 .crumbs button:hover { background: var(--surface-2); } .crumbs i { color: var(--accent); font-style: normal; }
-.searchbox { position: relative; width: 210px; }
+.searchbox { position: relative; flex: 0 1 170px; min-width: 140px; }
 .search { width: 100%; padding-right: 36px !important; }
 .search::-webkit-search-cancel-button { display: none; }
 .searchbox .ico { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
